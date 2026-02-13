@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "iglistkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Instagram/IGListKit",
+      "state" : {
+        "revision" : "bb6dea7d6d9e578948cc601fa8200ab6b236c2b5",
+        "version" : "5.1.0"
+      }
+    }
+  ],
+  "version" : 2
+}

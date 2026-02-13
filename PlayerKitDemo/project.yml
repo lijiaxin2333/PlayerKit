@@ -1,0 +1,27 @@
+name: PlayerKitDemo
+options:
+  bundleIdPrefix: com.ljx
+  deploymentTarget:
+    iOS: "15.6"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: true
+packages:
+  PlayerKit:
+    path: ../Packages/PlayerKit
+  ListKit:
+    path: ../Packages/ListKit
+targets:
+  PlayerKitDemo:
+    type: application
+    platform: iOS
+    sources:
+      - PlayerKitDemo
+    dependencies:
+      - package: PlayerKit
+      - package: ListKit
+    settings:
+      base:
+        INFOPLIST_FILE: PlayerKitDemo/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: com.ljx.playerkitdemo
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_VERSION: "5.0"

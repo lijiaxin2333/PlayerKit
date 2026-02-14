@@ -1,7 +1,5 @@
 import IGListKit
 
-// MARK: - ListDiffableWrapper
-
 final class ListDiffableWrapper: NSObject, IGListKit.ListDiffable {
 
     let wrapped: AnyObject

@@ -2,7 +2,9 @@ import UIKit
 import IGListKit
 
 @MainActor
-public final class ListKitAdapterUpdaterDelegate: NSObject, IGListKit.ListAdapterUpdaterDelegate {
+public final class ListKitAdapterUpdaterDelegate:
+    NSObject,
+    IGListKit.ListAdapterUpdaterDelegate {
 
     public weak var updateDelegate: ListUpdateDelegate?
     private weak var viewController: UIViewController?

@@ -2,7 +2,9 @@ import UIKit
 import IGListKit
 
 @MainActor
-open class BaseListSectionViewModel: NSObject, IGListKit.ListDiffable, ListSectionViewModelProtocol {
+open class BaseListSectionViewModel: NSObject,
+                                     IGListKit.ListDiffable,
+                                     ListSectionViewModelProtocol {
 
     public private(set) var modelsArray: [AnyObject]
 
@@ -44,6 +46,7 @@ open class BaseListSectionViewModel: NSObject, IGListKit.ListDiffable, ListSecti
         self.isVisible = visible
     }
 
+    // 业务不实现, 就会按照类名自动创建对应的section controller
     open class func sectionControllerClass() -> BaseListSectionController.Type? {
         let vmClassName = NSStringFromClass(self)
         let scClassName = vmClassName.replacingOccurrences(of: "SectionViewModel", with: "SectionController")

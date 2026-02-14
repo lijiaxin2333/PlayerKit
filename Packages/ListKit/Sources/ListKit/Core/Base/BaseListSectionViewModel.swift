@@ -157,9 +157,9 @@ open class BaseListSectionViewModel: NSObject, IGListKit.ListDiffable, ListSecti
         return self === (object as AnyObject)
     }
 
-    // MARK: - Private
+    // MARK: - Helpers
 
-    private static func removeDuplicates(_ objects: [AnyObject]) -> [AnyObject] {
+    static func removeDuplicates(_ objects: [AnyObject]) -> [AnyObject] {
         var seen = Set<ObjectIdentifier>()
         return objects.filter { seen.insert(ObjectIdentifier($0)).inserted }
     }

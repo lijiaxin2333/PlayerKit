@@ -2,15 +2,24 @@ import UIKit
 import IGListKit
 
 @MainActor
-open class BaseListSectionController: IGListKit.ListSectionController, IGListKit.ListSupplementaryViewSource, IGListKit.ListDisplayDelegate, IGListKit.ListWorkingRangeDelegate, IGListKit.ListScrollDelegate, ListSectionContext, ListControllerLifeCycle {
+open class BaseListSectionController: IGListKit.ListSectionController {
+
+    // MARK: - Data
 
     public private(set) var viewModel: BaseListSectionViewModel?
     public private(set) var modelsArray: [AnyObject] = []
 
+    // MARK: - Delegates
+
     public weak var sectionDelegate: ListSectionControllerDelegate?
     public weak var sectionWorkingRangeDelegate: ListSectionControllerWorkingRangeDelegate?
     public weak var sectionScrollDelegate: ListSectionControllerScrollDelegate?
+
+    // MARK: - Configuration
+
     public weak var containerConfig: ListContainerConfig?
+
+    // MARK: - Layout State
 
     private var _isLastSection: Bool = false
     var canUpdateLayout: (() -> Bool)?
@@ -20,10 +29,14 @@ open class BaseListSectionController: IGListKit.ListSectionController, IGListKit
         set { _isLastSection = newValue }
     }
 
+    // MARK: - Internal State
+
     private enum UpdateState {
         case idle, queued, applied
     }
     private var state: UpdateState = .idle
+
+    // MARK: - Init
 
     public required override init() {
         super.init()
@@ -132,103 +145,6 @@ open class BaseListSectionController: IGListKit.ListSectionController, IGListKit
         didSelectItem(atIndex: index, model: modelsArray[index])
     }
 
-    // MARK: - IGListSupplementaryViewSource
-
-    public func supportedElementKinds() -> [String] {
-        var kinds = [String]()
-        if headerViewClass() != nil { kinds.append(UICollectionView.elementKindSectionHeader) }
-        if footerViewClass() != nil { kinds.append(UICollectionView.elementKindSectionFooter) }
-        return kinds
-    }
-
-    public func viewForSupplementaryElement(ofKind elementKind: String, at index: Int) -> UICollectionReusableView {
-        if elementKind == UICollectionView.elementKindSectionHeader, let cls = headerViewClass() {
-            let view = collectionContext!.dequeueReusableSupplementaryView(ofKind: elementKind, for: self, class: cls, at: index)
-            configHeaderView(view)
-            return view
-        }
-        if elementKind == UICollectionView.elementKindSectionFooter, let cls = footerViewClass() {
-            let view = collectionContext!.dequeueReusableSupplementaryView(ofKind: elementKind, for: self, class: cls, at: index)
-            configFooterView(view)
-            return view
-        }
-        return UICollectionReusableView()
-    }
-
-    public func sizeForSupplementaryView(ofKind elementKind: String, at index: Int) -> CGSize {
-        let containerSize = collectionContext!.containerSize
-        if elementKind == UICollectionView.elementKindSectionHeader {
-            return sizeForHeader(collectionViewSize: containerSize)
-        }
-        if elementKind == UICollectionView.elementKindSectionFooter {
-            return sizeForFooter(collectionViewSize: containerSize)
-        }
-        return .zero
-    }
-
-    // MARK: - IGListDisplayDelegate
-
-    public func listAdapter(_ listAdapter: IGListKit.ListAdapter, willDisplay sectionController: IGListKit.ListSectionController) {
-        sectionDelegate?.sectionControllerWillDisplay(self)
-    }
-
-    public func listAdapter(_ listAdapter: IGListKit.ListAdapter, didEndDisplaying sectionController: IGListKit.ListSectionController) {
-        sectionDelegate?.sectionControllerDidEndDisplaying(self)
-    }
-
-    public func listAdapter(_ listAdapter: IGListKit.ListAdapter, willDisplay sectionController: IGListKit.ListSectionController, cell: UICollectionViewCell, at index: Int) {
-        guard index < modelsArray.count else { return }
-        sectionWillDisplayCell(cell, index: index, model: modelsArray[index])
-    }
-
-    public func listAdapter(_ listAdapter: IGListKit.ListAdapter, didEndDisplaying sectionController: IGListKit.ListSectionController, cell: UICollectionViewCell, at index: Int) {
-        guard index < modelsArray.count else { return }
-        sectionDidEndDisplayingCell(cell, index: index, model: modelsArray[index])
-    }
-
-    // MARK: - IGListWorkingRangeDelegate
-
-    public func listAdapter(_ listAdapter: IGListKit.ListAdapter, sectionControllerWillEnterWorkingRange sectionController: IGListKit.ListSectionController) {
-        sectionWorkingRangeDelegate?.sectionControllerWillEnterWorkingRange(self)
-    }
-
-    public func listAdapter(_ listAdapter: IGListKit.ListAdapter, sectionControllerDidExitWorkingRange sectionController: IGListKit.ListSectionController) {
-        sectionWorkingRangeDelegate?.sectionControllerDidExitWorkingRange(self)
-    }
-
-    // MARK: - IGListScrollDelegate
-
-    public func listAdapter(_ listAdapter: IGListKit.ListAdapter, didScroll sectionController: IGListKit.ListSectionController) {
-        sectionScrollDelegate?.sectionControllerDidScroll(self)
-    }
-
-    public func listAdapter(_ listAdapter: IGListKit.ListAdapter, willBeginDragging sectionController: IGListKit.ListSectionController) {
-        sectionScrollDelegate?.sectionControllerWillBeginDragging(self)
-    }
-
-    public func listAdapter(_ listAdapter: IGListKit.ListAdapter, didEndDragging sectionController: IGListKit.ListSectionController, willDecelerate decelerate: Bool) {
-        sectionScrollDelegate?.sectionControllerDidEndDragging(self, willDecelerate: decelerate)
-    }
-
-    public func listAdapter(_ listAdapter: IGListKit.ListAdapter, didEndDeceleratingSectionController sectionController: IGListKit.ListSectionController) {
-        sectionScrollDelegate?.sectionControllerDidEndDecelerating(self)
-    }
-
-    // MARK: - ListSectionContext
-
-    public func reloadSection(animated: Bool, completion: ((Bool) -> Void)?) {
-        reloadAnimated(animated, completion: completion)
-    }
-
-    public func updateSection(animated: Bool, completion: ((Bool) -> Void)?) {
-        updateAnimated(animated, completion: completion)
-    }
-
-    public func scrollToItem(atIndex index: Int, scrollPosition: UICollectionView.ScrollPosition, animated: Bool) {
-        guard index < modelsArray.count else { return }
-        collectionContext?.scroll(to: self, at: index, scrollPosition: scrollPosition, animated: animated)
-    }
-
     // MARK: - Update
 
     public func reloadAnimated(_ animated: Bool, completion: ((Bool) -> Void)?) {
@@ -313,70 +229,10 @@ open class BaseListSectionController: IGListKit.ListSectionController, IGListKit
             updates(batchContext)
             self?.state = .applied
         }, completion: { [weak self] finished in
-            self?.state = .idle
+            MainActor.assumeIsolated {
+                self?.state = .idle
+            }
             completion?(finished)
         })
-    }
-}
-
-// MARK: - BaseListSeparatorView
-
-@MainActor
-public final class BaseListSeparatorView: UICollectionReusableView {
-
-    private let lineView = UIView()
-
-    public var separatorInsets: ListSeparatorInsets = ListSeparatorInsets() {
-        didSet { setNeedsLayout() }
-    }
-
-    public var separatorColor: UIColor = UIColor(white: 1, alpha: 0.1) {
-        didSet { lineView.backgroundColor = separatorColor }
-    }
-
-    public override init(frame: CGRect) {
-        super.init(frame: frame)
-        lineView.backgroundColor = separatorColor
-        addSubview(lineView)
-    }
-
-    public required init?(coder: NSCoder) { fatalError() }
-
-    public override func layoutSubviews() {
-        super.layoutSubviews()
-        lineView.frame = CGRect(
-            x: separatorInsets.left,
-            y: 0,
-            width: bounds.width - separatorInsets.left - separatorInsets.right,
-            height: bounds.height
-        )
-    }
-}
-
-// MARK: - Private helper for removeDuplicates
-
-fileprivate extension BaseListSectionViewModel {
-    static func removeDuplicates(_ objects: [AnyObject]) -> [AnyObject] {
-        var seen = Set<ObjectIdentifier>()
-        return objects.filter { seen.insert(ObjectIdentifier($0)).inserted }
-    }
-}
-
-// MARK: - ListDiffableWrapper
-
-final class ListDiffableWrapper: NSObject, IGListKit.ListDiffable {
-    let wrapped: AnyObject
-
-    init(_ object: AnyObject) {
-        self.wrapped = object
-    }
-
-    func diffIdentifier() -> any NSObjectProtocol {
-        return ObjectIdentifier(wrapped) as AnyObject as! NSObjectProtocol
-    }
-
-    func isEqual(toDiffableObject object: (any IGListKit.ListDiffable)?) -> Bool {
-        guard let other = object as? ListDiffableWrapper else { return false }
-        return wrapped === other.wrapped
     }
 }

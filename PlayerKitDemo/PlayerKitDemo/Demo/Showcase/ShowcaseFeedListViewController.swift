@@ -107,7 +107,6 @@ final class ShowcaseFeedListViewController: BaseListViewController<ShowcaseFeedL
     }
 
     private func setupPaging() {
-        scrollViewDelegate = self
         baseCollectionView?.isPagingEnabled = true
     }
 

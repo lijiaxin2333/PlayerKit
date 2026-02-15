@@ -101,29 +101,12 @@ public protocol ListProtocol: AnyObject {
 
     // MARK: - 滚动事件
 
-    /// 滚动中
     func scrollViewDidScroll(_ scrollView: UIScrollView)
-
-    /// 拖拽即将结束（可用于实现分页吸附）
-    /// - Parameters:
-    ///   - scrollView: 滚动视图
-    ///   - velocity: 拖拽速度
-    ///   - targetContentOffset: 目标偏移量（可修改此值实现吸附效果）
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView)
     func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>)
-
-    /// 拖拽结束
-    /// - Parameters:
-    ///   - scrollView: 滚动视图
-    ///   - decelerate: 是否会继续减速
     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool)
-
-    /// 减速结束
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView)
-
-    /// 滚动结束（拖拽或减速结束后触发）
     func scrollViewDidEndScrolling()
-
-    /// 滚动动画结束（如 scrollToItem 触发的动画）
     func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView)
 
     // MARK: - 其他事件
@@ -191,6 +174,7 @@ public extension ListProtocol {
     ) {}
 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {}
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {}
     func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {}
     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {}
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {}

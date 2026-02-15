@@ -2,20 +2,33 @@ import UIKit
 import IGListKit
 
 @MainActor
-open class BaseListViewController<VM: BaseListViewModel>: UIViewController, ListViewControllerDataSource, ListContainerContext, ListContainerConfig, BaseListFlowLayoutDelegate, ListContext, ListDisplayDelegate, UIScrollViewDelegate {
+open class BaseListViewController<VM: BaseListViewModel>: UIViewController,
+                                                            ListViewControllerDataSource,
+                                                            ListContainerContext,
+                                                            ListContainerConfig,
+                                                            BaseListFlowLayoutDelegate,
+                                                            ListContext,
+                                                            ListDisplayDelegate,
+                                                            ListScrollViewDelegate {
 
     public private(set) var listAdapter: IGListKit.ListAdapter?
     public private(set) var baseCollectionView: UICollectionView?
 
-    private var adapterDataSource: ListKitAdapterDataSource?
-    private var adapterDelegate: ListKitAdapterDelegate?
-    private var adapterUpdaterDelegate: ListKitAdapterUpdaterDelegate?
+    // IGListKit桥接层
+    //    1. 解耦：将 IGListKit 的协议实现与 ViewController 分离
+    //    2. 封装：ListKit 内部可以对 IGListKit 的回调进行二次处理
+    //    3. 扩展：可以在桥接层添加额外逻辑（如生命周期分发）而不修改 ViewController
+    private var adapterDataSource: ListKitAdapterDataSource? // 列表: 数据源 + lifeCycle
+    private var adapterDelegate: ListKitAdapterDelegate? // 列表: section & cell 显隐状态
+    private var adapterUpdaterDelegate: ListKitAdapterUpdaterDelegate? // 列表: 数据数据更新事件回调
+    private var adapterScrollViewDelegate: ListKitAdapterScrollViewDelegate? // 列表: 滚动事件
 
     public weak var scrollViewDelegate: UIScrollViewDelegate? {
         didSet {
-            listAdapter?.scrollViewDelegate = scrollViewDelegate
+            adapterScrollViewDelegate?.externalDelegate = scrollViewDelegate
         }
     }
+
     public weak var listDisplayDelegate: ListDisplayDelegate? {
         didSet {
             adapterDelegate?.delegate = listDisplayDelegate
@@ -160,6 +173,10 @@ open class BaseListViewController<VM: BaseListViewModel>: UIViewController, List
         let updaterDel = ListKitAdapterUpdaterDelegate(viewController: self)
         adapterUpdaterDelegate = updaterDel
 
+        let scrollDel = ListKitAdapterScrollViewDelegate()
+        scrollDel.delegate = self
+        adapterScrollViewDelegate = scrollDel
+
         let updater = IGListKit.ListAdapterUpdater()
         updater.delegate = updaterDel
 
@@ -168,9 +185,7 @@ open class BaseListViewController<VM: BaseListViewModel>: UIViewController, List
         adapter.collectionView = cv
         adapter.dataSource = ds
         adapter.delegate = del
-        if let svd = scrollViewDelegate {
-            adapter.scrollViewDelegate = svd
-        }
+        adapter.scrollViewDelegate = scrollDel
         listAdapter = adapter
 
         setupCollectionView(cv)
@@ -520,11 +535,15 @@ open class BaseListViewController<VM: BaseListViewModel>: UIViewController, List
         viewModel.notifyPlugins { $0.sectionViewModelDidEndDisplaying(sectionViewModel, forIndex: index, duplicateReload: duplicateReload) }
     }
 
-    // MARK: - UIScrollViewDelegate
+    // MARK: - ListScrollViewDelegate
 
     open func scrollViewDidScroll(_ scrollView: UIScrollView) {
         _isScrolling = true
         viewModel.notifyPlugins { $0.scrollViewDidScroll(scrollView) }
+    }
+
+    open func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        viewModel.notifyPlugins { $0.scrollViewWillBeginDragging(scrollView) }
     }
 
     open func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {

@@ -1,9 +1,19 @@
 import UIKit
 
+// MARK: - BaseListFlowLayoutDelegate
+
+/// Flow Layout 代理协议
+/// - 职责: 提供 Section 背景色、Header 吸顶配置等
 @MainActor
 public protocol BaseListFlowLayoutDelegate: AnyObject {
+
+    /// 返回指定 Section 的背景色
     func backgroundColorAtSectionIndex(_ sectionIndex: Int) -> UIColor?
+
+    /// 返回指定 Section 的 Header 是否吸顶
     func shouldStickHeaderAtSectionIndex(_ sectionIndex: Int) -> Bool
+
+    /// Section 背景视图布局完成回调
     func sectionBackgroundViewDidLayout(_ view: UIView, atSectionIndex sectionIndex: Int)
 }
 
@@ -13,16 +23,28 @@ public extension BaseListFlowLayoutDelegate {
     func sectionBackgroundViewDidLayout(_ view: UIView, atSectionIndex sectionIndex: Int) {}
 }
 
+// MARK: - BaseListFlowLayoutUserInfo
+
+/// Layout 布局信息
+/// 用于在布局刷新时指定滚动目标
 @MainActor
 public final class BaseListFlowLayoutUserInfo {
+
+    /// 目标 IndexPath（用于滚动到指定 item）
     public let indexPathToAutoScroll: IndexPath?
+
+    /// 左上角偏移
     public let leftTopOffset: CGPoint?
+
+    /// 目标 contentOffset（用于滚动到指定位置）
     public let contentOffset: CGPoint?
 
+    /// 创建滚动到指定 item 的信息
     public static func info(targetIndexPath: IndexPath, leftTopOffset: CGPoint) -> BaseListFlowLayoutUserInfo {
         BaseListFlowLayoutUserInfo(indexPath: targetIndexPath, leftTopOffset: leftTopOffset)
     }
 
+    /// 创建滚动到指定位置的信息
     public static func info(targetContentOffset: CGPoint) -> BaseListFlowLayoutUserInfo {
         BaseListFlowLayoutUserInfo(contentOffset: targetContentOffset)
     }
@@ -40,14 +62,29 @@ public final class BaseListFlowLayoutUserInfo {
     }
 }
 
+// MARK: - BaseListFlowLayout
+
+/// 列表 Flow Layout 基类
+/// - 职责:
+///   1. 提供 Section 背景视图
+///   2. 支持 Header 吸顶
+///   3. 支持布局刷新时自动滚动
 @MainActor
 public class BaseListFlowLayout: UICollectionViewFlowLayout {
 
+    /// 代理
     public weak var baseDelegate: BaseListFlowLayoutDelegate?
+
+    /// 布局刷新时的滚动信息
     public var userInfoForInvalidation: BaseListFlowLayoutUserInfo?
+
+    /// 是否禁用装饰视图（Section 背景）
     public var disableDecorationView: Bool = false
 
+    /// 装饰视图类型标识
     private static let decorationKind = "ListKit.SectionBackground"
+
+    /// 装饰视图属性数组
     private var decorationAttributes: [BaseListLayoutAttributes] = []
 
     public override init() {
@@ -66,12 +103,14 @@ public class BaseListFlowLayout: UICollectionViewFlowLayout {
     public override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
         guard var attributes = super.layoutAttributesForElements(in: rect)?.map({ $0.copy() as! UICollectionViewLayoutAttributes }) else { return nil }
 
+        // 添加装饰视图属性
         if !disableDecorationView {
             for deco in decorationAttributes where rect.intersects(deco.frame) {
                 attributes.append(deco)
             }
         }
 
+        // 处理吸顶 Header
         var missingSections = IndexSet()
         for attr in attributes {
             let section = attr.indexPath.section
@@ -142,10 +181,12 @@ public class BaseListFlowLayout: UICollectionViewFlowLayout {
 
     // MARK: - Private
 
+    /// 判断指定 Section 的 Header 是否吸顶
     private func shouldStickHeader(_ section: Int) -> Bool {
         baseDelegate?.shouldStickHeaderAtSectionIndex(section) ?? false
     }
 
+    /// 准备装饰视图属性
     private func prepareDecorationAttributes() {
         guard !disableDecorationView, let collectionView = collectionView else { return }
         decorationAttributes.removeAll()
@@ -185,11 +226,13 @@ public class BaseListFlowLayout: UICollectionViewFlowLayout {
         }
     }
 
+    /// 如果需要，滚动到指定 Section
     private func scrollToSpecifySectionIfNeeded() {
         guard let target = targetContentOffsetForInvalidation() else { return }
         collectionView?.contentOffset = target
     }
 
+    /// 计算布局刷新时的目标 contentOffset
     private func targetContentOffsetForInvalidation() -> CGPoint? {
         guard let info = userInfoForInvalidation else { return nil }
         if let offset = info.contentOffset {
@@ -209,16 +252,24 @@ public class BaseListFlowLayout: UICollectionViewFlowLayout {
 
 // MARK: - Layout Attributes
 
+/// 自定义布局属性
+/// 用于存储 Section 背景色等额外信息
 @MainActor
 final class BaseListLayoutAttributes: UICollectionViewLayoutAttributes {
+
+    /// Section 背景色
     var sectionBackgroundColor: UIColor?
+
+    /// Section 背景视图布局完成回调
     var sectionBackgroundViewDidLayout: ((IndexPath, UIView) -> Void)?
 }
 
 // MARK: - Background View
 
+/// Section 背景视图
 @MainActor
 final class BaseListSectionBackgroundView: UICollectionReusableView {
+
     override func apply(_ layoutAttributes: UICollectionViewLayoutAttributes) {
         super.apply(layoutAttributes)
         guard let attrs = layoutAttributes as? BaseListLayoutAttributes else { return }

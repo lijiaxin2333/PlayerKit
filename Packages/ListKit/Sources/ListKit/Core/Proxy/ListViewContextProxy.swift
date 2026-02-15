@@ -1,8 +1,12 @@
 import UIKit
 
+/// ListContext 代理类
+/// - 职责: 作为 ListContext 的代理包装，将所有调用转发给目标对象
+/// - 用途: 用于在需要传递 ListContext 但又不想直接持有引用的场景
 @MainActor
 public final class ListViewContextProxy: ListContext {
 
+    /// 代理目标
     private weak var target: ListContext?
 
     public init(target: ListContext) {

@@ -11,46 +11,77 @@ import UIKit
 
 // MARK: - 播放控制服务
 
+/**
+ * 播放控制服务协议
+ */
 @MainActor
 public protocol PlayerPlaybackControlService: PluginService {
 
-    /// 是否正在播放
+    /**
+     * 是否正在播放
+     */
     var isPlaying: Bool { get }
 
-    /// 是否暂停
+    /**
+     * 是否暂停
+     */
     var isPaused: Bool { get }
 
-    /// 是否可以播放
+    /**
+     * 是否可以播放
+     */
     var canPlay: Bool { get }
 
-    /// 是否可以暂停
+    /**
+     * 是否可以暂停
+     */
     var canPause: Bool { get }
 
-    /// 播放
+    /**
+     * 播放
+     */
     func play()
 
-    /// 暂停
+    /**
+     * 暂停
+     */
     func pause()
 
-    /// 播放/暂停切换
+    /**
+     * 播放/暂停切换
+     */
     func togglePlayPause()
 
-    /// 停止
+    /**
+     * 停止
+     */
     func stop()
 
-    /// 重播
+    /**
+     * 重播
+     */
     func replay()
 }
 
 // MARK: - 配置模型
 
+/**
+ * 播放控制配置模型
+ */
 public class PlayerPlaybackControlConfigModel {
 
-    /// 是否自动播放
+    /**
+     * 是否自动播放
+     */
     public var autoPlay: Bool = false
 
-    /// 播放结束时是否自动重播
+    /**
+     * 播放结束时是否自动重播
+     */
     public var autoReplay: Bool = false
 
+    /**
+     * 初始化
+     */
     public init() {}
 }

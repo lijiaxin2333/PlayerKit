@@ -9,11 +9,15 @@ import Foundation
 import AVFoundation
 import UIKit
 
-// MARK: - 提示视图
-
+/**
+ * 提示视图，显示带图标和消息的提示 UI
+ */
 private class TipView: UIView {
+    /** 内容容器 */
     private let containerView = UIView()
+    /** 图标视图 */
     private let iconImageView = UIImageView()
+    /** 消息标签 */
     private let messageLabel = UILabel()
 
     init(type: PlayerTipType, message: String) {
@@ -25,6 +29,9 @@ private class TipView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
+    /**
+     * 构建提示 UI，根据类型设置图标和颜色
+     */
     private func setupUI(type: PlayerTipType, message: String) {
         backgroundColor = .clear
 
@@ -33,7 +40,6 @@ private class TipView: UIView {
         containerView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(containerView)
 
-        // 设置图标
         let iconName: String?
         let tintColor: UIColor
         switch type {
@@ -62,7 +68,6 @@ private class TipView: UIView {
         iconImageView.translatesAutoresizingMaskIntoConstraints = false
         containerView.addSubview(iconImageView)
 
-        // 消息标签
         messageLabel.text = message
         messageLabel.textColor = .white
         messageLabel.font = .systemFont(ofSize: 14)
@@ -88,39 +93,43 @@ private class TipView: UIView {
     }
 }
 
-// MARK: - 提示管理组件
-
 @MainActor
+/**
+ * 提示管理插件，在播放器内展示缓冲/加载/错误等提示信息
+ */
 public final class PlayerTipManagerPlugin: BasePlugin, PlayerTipManagerService {
 
+    /** 配置模型类型 */
     public typealias ConfigModelType = PlayerTipManagerConfigModel
 
-    // MARK: - Properties
-
+    /** 播放引擎服务，用于获取播放器视图 */
     @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
 
+    /** 当前显示的提示视图，按类型索引 */
     private var visibleTips: [PlayerTipType: TipView] = [:]
-
-    // MARK: - Initialization
 
     public required override init() {
         super.init()
     }
 
-    // MARK: - Plugin Lifecycle
-
+    /**
+     * 插件加载完成
+     */
     public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
     }
 
+    /**
+     * 应用配置模型
+     */
     public override func config(_ configModel: Any?) {
         super.config(configModel)
     }
 
-    // MARK: - PlayerTipManagerService
-
+    /**
+     * 显示指定类型的提示
+     */
     public func showTip(_ type: PlayerTipType, message: String) {
-        // 同一类型只显示一个
         hideTip(type)
 
         guard let playerView = engineService?.playerView else {
@@ -146,7 +155,6 @@ public final class PlayerTipManagerPlugin: BasePlugin, PlayerTipManagerService {
             tipView.alpha = 1
         }
 
-        // 自动隐藏
         let config = configModel as? PlayerTipManagerConfigModel
         let duration = config?.displayDuration ?? 2.0
         DispatchQueue.main.asyncAfter(deadline: .now() + duration) { [weak self] in
@@ -156,6 +164,9 @@ public final class PlayerTipManagerPlugin: BasePlugin, PlayerTipManagerService {
         print("[PlayerTipManagerPlugin] 显示提示: \(type) - \(message)")
     }
 
+    /**
+     * 隐藏指定类型的提示
+     */
     public func hideTip(_ type: PlayerTipType) {
         guard let tipView = visibleTips.removeValue(forKey: type) else { return }
 
@@ -168,6 +179,9 @@ public final class PlayerTipManagerPlugin: BasePlugin, PlayerTipManagerService {
         print("[PlayerTipManagerPlugin] 隐藏提示: \(type)")
     }
 
+    /**
+     * 隐藏所有提示
+     */
     public func hideAllTips() {
         let count = visibleTips.count
         visibleTips.values.forEach { tipView in
@@ -181,24 +195,37 @@ public final class PlayerTipManagerPlugin: BasePlugin, PlayerTipManagerService {
         print("[PlayerTipManagerPlugin] 隐藏所有提示，数量: \(count)")
     }
 
-    // MARK: - Convenience Methods
-
+    /**
+     * 显示缓冲中提示
+     */
     public func showBufferingTip() {
         showTip(.buffering, message: "缓冲中...")
     }
 
+    /**
+     * 显示加载中提示
+     */
     public func showLoadingTip(_ message: String = "加载中...") {
         showTip(.loading, message: message)
     }
 
+    /**
+     * 显示错误提示
+     */
     public func showErrorTip(_ message: String) {
         showTip(.error, message: message)
     }
 
+    /**
+     * 显示警告提示
+     */
     public func showWarningTip(_ message: String) {
         showTip(.warning, message: message)
     }
 
+    /**
+     * 显示信息提示
+     */
     public func showInfoTip(_ message: String) {
         showTip(.info, message: message)
     }

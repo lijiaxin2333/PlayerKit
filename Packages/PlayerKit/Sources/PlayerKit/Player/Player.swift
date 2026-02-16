@@ -2,15 +2,15 @@
 //  Player.swift
 //  playerkit
 //
-//  基于插件化架构的主播放器类（简化版）
-//
 
 import Foundation
 import UIKit
 import AVFoundation
 
+/** 播放器注册提供者，注册所有基础层播放插件 */
 @MainActor
 final class PlayerRegProvider: RegisterProvider {
+    /** 向注册集合中注册所有核心播放器插件 */
     func registerPlugins(with registerSet: PluginRegisterSet) {
         registerSet.addEntry(pluginClass: PlayerDataPlugin.self, serviceType: PlayerDataService.self)
         registerSet.addEntry(pluginClass: PlayerEngineCorePlugin.self, serviceType: PlayerEngineCoreService.self)
@@ -46,13 +46,17 @@ final class PlayerRegProvider: RegisterProvider {
     }
 }
 
+/** 主播放器类，基于插件化架构管理播放器核心功能 */
 @MainActor
 public final class Player: ContextHolder {
 
+    /** 播放器的 Context 实例 */
     public let context: PublicContext
 
+    /** 播放器注册提供者 */
     private let regProvider = PlayerRegProvider()
 
+    /** 初始化播放器，可指定名称 */
     public init(name: String? = nil) {
         let ctx = Context(name: name ?? "Player")
         self.context = ctx
@@ -61,14 +65,18 @@ public final class Player: ContextHolder {
 
     // MARK: - Engine Pool
 
+    /** 共享的播放引擎池 */
     private var _sharedPool: PlayerEnginePoolService?
+    /** 引擎池中的标识符 */
     private var _poolIdentifier: String?
 
+    /** 绑定引擎池，用于引擎复用 */
     public func bindPool(_ pool: PlayerEnginePoolService, identifier: String) {
         _sharedPool = pool
         _poolIdentifier = identifier
     }
 
+    /** 从引擎池中获取引擎实例 */
     @discardableResult
     public func acquireEngine() -> Bool {
         guard let pool = _sharedPool, let id = _poolIdentifier else { return false }
@@ -79,6 +87,7 @@ public final class Player: ContextHolder {
         return true
     }
 
+    /** 回收引擎实例到引擎池 */
     public func recycleEngine() {
         guard let pool = _sharedPool, let id = _poolIdentifier else { return }
         engineService?.pause()
@@ -89,54 +98,67 @@ public final class Player: ContextHolder {
 
     // MARK: - 便捷服务访问
 
+    /** 数据服务，管理视频数据模型 */
     public var dataService: PlayerDataService? {
         context.resolveService(PlayerDataService.self)
     }
 
+    /** 流程服务，管理播放流程状态 */
     public var processService: PlayerProcessService? {
         context.resolveService(PlayerProcessService.self)
     }
 
+    /** 埋点服务，发送播放器事件追踪 */
     public var trackerService: PlayerTrackerService? {
         context.resolveService(PlayerTrackerService.self)
     }
 
+    /** 视图服务，管理播放器视图层级 */
     public var viewService: PlayerViewService? {
         context.resolveService(PlayerViewService.self)
     }
 
+    /** 引擎核心服务，提供底层播放能力 */
     public var engineCoreService: PlayerEngineCoreService? {
         context.resolveService(PlayerEngineCoreService.self)
     }
 
+    /** 倍速服务，管理播放倍速 */
     public var speedService: PlayerSpeedService? {
         context.resolveService(PlayerSpeedService.self)
     }
 
+    /** 引擎服务的便捷别名 */
     public var engineService: PlayerEngineCoreService? {
         return engineCoreService
     }
 
+    /** 预加载服务，管理视频预加载 */
     public var preloadService: PlayerPreloadService? {
         context.resolveService(PlayerPreloadService.self)
     }
 
+    /** 起播时间服务，管理视频起播时间点 */
     public var startTimeService: PlayerStartTimeService? {
         context.resolveService(PlayerStartTimeService.self)
     }
 
+    /** 手势服务，管理播放器手势交互 */
     public var gestureService: PlayerGestureService? {
         context.resolveService(PlayerGestureService.self)
     }
 
+    /** 字幕服务，管理视频字幕 */
     public var subtitleService: PlayerSubtitleService? {
         context.resolveService(PlayerSubtitleService.self)
     }
 
+    /** 截图服务，管理视频截图功能 */
     public var snapshotService: PlayerSnapshotService? {
         context.resolveService(PlayerSnapshotService.self)
     }
 
+    /** 倍速面板服务，管理倍速选择面板 */
     public var speedPanelService: PlayerSpeedPanelService? {
         context.resolveService(PlayerSpeedPanelService.self)
     }

@@ -9,10 +9,13 @@ import Foundation
 import AVFoundation
 import UIKit
 
-// MARK: - Toast 视图
-
+/**
+ * Toast 消息视图，显示短时文本提示
+ */
 private class ToastView: UIView {
+    /** 消息标签 */
     private let messageLabel = UILabel()
+    /** 背景视图 */
     private let backgroundView = UIView()
 
     init(message: String, style: PlayerToastStyle = .info) {
@@ -24,14 +27,15 @@ private class ToastView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
+    /**
+     * 构建 Toast UI
+     */
     private func setupUI(message: String, style: PlayerToastStyle) {
-        // 背景视图
         backgroundView.backgroundColor = .black.withAlphaComponent(0.8)
         backgroundView.layer.cornerRadius = 8
         backgroundView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(backgroundView)
 
-        // 消息标签
         messageLabel.text = message
         messageLabel.textColor = .white
         messageLabel.font = .systemFont(ofSize: 14)
@@ -40,7 +44,6 @@ private class ToastView: UIView {
         messageLabel.translatesAutoresizingMaskIntoConstraints = false
         backgroundView.addSubview(messageLabel)
 
-        // 布局
         NSLayoutConstraint.activate([
             backgroundView.centerXAnchor.constraint(equalTo: centerXAnchor),
             backgroundView.centerYAnchor.constraint(equalTo: centerYAnchor),
@@ -56,11 +59,15 @@ private class ToastView: UIView {
     }
 }
 
-// MARK: - 加载视图
-
+/**
+ * 加载视图，显示加载指示器和可选消息
+ */
 private class LoadingView: UIView {
+    /** 加载指示器 */
     private let activityIndicator = UIActivityIndicatorView(style: .large)
+    /** 消息标签 */
     private let messageLabel = UILabel()
+    /** 背景视图 */
     private let backgroundView = UIView()
 
     init(message: String? = nil) {
@@ -72,20 +79,20 @@ private class LoadingView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
+    /**
+     * 构建加载 UI
+     */
     private func setupUI(message: String?) {
-        // 背景视图
         backgroundView.backgroundColor = .black.withAlphaComponent(0.8)
         backgroundView.layer.cornerRadius = 12
         backgroundView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(backgroundView)
 
-        // 指示器
         activityIndicator.color = .white
         activityIndicator.translatesAutoresizingMaskIntoConstraints = false
         activityIndicator.startAnimating()
         backgroundView.addSubview(activityIndicator)
 
-        // 消息标签
         if let message = message {
             messageLabel.text = message
             messageLabel.textColor = .white
@@ -95,7 +102,6 @@ private class LoadingView: UIView {
             backgroundView.addSubview(messageLabel)
         }
 
-        // 布局
         NSLayoutConstraint.activate([
             backgroundView.centerXAnchor.constraint(equalTo: centerXAnchor),
             backgroundView.centerYAnchor.constraint(equalTo: centerYAnchor),
@@ -112,55 +118,59 @@ private class LoadingView: UIView {
     }
 }
 
-// MARK: - Toast 提示组件
-
 @MainActor
+/**
+ * Toast 提示插件，在播放器内展示短时 Toast 和加载状态
+ */
 public final class PlayerToastPlugin: BasePlugin, PlayerToastService {
 
+    /** 配置模型类型 */
     public typealias ConfigModelType = PlayerToastConfigModel
 
-    // MARK: - Properties
-
+    /** 播放引擎服务，用于获取播放器视图 */
     @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
 
+    /** 当前显示的 Toast 视图 */
     private var currentToastView: ToastView?
+    /** 当前显示的加载视图 */
     private var loadingView: LoadingView?
+    /** Toast 自动隐藏定时器 */
     private var toastHideTimer: Timer?
-
-    // MARK: - Initialization
 
     public required override init() {
         super.init()
     }
 
-    // MARK: - Plugin Lifecycle
-
+    /**
+     * 插件加载完成
+     */
     public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
     }
 
+    /**
+     * 应用配置模型
+     */
     public override func config(_ configModel: Any?) {
         super.config(configModel)
     }
 
-    // MARK: - PlayerToastService
-
+    /**
+     * 显示 Toast 消息
+     */
     public func showToast(_ message: String, style: PlayerToastStyle = .info, duration: TimeInterval = 0) {
         let config = configModel as? PlayerToastConfigModel
         let finalDuration = duration > 0 ? duration : (config?.defaultDuration ?? 2.0)
 
         print("[PlayerToastPlugin] 显示 Toast: \(message), 样式: \(style)")
 
-        // 移除旧的 Toast
         hideToast()
 
-        // 获取播放器视图作为父视图
         guard let playerView = engineService?.playerView else {
             print("[PlayerToastPlugin] 无法显示 Toast: 播放器视图不可用")
             return
         }
 
-        // 创建新的 Toast
         let toast = ToastView(message: message, style: style)
         toast.translatesAutoresizingMaskIntoConstraints = false
         toast.alpha = 0
@@ -175,30 +185,28 @@ public final class PlayerToastPlugin: BasePlugin, PlayerToastService {
 
         currentToastView = toast
 
-        // 动画显示
         UIView.animate(withDuration: 0.25) {
             toast.alpha = 1
         }
 
-        // 自动隐藏
         toastHideTimer = Timer.scheduledTimer(withTimeInterval: finalDuration, repeats: false) { [weak self] _ in
             self?.hideToast()
         }
     }
 
+    /**
+     * 显示加载视图
+     */
     public func showLoading(_ message: String? = nil) {
         print("[PlayerToastPlugin] 显示加载: \(message ?? "")")
 
-        // 移除旧的加载视图
         hideLoading()
 
-        // 获取播放器视图作为父视图
         guard let playerView = engineService?.playerView else {
             print("[PlayerToastPlugin] 无法显示加载: 播放器视图不可用")
             return
         }
 
-        // 创建加载视图
         let loading = LoadingView(message: message)
         loading.translatesAutoresizingMaskIntoConstraints = false
         playerView.addSubview(loading)
@@ -211,13 +219,17 @@ public final class PlayerToastPlugin: BasePlugin, PlayerToastService {
         loadingView = loading
     }
 
+    /**
+     * 隐藏加载视图
+     */
     public func hideLoading() {
         loadingView?.removeFromSuperview()
         loadingView = nil
     }
 
-    // MARK: - Private Methods
-
+    /**
+     * 隐藏 Toast，带动画
+     */
     private func hideToast() {
         toastHideTimer?.invalidate()
         toastHideTimer = nil

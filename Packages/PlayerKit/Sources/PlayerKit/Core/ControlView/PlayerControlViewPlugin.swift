@@ -9,58 +9,81 @@ import Foundation
 import AVFoundation
 import UIKit
 
-// MARK: - 默认播控视图
-
+/**
+ * 默认播控视图，包含播放暂停、全屏、进度条、时间等控件
+ */
 public class PlayerDefaultControlView: UIView, PlayerControlViewProtocol {
 
+    /**
+     * 内容容器视图
+     */
     private let contentView = UIView()
+
+    /**
+     * 播放暂停按钮
+     */
     private let playPauseButton = UIButton(type: .system)
+
+    /**
+     * 全屏按钮
+     */
     private let fullscreenButton = UIButton(type: .system)
+
+    /**
+     * 进度条
+     */
     private let progressBar = UIProgressView(progressViewStyle: .default)
+
+    /**
+     * 时间标签
+     */
     private let timeLabel = UILabel()
 
+    /**
+     * 使用 frame 初始化
+     */
     public override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
     }
 
+    /**
+     * 使用 coder 初始化
+     */
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setupUI()
     }
 
+    /**
+     * 设置界面布局
+     */
     private func setupUI() {
         backgroundColor = .black.withAlphaComponent(0.3)
 
-        // 内容视图
         contentView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(contentView)
 
-        // 播放/暂停按钮
         playPauseButton.translatesAutoresizingMaskIntoConstraints = false
         playPauseButton.setImage(UIImage(systemName: "pause.fill"), for: .normal)
         playPauseButton.tintColor = .white
         contentView.addSubview(playPauseButton)
 
-        // 全屏按钮
         fullscreenButton.translatesAutoresizingMaskIntoConstraints = false
         fullscreenButton.setImage(UIImage(systemName: "arrow.up.right.and.arrow.down.left"), for: .normal)
         fullscreenButton.tintColor = .white
         contentView.addSubview(fullscreenButton)
 
-        // 进度条
         progressBar.translatesAutoresizingMaskIntoConstraints = false
         progressBar.progressTintColor = .white
         contentView.addSubview(progressBar)
 
-        // 时间标签
         timeLabel.translatesAutoresizingMaskIntoConstraints = false
         timeLabel.textColor = .white
         timeLabel.font = .monospacedDigitSystemFont(ofSize: 12, weight: .regular)
         timeLabel.text = "00:00 / 00:00"
         contentView.addSubview(timeLabel)
 
-        // 布局
         NSLayoutConstraint.activate([
             contentView.topAnchor.constraint(equalTo: topAnchor),
             contentView.leadingAnchor.constraint(equalTo: leadingAnchor),
@@ -84,6 +107,9 @@ public class PlayerDefaultControlView: UIView, PlayerControlViewProtocol {
 
     // MARK: - PlayerControlViewProtocol
 
+    /**
+     * 设置播控显示或隐藏
+     */
     public func setShowControl(_ show: Bool, animated: Bool) {
         let alpha: CGFloat = show ? 1 : 0
         if animated {
@@ -95,50 +121,101 @@ public class PlayerDefaultControlView: UIView, PlayerControlViewProtocol {
         }
     }
 
+    /**
+     * 设置播控锁定状态
+     */
     public func setLocked(_ locked: Bool) {
         isUserInteractionEnabled = !locked
     }
 
+    /**
+     * 更新播控状态
+     */
     public func updateControlState() {
-        // 更新播控状态
     }
 
     // MARK: - Public Methods
 
+    /**
+     * 设置播放暂停按钮图片
+     */
     public func setPlayPauseButtonImage(_ image: UIImage?, for state: UIControl.State) {
         playPauseButton.setImage(image, for: state)
     }
 
+    /**
+     * 设置时间文本
+     */
     public func setTimeText(_ text: String) {
         timeLabel.text = text
     }
 
+    /**
+     * 设置进度
+     */
     public func setProgress(_ progress: Float) {
         progressBar.progress = progress
     }
 }
 
-// MARK: - 播控视图组件
-
+/**
+ * 播控视图插件，管理播控视图的显示隐藏、锁定、自动隐藏等
+ */
 @MainActor
 public final class PlayerControlViewPlugin: BasePlugin, PlayerControlViewService {
 
+    /**
+     * 配置模型类型
+     */
     public typealias ConfigModelType = PlayerControlViewConfigModel
 
     // MARK: - Properties
 
+    /**
+     * 播控视图实例
+     */
     private var controlViewInstance: PlayerDefaultControlView?
+
+    /**
+     * 是否显示播控
+     */
     private var _isShowControl: Bool = true
+
+    /**
+     * 是否锁定播控
+     */
     private var _isLocked: Bool = false
+
+    /**
+     * 播控视图是否已加载
+     */
     private var _controlViewDidLoad: Bool = false
+
+    /**
+     * 自动隐藏定时器
+     */
     private var autoHideTimer: Timer?
+
+    /**
+     * 强制隐藏的 key 集合
+     */
     private var forceHideKeys: Set<String> = []
+
+    /**
+     * 当前模板类
+     */
     private var currentTemplateClass: AnyClass?
 
     // MARK: - PlayerControlViewService
 
+    /**
+     * 播控视图
+     */
     public var controlView: UIView? { controlViewInstance }
 
+    /**
+     * 是否显示播控
+     */
     public var isShowControl: Bool {
         get { _isShowControl }
         set {
@@ -150,6 +227,9 @@ public final class PlayerControlViewPlugin: BasePlugin, PlayerControlViewService
         }
     }
 
+    /**
+     * 是否锁定播控
+     */
     public var isLocked: Bool {
         get { _isLocked }
         set {
@@ -159,26 +239,33 @@ public final class PlayerControlViewPlugin: BasePlugin, PlayerControlViewService
         }
     }
 
+    /**
+     * 播控视图是否已加载
+     */
     public var controlViewDidLoad: Bool { _controlViewDidLoad }
 
     // MARK: - Initialization
 
+    /**
+     * 初始化插件
+     */
     public required override init() {
         super.init()
     }
 
     // MARK: - Plugin Lifecycle
 
+    /**
+     * 插件加载完成，创建默认播控视图
+     */
     public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
 
-        // 创建默认播控视图
         createDefaultControlView()
 
         _controlViewDidLoad = true
         self.context?.post(.playerControlViewDidLoadSticky, object: true, sender: self)
 
-        // 监听播放状态变化，自动显示播控
         self.context?.add(self, event: .playerPlaybackStateChanged) { [weak self] state, _ in
             guard let self = self else { return }
             if case .playing = state as? PlayerPlaybackState {
@@ -187,6 +274,9 @@ public final class PlayerControlViewPlugin: BasePlugin, PlayerControlViewService
         }
     }
 
+    /**
+     * 配置更新
+     */
     public override func config(_ configModel: Any?) {
         super.config(configModel)
 
@@ -197,6 +287,9 @@ public final class PlayerControlViewPlugin: BasePlugin, PlayerControlViewService
 
     // MARK: - Methods
 
+    /**
+     * 显示播控
+     */
     public func showControl(animated: Bool) {
         guard !_isLocked && forceHideKeys.isEmpty else { return }
 
@@ -207,6 +300,9 @@ public final class PlayerControlViewPlugin: BasePlugin, PlayerControlViewService
         resetAutoHideTimer()
     }
 
+    /**
+     * 隐藏播控
+     */
     public func hideControl(animated: Bool) {
         _isShowControl = false
         controlViewInstance?.setShowControl(false, animated: animated)
@@ -215,6 +311,9 @@ public final class PlayerControlViewPlugin: BasePlugin, PlayerControlViewService
         cancelAutoHideTimer()
     }
 
+    /**
+     * 切换播控显示状态
+     */
     public func toggleControl(animated: Bool = true) {
         if _isShowControl {
             hideControl(animated: animated)
@@ -223,14 +322,23 @@ public final class PlayerControlViewPlugin: BasePlugin, PlayerControlViewService
         }
     }
 
+    /**
+     * 锁定播控
+     */
     public func lockControl() {
         isLocked = true
     }
 
+    /**
+     * 解锁播控
+     */
     public func unlockControl() {
         isLocked = false
     }
 
+    /**
+     * 按 key 强制显示或隐藏播控
+     */
     public func forceShowControl(_ show: Bool, forKey key: String) {
         if show {
             forceHideKeys.remove(key)
@@ -243,6 +351,9 @@ public final class PlayerControlViewPlugin: BasePlugin, PlayerControlViewService
         }
     }
 
+    /**
+     * 恢复指定 key 的播控显示状态
+     */
     public func resumeControl(forKey key: String) {
         forceHideKeys.remove(key)
         if forceHideKeys.isEmpty {
@@ -250,17 +361,17 @@ public final class PlayerControlViewPlugin: BasePlugin, PlayerControlViewService
         }
     }
 
+    /**
+     * 更新播控模板
+     */
     public func updateControlTemplate(_ templateClass: AnyClass?) {
         print("[PlayerControlViewPlugin] 更新播控模板: \(String(describing: templateClass))")
 
-        // 如果模板类型变化，重新创建播控视图
         if let newTemplate = templateClass, newTemplate != currentTemplateClass {
             currentTemplateClass = newTemplate
 
-            // 移除旧视图
             controlViewInstance?.removeFromSuperview()
 
-            // 创建新视图（这里简化处理，实际应该根据模板类创建）
             createDefaultControlView()
         }
 
@@ -269,22 +380,34 @@ public final class PlayerControlViewPlugin: BasePlugin, PlayerControlViewService
 
     // MARK: - Public Methods
 
+    /**
+     * 更新播放暂停按钮状态
+     */
     public func updatePlayPauseButton(isPlaying: Bool) {
         let imageName = isPlaying ? "pause.fill" : "play.fill"
         let image = UIImage(systemName: imageName)
         controlViewInstance?.setPlayPauseButtonImage(image, for: .normal)
     }
 
+    /**
+     * 更新时间文本
+     */
     public func updateTimeText(_ text: String) {
         controlViewInstance?.setTimeText(text)
     }
 
+    /**
+     * 更新进度
+     */
     public func updateProgress(_ progress: Float) {
         controlViewInstance?.setProgress(progress)
     }
 
     // MARK: - Private Methods
 
+    /**
+     * 创建默认播控视图
+     */
     private func createDefaultControlView() {
         let view = PlayerDefaultControlView(frame: .zero)
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -293,6 +416,9 @@ public final class PlayerControlViewPlugin: BasePlugin, PlayerControlViewService
         print("[PlayerControlViewPlugin] 创建默认播控视图")
     }
 
+    /**
+     * 重置自动隐藏定时器
+     */
     private func resetAutoHideTimer() {
         cancelAutoHideTimer()
 
@@ -304,6 +430,9 @@ public final class PlayerControlViewPlugin: BasePlugin, PlayerControlViewService
         }
     }
 
+    /**
+     * 取消自动隐藏定时器
+     */
     private func cancelAutoHideTimer() {
         autoHideTimer?.invalidate()
         autoHideTimer = nil

@@ -2,52 +2,49 @@
 //  PlayerSharedComps.swift
 //  playerkit
 //
-//  Shared 层组件实现
-//
 
 import Foundation
 import UIKit
 
-// MARK: - 当前播放器组件
-
-/// 当前播放器共享组件
+/** 当前播放器共享插件，管理全局的当前播放器实例 */
 @MainActor
 public final class PlayerSharedCurrentPlayerPlugin: SharedBasePlugin, PlayerSharedCurrentPlayerService {
 
+    /** 配置模型类型 */
     public typealias ConfigModelType = EmptyConfigModel
 
+    /** 服务名称 */
     public static let cclServiceName = "PlayerSharedCurrentPlayerService"
 
-    // MARK: - Properties
-
+    /** 当前播放器实例 */
     private var _currentPlayer: ContextHolder?
+    /** 当前播放器类型 */
     private var _currentPlayerType: PlayerType?
 
-    // MARK: - PlayerSharedCurrentPlayerService
-
+    /** 获取当前播放器 */
     public var currentPlayer: ContextHolder? {
         return _currentPlayer
     }
 
+    /** 获取当前播放器类型 */
     public var currentPlayerType: PlayerType? {
         return _currentPlayerType
     }
 
-    // MARK: - Initialization
-
+    /** 必须的初始化方法 */
     public required override init() {
         super.init()
         print("[PlayerSharedCurrentPlayerPlugin] 共享组件已创建")
     }
 
-    // MARK: - PlayerSharedCurrentPlayerService
-
+    /** 设置当前播放器及其类型 */
     public func setCurrentPlayer(_ player: ContextHolder?, type: PlayerType?) {
         _currentPlayer = player
         _currentPlayerType = type
         print("[PlayerSharedCurrentPlayerPlugin] 设置当前播放器: \(type?.rawValue ?? "unknown")")
     }
 
+    /** 清除当前播放器 */
     public func clearCurrentPlayer() {
         _currentPlayer = nil
         _currentPlayerType = nil
@@ -55,54 +52,56 @@ public final class PlayerSharedCurrentPlayerPlugin: SharedBasePlugin, PlayerShar
     }
 }
 
-// MARK: - 全屏组件
-
-/// 全屏共享组件
+/** 全屏共享插件，管理全局全屏状态 */
 @MainActor
 public final class PlayerSharedFullScreenPlugin: SharedBasePlugin, PlayerSharedFullScreenService {
 
+    /** 配置模型类型 */
     public typealias ConfigModelType = EmptyConfigModel
 
+    /** 服务名称 */
     public static let cclServiceName = "PlayerSharedFullScreenService"
 
-    // MARK: - Properties
-
+    /** 是否处于全屏状态 */
     private var _isFullScreen: Bool = false
+    /** 全屏容器视图 */
     private var _fullScreenContainer: UIView?
+    /** 倍速变化回调映射 */
     private var speedChangeHandlers: [ObjectIdentifier: (Float) -> Void] = [:]
+    /** 回调 token 计数器 */
     private var handlerToken: Int = 0
 
-    // MARK: - PlayerSharedFullScreenService
-
+    /** 是否处于全屏 */
     public var isFullScreen: Bool {
         return _isFullScreen
     }
 
+    /** 全屏容器视图 */
     public var fullScreenContainer: UIView? {
         return _fullScreenContainer
     }
 
-    // MARK: - Initialization
-
+    /** 必须的初始化方法 */
     public required override init() {
         super.init()
         print("[PlayerSharedFullScreenPlugin] 共享组件已创建")
     }
 
-    // MARK: - PlayerSharedFullScreenService
-
+    /** 进入全屏模式 */
     public func enterFullScreen(with container: UIView?) {
         _isFullScreen = true
         _fullScreenContainer = container
         print("[PlayerSharedFullScreenPlugin] 进入全屏")
     }
 
+    /** 退出全屏模式 */
     public func exitFullScreen() {
         _isFullScreen = false
         _fullScreenContainer = nil
         print("[PlayerSharedFullScreenPlugin] 退出全屏")
     }
 
+    /** 切换全屏状态 */
     public func toggleFullScreen() {
         if _isFullScreen {
             exitFullScreen()
@@ -112,46 +111,48 @@ public final class PlayerSharedFullScreenPlugin: SharedBasePlugin, PlayerSharedF
     }
 }
 
-// MARK: - 倍速组件（简化版）
-
-/// 倍速共享组件（简化版）- 轻量级实现
+/** 倍速共享插件（简化版），管理全局倍速设置 */
 @MainActor
 public final class PlayerSharedSpeedPluginSimple: SharedBasePlugin, PlayerSharedSpeedServiceSimple {
 
+    /** 配置模型类型 */
     public typealias ConfigModelType = EmptyConfigModel
 
+    /** 服务名称 */
     public static let cclServiceName = "PlayerSharedSpeedService"
 
-    // MARK: - Properties
-
+    /** 当前倍速值 */
     private var _currentSpeed: Float = 1.0
+    /** 可用倍速列表 */
     private let _availableSpeeds: [Float] = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0]
 
+    /** 弱引用回调包装 */
     private struct WeakHandler {
+        /** 回调 token 弱引用 */
         weak var token: AnyObject?
+        /** 回调闭包 */
         let handler: (Float) -> Void
     }
+    /** 倍速变化监听器映射 */
     private var speedChangeHandlers: [ObjectIdentifier: WeakHandler] = [:]
 
-    // MARK: - PlayerSharedSpeedService
-
+    /** 当前倍速 */
     public var currentSpeed: Float {
         return _currentSpeed
     }
 
+    /** 可用倍速列表 */
     public var availableSpeeds: [Float] {
         return _availableSpeeds
     }
 
-    // MARK: - Initialization
-
+    /** 必须的初始化方法 */
     public required override init() {
         super.init()
         print("[PlayerSharedSpeedPlugin] 共享组件已创建，默认倍速: 1.0x")
     }
 
-    // MARK: - PlayerSharedSpeedService
-
+    /** 设置倍速，验证有效性后通知所有监听者 */
     public func setSpeed(_ speed: Float) {
         guard _availableSpeeds.contains(speed) else {
             print("[PlayerSharedSpeedPlugin] 无效的倍速: \(speed)")
@@ -175,6 +176,7 @@ public final class PlayerSharedSpeedPluginSimple: SharedBasePlugin, PlayerShared
         print("[PlayerSharedSpeedPlugin] 设置倍速: \(speed)x")
     }
 
+    /** 添加倍速变化监听器，返回用于移除的 token */
     @discardableResult
     public func addSpeedChangeListener(_ handler: @escaping (Float) -> Void) -> AnyObject? {
         let token = NSObject()
@@ -183,11 +185,13 @@ public final class PlayerSharedSpeedPluginSimple: SharedBasePlugin, PlayerShared
         return token
     }
 
+    /** 移除倍速变化监听器 */
     public func removeSpeedChangeListener(_ token: AnyObject?) {
         guard let token = token else { return }
         speedChangeHandlers.removeValue(forKey: ObjectIdentifier(token))
     }
 
+    /** 获取下一个可用倍速 */
     public func nextSpeed() -> Float {
         guard let index = _availableSpeeds.firstIndex(of: _currentSpeed) else {
             return _currentSpeed
@@ -196,74 +200,74 @@ public final class PlayerSharedSpeedPluginSimple: SharedBasePlugin, PlayerShared
         return _availableSpeeds[nextIndex]
     }
 
+    /** 切换到下一个倍速 */
     public func switchToNextSpeed() {
         setSpeed(nextSpeed())
     }
 }
 
-// MARK: - 循环播放组件
-
-/// 循环播放共享组件
+/** 循环播放共享插件，管理全局循环播放设置 */
 @MainActor
 public final class PlayerSharedLoopingPlugin: SharedBasePlugin, PlayerSharedLoopingService {
 
+    /** 配置模型类型 */
     public typealias ConfigModelType = EmptyConfigModel
 
+    /** 服务名称 */
     public static let cclServiceName = "PlayerSharedLoopingService"
 
-    // MARK: - Properties
-
+    /** 是否启用循环播放 */
     private var _isLooping: Bool = false
 
-    // MARK: - PlayerSharedLoopingService
-
+    /** 是否循环播放 */
     public var isLooping: Bool {
         return _isLooping
     }
 
-    // MARK: - Initialization
-
+    /** 必须的初始化方法 */
     public required override init() {
         super.init()
         print("[PlayerSharedLoopingPlugin] 共享组件已创建")
     }
 
-    // MARK: - PlayerSharedLoopingService
-
+    /** 设置循环播放状态 */
     public func setLooping(_ enabled: Bool) {
         _isLooping = enabled
         print("[PlayerSharedLoopingPlugin] 循环播放: \(enabled ? "启用" : "禁用")")
     }
 
+    /** 切换循环播放状态 */
     public func toggleLooping() {
         _isLooping.toggle()
         print("[PlayerSharedLoopingPlugin] 切换循环播放: \(_isLooping)")
     }
 }
 
-// MARK: - 定时关闭组件
-
-/// 定时关闭共享组件
+/** 定时关闭共享插件，管理定时自动停止播放功能 */
 @MainActor
 public final class PlayerSharedTimedOffPlugin: SharedBasePlugin, PlayerSharedTimedOffService {
 
+    /** 配置模型类型 */
     public typealias ConfigModelType = EmptyConfigModel
 
+    /** 服务名称 */
     public static let cclServiceName = "PlayerSharedTimedOffService"
 
-    // MARK: - Properties
-
+    /** 定时关闭时间间隔（秒） */
     public private(set) var timedOffInterval: TimeInterval?
+    /** 定时器 */
     private var timer: Timer?
+    /** 计时开始时间 */
     private var startTime: Date?
-    private let _availableIntervals: [TimeInterval] = [0, 900, 1800, 3600] // 0, 15, 30, 60 分钟
+    /** 可用的定时间隔列表（秒）：0, 15分钟, 30分钟, 60分钟 */
+    private let _availableIntervals: [TimeInterval] = [0, 900, 1800, 3600]
 
-    // MARK: - PlayerSharedTimedOffService
-
+    /** 是否已启用定时关闭 */
     public var isTimedOffEnabled: Bool {
         return timedOffInterval != nil && timedOffInterval! > 0
     }
 
+    /** 剩余时间（秒） */
     public var remainingTime: TimeInterval? {
         guard let start = startTime, let interval = timedOffInterval, interval > 0 else {
             return nil
@@ -272,17 +276,14 @@ public final class PlayerSharedTimedOffPlugin: SharedBasePlugin, PlayerSharedTim
         return max(0, interval - elapsed)
     }
 
-    // MARK: - Initialization
-
+    /** 必须的初始化方法 */
     public required override init() {
         super.init()
         print("[PlayerSharedTimedOffPlugin] 共享组件已创建")
     }
 
-    // MARK: - PlayerSharedTimedOffService
-
+    /** 设置定时关闭间隔，0 表示取消 */
     public func setTimedOff(interval: TimeInterval) {
-        // 取消之前的定时器
         timer?.invalidate()
         timer = nil
 
@@ -296,7 +297,6 @@ public final class PlayerSharedTimedOffPlugin: SharedBasePlugin, PlayerSharedTim
         timedOffInterval = interval
         startTime = Date()
 
-        // 创建新的定时器
         timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { [weak self] _ in
             self?.handleTimedOff()
         }
@@ -304,29 +304,24 @@ public final class PlayerSharedTimedOffPlugin: SharedBasePlugin, PlayerSharedTim
         print("[PlayerSharedTimedOffPlugin] 设置定时关闭: \(interval / 60) 分钟")
     }
 
+    /** 取消定时关闭 */
     public func cancelTimedOff() {
         setTimedOff(interval: 0)
     }
 
-    // MARK: - Private Methods
-
+    /** 处理定时关闭触发 */
     private func handleTimedOff() {
         print("[PlayerSharedTimedOffPlugin] 定时关闭触发")
         timer = nil
         startTime = nil
-        // 触发关闭事件（通过外部监听处理）
-        // 注意：共享组件没有直接的事件发布能力
-        // 使用者应该监听 timedOffInterval 的变化
     }
 
-    // MARK: - Public Methods
-
-    /// 可用的定时关闭间隔（秒）
+    /** 可用的定时关闭间隔列表（秒） */
     public var availableIntervals: [TimeInterval] {
         return _availableIntervals
     }
 
-    /// 格式化剩余时间
+    /** 格式化剩余时间为 MM:SS 格式 */
     public func formatRemainingTime() -> String? {
         guard let remaining = remainingTime else {
             return nil

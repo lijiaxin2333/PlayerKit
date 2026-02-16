@@ -2,15 +2,25 @@ import Foundation
 import UIKit
 import AVFoundation
 
+/**
+ * 快照插件，负责截取视频当前帧和生成缩略图
+ */
 @MainActor
 public final class PlayerSnapshotPlugin: BasePlugin, PlayerSnapshotService {
 
+    /** 引擎核心服务 */
     @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engine: PlayerEngineCoreService?
 
+    /**
+     * 初始化
+     */
     public required override init() {
         super.init()
     }
 
+    /**
+     * 同步获取当前帧图片（可指定最大尺寸）
+     */
     public func currentFrameImage(size: CGSize?) -> UIImage? {
         guard let player = engine?.avPlayer,
               let item = player.currentItem,
@@ -33,6 +43,9 @@ public final class PlayerSnapshotPlugin: BasePlugin, PlayerSnapshotService {
         return UIImage(cgImage: cgImage)
     }
 
+    /**
+     * 异步获取当前帧图片
+     */
     public func currentFrameImage(completion: @escaping (UIImage?) -> Void) {
         guard let player = engine?.avPlayer,
               let item = player.currentItem else {
@@ -57,6 +70,9 @@ public final class PlayerSnapshotPlugin: BasePlugin, PlayerSnapshotService {
         }
     }
 
+    /**
+     * 在指定时间点生成缩略图
+     */
     public func generateThumbnail(at time: TimeInterval, size: CGSize?, completion: @escaping (UIImage?) -> Void) {
         guard let player = engine?.avPlayer,
               let item = player.currentItem else {
@@ -84,6 +100,9 @@ public final class PlayerSnapshotPlugin: BasePlugin, PlayerSnapshotService {
         }
     }
 
+    /**
+     * 在多个时间点批量生成缩略图
+     */
     public func generateThumbnails(at times: [TimeInterval], size: CGSize?, completion: @escaping ([TimeInterval: UIImage]) -> Void) {
         guard let player = engine?.avPlayer,
               let item = player.currentItem else {

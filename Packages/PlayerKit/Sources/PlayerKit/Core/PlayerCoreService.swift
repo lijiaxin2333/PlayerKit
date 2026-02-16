@@ -9,176 +9,318 @@ import Foundation
 import AVFoundation
 import UIKit
 
-// MARK: - Core 服务导入
 
-// 各个服务协议会通过插件系统自动注册
-// 使用时通过 context.resolveService(SERVICE_PROTOCOL.self) 获取
-
-// MARK: - Core 事件定义汇总
-
+/**
+ * Event 扩展，定义 PlayerKit 核心事件
+ */
 public extension Event {
-    // ===== Engine 事件 =====
-    /// 播放器引擎已创建（粘性事件）
+    /**
+     * 播放器引擎已创建（粘性事件）
+     */
     static let playerEngineDidCreateSticky: Event = "PlayerEngineDidCreateSticky"
-    /// 播放器引擎已改变
+    /**
+     * 播放器引擎已改变
+     */
     static let playerEngineDidChange: Event = "PlayerEngineDidChange"
-    /// 播放状态改变
+    /**
+     * 播放状态改变
+     */
     static let playerPlaybackStateChanged: Event = "PlayerPlaybackStateChanged"
-    /// 准备好显示（粘性事件）
+    /**
+     * 准备好显示（粘性事件）
+     */
     static let playerReadyForDisplaySticky: Event = "PlayerReadyForDisplaySticky"
-    /// 准备播放（粘性事件）
+    /**
+     * 准备播放
+     */
     static let playerReadyToPlay: Event = "PlayerReadyToPlay"
+    /**
+     * 准备播放（粘性事件）
+     */
     static let playerReadyToPlaySticky: Event = "PlayerReadyToPlaySticky"
-    /// 加载状态改变
+    /**
+     * 加载状态改变
+     */
     static let playerLoadStateDidChange: Event = "PlayerLoadStateDidChange"
-    /// 播放完成
+    /**
+     * 播放完成
+     */
     static let playerPlaybackDidFinish: Event = "PlayerPlaybackDidFinish"
-    /// 播放失败
+    /**
+     * 播放失败
+     */
     static let playerPlaybackDidFail: Event = "PlayerPlaybackDidFail"
 
-    // ===== Progress/Seek 事件 =====
-    /// 进度开始拖动
+    /**
+     * 进度开始拖动
+     */
     static let playerProgressBeginScrubbing: Event = "PlayerProgressBeginScrubbing"
-    /// 进度拖动中
+    /**
+     * 进度拖动中
+     */
     static let playerProgressScrubbing: Event = "PlayerProgressScrubbing"
-    /// 进度结束拖动
+    /**
+     * 进度结束拖动
+     */
     static let playerProgressEndScrubbing: Event = "PlayerProgressEndScrubbing"
-    /// Slider 触发的 Seek 开始
+    /**
+     * Slider 触发的 Seek 开始
+     */
     static let playerSliderSeekBegin: Event = "PlayerSliderSeekBegin"
-    /// Slider 触发的 Seek 结束
+    /**
+     * Slider 触发的 Seek 结束
+     */
     static let playerSliderSeekEnd: Event = "PlayerSliderSeekEnd"
-    /// 手势触发的 Seek 开始
+    /**
+     * 手势触发的 Seek 开始
+     */
     static let playerGestureSeekBegin: Event = "PlayerGestureSeekBegin"
-    /// 手势触发的 Seek 结束
+    /**
+     * 手势触发的 Seek 结束
+     */
     static let playerGestureSeekEnd: Event = "PlayerGestureSeekEnd"
-    /// Seek 开始
+    /**
+     * Seek 开始
+     */
     static let playerSeekBegin: Event = "PlayerSeekBegin"
-    /// Seek 结束
+    /**
+     * Seek 结束
+     */
     static let playerSeekEnd: Event = "PlayerSeekEnd"
-    /// 开始卡顿
+    /**
+     * 开始卡顿
+     */
     static let playerPlayingStalledBegin: Event = "PlayerPlayingStalledBegin"
-    /// 结束卡顿
+    /**
+     * 结束卡顿
+     */
     static let playerPlayingStalledEnd: Event = "PlayerPlayingStalledEnd"
 
-    // ===== ControlView 事件 =====
-    /// 播控模板更新
+    /**
+     * 播控模板更新
+     */
     static let playerControlViewTemplateChanged: Event = "PlayerControlViewTemplateChanged"
-    /// 主动更新模板
+    /**
+     * 主动更新模板
+     */
     static let playerControlViewTryUpdateTemplate: Event = "PlayerControlViewTryUpdateTemplate"
-    /// 播控初次加载完成（粘性事件）
+    /**
+     * 播控初次加载完成（粘性事件）
+     */
     static let playerControlViewDidLoadSticky: Event = "PlayerControlViewDidLoadSticky"
-    /// 播控显示状态更新
+    /**
+     * 播控显示状态更新
+     */
     static let playerShowControl: Event = "PlayerShowControl"
-    /// 播控锁屏状态更新
+    /**
+     * 播控锁屏状态更新
+     */
     static let playerControlViewDidChangeLock: Event = "PlayerControlViewDidChangeLock"
-    /// 单击播控
+    /**
+     * 单击播控
+     */
     static let playerControlViewSingleTap: Event = "PlayerControlViewSingleTap"
-    /// 播控 Focus 状态更新
+    /**
+     * 播控 Focus 状态更新
+     */
     static let playerControlViewDidChangeFocus: Event = "PlayerControlViewDidChangeFocus"
 
-    // ===== FullScreen 事件 =====
-    /// 全屏状态改变
+    /**
+     * 全屏状态改变
+     */
     static let playerFullScreenStateChanged: Event = "PlayerFullScreenStateChanged"
-    /// 将要进入全屏
+    /**
+     * 将要进入全屏
+     */
     static let playerWillEnterFullScreen: Event = "PlayerWillEnterFullScreen"
-    /// 已经进入全屏
+    /**
+     * 已经进入全屏
+     */
     static let playerDidEnterFullScreen: Event = "PlayerDidEnterFullScreen"
-    /// 将要退出全屏
+    /**
+     * 将要退出全屏
+     */
     static let playerWillExitFullScreen: Event = "PlayerWillExitFullScreen"
-    /// 已经退出全屏
+    /**
+     * 已经退出全屏
+     */
     static let playerDidExitFullScreen: Event = "PlayerDidExitFullScreen"
 
-    // ===== Speed 事件 =====
-    /// 倍速改变
+    /**
+     * 倍速改变
+     */
     static let playerSpeedDidChange: Event = "PlayerSpeedDidChange"
 
-    // ===== Resolution 事件 =====
-    /// 分辨率改变
+    /**
+     * 分辨率改变
+     */
     static let playerResolutionDidChange: Event = "PlayerResolutionDidChange"
-    /// 获取到分辨率列表
+    /**
+     * 获取到分辨率列表
+     */
     static let playerDidFetchResolutions: Event = "PlayerDidFetchResolutions"
 
-    // ===== MediaControl 事件 =====
-    /// 音量改变
+    /**
+     * 音量改变
+     */
     static let playerVolumeDidChange: Event = "PlayerVolumeDidChange"
-    /// 亮度改变
+    /**
+     * 亮度改变
+     */
     static let playerBrightnessDidChange: Event = "PlayerBrightnessDidChange"
 
-    // ===== Looping 事件 =====
-    /// 循环状态改变
+    /**
+     * 循环状态改变
+     */
     static let playerLoopingDidChange: Event = "PlayerLoopingDidChange"
 
-    // ===== Time 事件 =====
-    /// 时间更新
+    /**
+     * 时间更新
+     */
     static let playerTimeDidChange: Event = "PlayerTimeDidChange"
-    /// 总时长已设置
+    /**
+     * 总时长已设置
+     */
     static let playerDurationDidSet: Event = "PlayerDurationDidSet"
 
-    // ===== PreNext 事件 =====
-    /// 预加载下一个开始
+    /**
+     * 预加载下一个开始
+     */
     static let playerPreNextDidStart: Event = "PlayerPreNextDidStart"
-    /// 预加载下一个完成
+    /**
+     * 预加载下一个完成
+     */
     static let playerPreNextDidFinish: Event = "PlayerPreNextDidFinish"
 
-    // ===== AppActive 事件 =====
+    /**
+     * 应用变为活跃
+     */
     static let playerAppDidBecomeActive: Event = "PlayerAppDidBecomeActive"
+    /**
+     * 应用失去活跃
+     */
     static let playerAppDidResignActive: Event = "PlayerAppDidResignActive"
 
-    // ===== Pool 事件 =====
+    /**
+     * 引擎入队到回收池
+     */
     static let playerEngineDidEnqueueToPool: Event = "PlayerEngineDidEnqueueToPool"
+    /**
+     * 引擎从回收池出队
+     */
     static let playerEngineDidDequeueFromPool: Event = "PlayerEngineDidDequeueFromPool"
+    /**
+     * 回收池已清空
+     */
     static let playerEnginePoolDidClear: Event = "PlayerEnginePoolDidClear"
 
-    // ===== Scene 事件 =====
+    /**
+     * 场景注册
+     */
     static let playerSceneDidRegister: Event = "PlayerSceneDidRegister"
+    /**
+     * 场景注销
+     */
     static let playerSceneDidUnregister: Event = "PlayerSceneDidUnregister"
+    /**
+     * 场景改变
+     */
     static let playerSceneDidChange: Event = "PlayerSceneDidChange"
 
-    // ===== SceneContext - TypedPlayer 事件 =====
-    // typedPlayerDidAddToSceneSticky / typedPlayerWillRemoveFromScene
-    // 定义在 PlayerTypedPlayerLayeredService.swift
-
-    // ===== SceneContext - Extension 事件 =====
-    // extensionDidAddToContextSticky / extensionWillRemoveFromContext
-    // 定义在 PlayerExtensionLayeredService.swift
-
-    // ===== Transfer 事件 =====
+    /**
+     * 引擎即将转移
+     */
     static let playerEngineWillTransfer: Event = "PlayerEngineWillTransfer"
+    /**
+     * 引擎已完成转移
+     */
     static let playerEngineDidTransfer: Event = "PlayerEngineDidTransfer"
 
-    // ===== PreRender Manager 事件 =====
+    /**
+     * 预渲染开始
+     */
     static let playerPreRenderStarted: Event = "PlayerPreRenderStarted"
+    /**
+     * 预渲染就绪
+     */
     static let playerPreRenderReady: Event = "PlayerPreRenderReady"
+    /**
+     * 预渲染超时
+     */
     static let playerPreRenderTimeout: Event = "PlayerPreRenderTimeout"
 
-    // ===== Preload 事件 =====
+    /**
+     * 预加载任务完成
+     */
     static let playerPreloadTaskDidFinish: Event = "PlayerPreloadTaskDidFinish"
 
-    // ===== StartTime 事件 =====
+    /**
+     * 起始时间已解析
+     */
     static let playerStartTimeDidResolve: Event = "PlayerStartTimeDidResolve"
 
-    // ===== Gesture 事件 =====
+    /**
+     * 单击手势
+     */
     static let playerGestureSingleTap: Event = "PlayerGestureSingleTap"
+    /**
+     * 双击手势
+     */
     static let playerGestureDoubleTap: Event = "PlayerGestureDoubleTap"
+    /**
+     * 滑动手势
+     */
     static let playerGesturePan: Event = "PlayerGesturePan"
+    /**
+     * 捏合手势
+     */
     static let playerGesturePinch: Event = "PlayerGesturePinch"
+    /**
+     * 长按手势
+     */
     static let playerGestureLongPress: Event = "PlayerGestureLongPress"
 
-    // ===== Subtitle 事件 =====
+    /**
+     * 字幕改变
+     */
     static let playerSubtitleDidChange: Event = "PlayerSubtitleDidChange"
+    /**
+     * 字幕 cue 更新
+     */
     static let playerSubtitleCueDidUpdate: Event = "PlayerSubtitleCueDidUpdate"
 
-    // ===== Snapshot 事件 =====
+    /**
+     * 截屏完成
+     */
     static let playerSnapshotDidCapture: Event = "PlayerSnapshotDidCapture"
 
-    // ===== SpeedPanel 事件 =====
+    /**
+     * 倍速面板显示
+     */
     static let playerSpeedPanelDidShow: Event = "PlayerSpeedPanelDidShow"
+    /**
+     * 倍速面板关闭
+     */
     static let playerSpeedPanelDidDismiss: Event = "PlayerSpeedPanelDidDismiss"
 
-    // ===== Showcase 场景级事件 =====
+    /**
+     * Showcase Feed 页面即将切换
+     */
     static let showcaseFeedPageWillChange: Event = "ShowcaseFeedPageWillChange"
+    /**
+     * Showcase Feed 页面已切换
+     */
     static let showcaseFeedPageDidChange: Event = "ShowcaseFeedPageDidChange"
+    /**
+     * Showcase Feed 数据加载完成
+     */
     static let showcaseFeedDataDidLoad: Event = "ShowcaseFeedDataDidLoad"
+    /**
+     * Showcase Feed 加载更多完成
+     */
     static let showcaseFeedDataDidLoadMore: Event = "ShowcaseFeedDataDidLoadMore"
+    /**
+     * Showcase Feed Cell 即将显示
+     */
     static let showcaseFeedCellWillDisplay: Event = "ShowcaseFeedCellWillDisplay"
 }

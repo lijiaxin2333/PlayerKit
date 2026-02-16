@@ -11,25 +11,49 @@ import UIKit
 
 // MARK: - 播放器视图
 
+/**
+ * 基于 AVPlayerLayer 的播放器渲染视图
+ */
 public class PlayerEngineRenderView: UIView {
 
+    /**
+     * 指定底层使用 AVPlayerLayer
+     */
     override public class var layerClass: AnyClass {
         return AVPlayerLayer.self
     }
 
+    /**
+     * AVPlayerLayer 的便捷访问
+     */
     var playerLayer: AVPlayerLayer {
         return layer as! AVPlayerLayer
     }
 
+    /**
+     * 持有的 AVPlayer 引用
+     */
     private var playerRef: AVPlayer?
+    /**
+     * 监听 isReadyForDisplay 的 KVO
+     */
     private var displayObservation: NSKeyValueObservation?
+    /**
+     * 首次准备好显示时的回调
+     */
     var onReadyForDisplay: (() -> Void)?
 
+    /**
+     * 取消对显示就绪状态的监听
+     */
     func cancelDisplayObservation() {
         displayObservation?.invalidate()
         displayObservation = nil
     }
 
+    /**
+     * 重新监听 isReadyForDisplay
+     */
     func reobserveReadyForDisplay() {
         displayObservation?.invalidate()
         displayObservation = nil
@@ -45,6 +69,9 @@ public class PlayerEngineRenderView: UIView {
         }
     }
 
+    /**
+     * 设置要绑定的 AVPlayer
+     */
     func setPlayer(_ player: AVPlayer?) {
         playerRef = player
         playerLayer.player = player
@@ -64,6 +91,9 @@ public class PlayerEngineRenderView: UIView {
         }
     }
 
+    /**
+     * 确保 player 已正确绑定到 layer
+     */
     public func ensurePlayerBound() {
         guard let player = playerRef else { return }
         if playerLayer.player !== player {
@@ -72,6 +102,9 @@ public class PlayerEngineRenderView: UIView {
         playerLayer.frame = bounds
     }
 
+    /**
+     * 视图加入窗口时重新绑定
+     */
     override public func didMoveToWindow() {
         super.didMoveToWindow()
         if window != nil {
@@ -79,6 +112,9 @@ public class PlayerEngineRenderView: UIView {
         }
     }
 
+    /**
+     * 布局变化时同步 layer 尺寸
+     */
     override public func layoutSubviews() {
         super.layoutSubviews()
         playerLayer.frame = bounds
@@ -87,6 +123,9 @@ public class PlayerEngineRenderView: UIView {
 
 // MARK: - 播放引擎组件
 
+/**
+ * 基于 AVPlayer 的播放引擎核心插件
+ */
 @MainActor
 public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
 
@@ -94,35 +133,107 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
 
     // MARK: - Properties
 
+    /**
+     * AVPlayer 实例
+     */
     private var avPlayerInstance: AVPlayer?
+    /**
+     * 当前播放项
+     */
     private var playerItem: AVPlayerItem?
+    /**
+     * 渲染视图
+     */
     private var renderView: PlayerEngineRenderView?
+    /**
+     * 外部添加的周期时间观察者
+     */
     private var timeObservers: [String: Any] = [:]
+    /**
+     * 播放状态观察者
+     */
     private var playbackObserver: NSObjectProtocol?
+    /**
+     * 内部时间更新观察者
+     */
     private var timeObserver: Any?
+    /**
+     * 监听 isPlaybackLikelyToKeepUp
+     */
     private var keepUpObserver: NSKeyValueObservation?
+    /**
+     * 监听 isPlaybackBufferEmpty
+     */
     private var bufferEmptyObserver: NSKeyValueObservation?
+    /**
+     * 监听 loadedTimeRanges
+     */
     private var loadedRangesObserver: NSKeyValueObservation?
+    /**
+     * 卡顿重试次数
+     */
     private var stalledRetryCount: Int = 0
+    /**
+     * 是否已从卡顿恢复过
+     */
     private var hasResumedFromBuffer: Bool = false
+    /**
+     * 重试定时器
+     */
     private var retryTimer: Timer?
+    /**
+     * 网络恢复监听
+     */
     private var networkObserver: NSObjectProtocol?
+    /**
+     * 最大重试次数
+     */
     private static let maxRetryCount = 3
 
+    /**
+     * 播放状态
+     */
     private var _playbackState: PlayerPlaybackState = .stopped
+    /**
+     * 加载状态
+     */
     private var _loadState: PlayerLoadState = .idle
+    /**
+     * 视频缩放模式
+     */
     private var _scalingMode: PlayerScalingMode = .fill
+    /**
+     * 播放倍速
+     */
     private var _rate: Float = 1.0
 
+    /**
+     * 是否处于回收复用流程
+     */
     public private(set) var isRecycling: Bool = false
+    /**
+     * 是否可复用
+     */
     public var canReuse: Bool { avPlayerInstance != nil && !isRecycling }
 
     // MARK: - PlayerEngineCoreService
 
+    /**
+     * 底层 AVPlayer
+     */
     public var avPlayer: AVPlayer? { avPlayerInstance }
+    /**
+     * 播放器视图
+     */
     public var playerView: UIView? { renderView }
+    /**
+     * 当前播放 URL
+     */
     public var currentURL: URL?
 
+    /**
+     * 播放状态
+     */
     public var playbackState: PlayerPlaybackState {
         get { _playbackState }
         set {
@@ -132,6 +243,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         }
     }
 
+    /**
+     * 加载状态
+     */
     public var loadState: PlayerLoadState {
         get { _loadState }
         set {
@@ -141,17 +255,26 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         }
     }
 
+    /**
+     * 当前播放时间（秒）
+     */
     public var currentTime: TimeInterval {
         guard let time = avPlayerInstance?.currentTime() else { return 0 }
         return CMTimeGetSeconds(time)
     }
 
+    /**
+     * 总时长（秒）
+     */
     public var duration: TimeInterval {
         guard let playerItem = playerItem,
               playerItem.duration.isNumeric else { return 0 }
         return CMTimeGetSeconds(playerItem.duration)
     }
 
+    /**
+     * 缓冲进度（0-1）
+     */
     public var bufferProgress: Double {
         guard let playerItem = playerItem else { return 0 }
         let currentTime = self.currentTime
@@ -164,21 +287,29 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         return 0
     }
 
+    /**
+     * 首帧是否已显示
+     */
     public var isReadyForDisplay: Bool {
         renderView?.playerLayer.isReadyForDisplay ?? false
     }
 
+    /**
+     * 播放倍速
+     */
     public var rate: Float {
         get { _rate }
         set {
             _rate = newValue
-            // 如果正在播放，立即应用新的倍速
             if playbackState == .playing {
                 avPlayerInstance?.rate = newValue
             }
         }
     }
 
+    /**
+     * 是否循环播放
+     */
     public var isLooping: Bool = false {
         didSet {
             if isLooping {
@@ -190,6 +321,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         }
     }
 
+    /**
+     * 音量（0-1）
+     */
     public var volume: Float {
         get { avPlayerInstance?.volume ?? 1.0 }
         set {
@@ -198,6 +332,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         }
     }
 
+    /**
+     * 视频缩放模式
+     */
     public var scalingMode: PlayerScalingMode {
         get { _scalingMode }
         set {
@@ -220,12 +357,13 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
     }
 
     deinit {
-        // 不做任何清理，让属性自动释放
-        // 在 deinit 中无法安全访问 main actor 隔离的属性
     }
 
     // MARK: - Plugin Lifecycle
 
+    /**
+     * 插件加载完成
+     */
     public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
         createPlayerIfNeeded()
@@ -234,6 +372,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         self.context?.post(.playerEngineDidCreateSticky, object: self, sender: self)
     }
 
+    /**
+     * 插件即将卸载
+     */
     public override func pluginWillUnload(_ context: ContextProtocol) {
         super.pluginWillUnload(context)
         cleanup()
@@ -241,6 +382,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
 
     // MARK: - Configuration
 
+    /**
+     * 应用配置模型
+     */
     public override func config(_ configModel: Any?) {
         super.config(configModel)
 
@@ -254,7 +398,6 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         }
 
         if config.autoPlay {
-            // 准备好后自动播放
             _ = context?.add(self, event: .playerReadyToPlaySticky, option: .execOnlyOnce) { [weak self] _, _ in
                 self?.play()
             }
@@ -263,8 +406,14 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
 
     // MARK: - Methods
 
+    /**
+     * 设置 URL 的时间戳（用于统计）
+     */
     private var setURLTime: CFAbsoluteTime = 0
 
+    /**
+     * 设置播放 URL
+     */
     public func setURL(_ url: URL) {
         self.currentURL = url
         stalledRetryCount = 0
@@ -287,11 +436,17 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         replaceCurrentItem(with: item)
     }
 
+    /**
+     * 准备播放
+     */
     public func prepareToPlay() {
         createPlayerIfNeeded()
         loadState = .preparing
     }
 
+    /**
+     * 开始播放
+     */
     public func play() {
         guard let player = avPlayerInstance else { return }
         if let item = player.currentItem {
@@ -305,12 +460,18 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         observeBufferState()
     }
 
+    /**
+     * 暂停播放
+     */
     public func pause() {
         removeBufferObservers()
         avPlayerInstance?.pause()
         playbackState = .paused
     }
 
+    /**
+     * 停止播放
+     */
     public func stop() {
         removeBufferObservers()
         avPlayerInstance?.pause()
@@ -318,10 +479,16 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         playbackState = .stopped
     }
 
+    /**
+     * Seek 到指定时间
+     */
     public func seek(to time: TimeInterval) {
         seek(to: time, completion: nil)
     }
 
+    /**
+     * Seek 到指定时间并回调
+     */
     public func seek(to time: TimeInterval, completion: ((Bool) -> Void)?) {
         guard let player = avPlayerInstance, duration > 0 else {
             completion?(false)
@@ -345,6 +512,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         }
     }
 
+    /**
+     * 添加周期时间观察者
+     */
     public func addPeriodicTimeObserver(interval: TimeInterval, queue: DispatchQueue, block: @escaping (TimeInterval) -> Void) -> AnyObject? {
         guard let player = avPlayerInstance else { return nil }
 
@@ -358,6 +528,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         return TimeObserverToken(key: key, engine: self)
     }
 
+    /**
+     * 移除时间观察者
+     */
     public func removeTimeObserver(_ observer: AnyObject?) {
         guard let token = observer as? TimeObserverToken else { return }
         if let obs = timeObservers.removeValue(forKey: token.key) {
@@ -365,6 +538,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         }
     }
 
+    /**
+     * 替换当前播放项
+     */
     public func replaceCurrentItem(with item: AVPlayerItem?) {
         self.playerItem = item
 
@@ -384,6 +560,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         }
     }
 
+    /**
+     * 重置播放器
+     */
     public func reset() {
         cleanup()
         createPlayer()
@@ -391,6 +570,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
 
     // MARK: - Reuse Lifecycle
 
+    /**
+     * 准备复用（进入回收池前）
+     */
     public func prepareForReuse() {
         isRecycling = true
         removeBufferObservers()
@@ -409,6 +591,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         (self.context as? Context)?.bindStickyEvent(.playerReadyToPlaySticky, value: nil)
     }
 
+    /**
+     * 从回收池出队时调用
+     */
     public func didDequeueForReuse() {
         isRecycling = false
         createPlayerIfNeeded()
@@ -420,12 +605,18 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
 
     // MARK: - Private Methods
 
+    /**
+     * 按需创建播放器
+     */
     private func createPlayerIfNeeded() {
         if avPlayerInstance == nil {
             createPlayer()
         }
     }
 
+    /**
+     * 创建 AVPlayer 实例
+     */
     private func createPlayer() {
         let newPlayer = AVPlayer()
         self.avPlayerInstance = newPlayer
@@ -461,6 +652,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         }
     }
 
+    /**
+     * 配置音频会话
+     */
     private func configureAudioSession() {
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
@@ -470,6 +664,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         }
     }
 
+    /**
+     * 清理所有资源
+     */
     private func cleanup() {
         removeBufferObservers()
         removePlaybackObservers()
@@ -496,6 +693,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         loadState = .idle
     }
 
+    /**
+     * 为 AVPlayerItem 添加播放相关观察
+     */
     private func addPlaybackObservers(to item: AVPlayerItem) {
         playbackObserver = item.observe(\.status, options: [.new]) { [weak self] item, _ in
             let status = item.status
@@ -549,6 +749,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         )
     }
 
+    /**
+     * 移除播放观察者
+     */
     private func removePlaybackObservers() {
         if let item = playerItem {
             NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: item)
@@ -556,6 +759,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         playbackObserver = nil
     }
 
+    /**
+     * 监听缓冲状态
+     */
     private func observeBufferState() {
         removeBufferObservers()
         guard let item = avPlayerInstance?.currentItem else { return }
@@ -586,6 +792,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         }
     }
 
+    /**
+     * 尝试从卡顿恢复
+     */
     private func tryResumeIfStalled(source: String, playerName: String) {
         guard _playbackState == .playing else { return }
         guard avPlayerInstance?.rate == 0 else {
@@ -609,6 +818,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         }
     }
 
+    /**
+     * 计算当前缓冲时长（秒）
+     */
     private func bufferedDuration() -> TimeInterval {
         guard let item = avPlayerInstance?.currentItem else { return 0 }
         guard let range = item.loadedTimeRanges.first?.timeRangeValue else { return 0 }
@@ -617,6 +829,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         return max(0, bufferedEnd - currentTime)
     }
 
+    /**
+     * 移除缓冲观察者
+     */
     private func removeBufferObservers() {
         keepUpObserver?.invalidate()
         keepUpObserver = nil
@@ -626,6 +841,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         loadedRangesObserver = nil
     }
 
+    /**
+     * 播放到结尾时的处理
+     */
     @objc private func playerItemDidReachEnd(_ notification: Notification) {
         if isLooping {
             avPlayerInstance?.seek(to: .zero)
@@ -638,6 +856,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
 
     // MARK: - Retry
 
+    /**
+     * 安排重试
+     */
     private func scheduleRetry(url: URL, delay: TimeInterval) {
         cancelRetry()
         retryTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
@@ -648,6 +869,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         }
     }
 
+    /**
+     * 执行重试
+     */
     private func executeRetry(url: URL) {
         let prefetchService = context?.tryResolveService(PlayerPrefetchService.self)
         let finalURL = prefetchService?.proxyURL(for: url) ?? url
@@ -660,6 +884,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         avPlayerInstance?.rate = targetRate
     }
 
+    /**
+     * 取消重试
+     */
     private func cancelRetry() {
         retryTimer?.invalidate()
         retryTimer = nil
@@ -669,6 +896,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         }
     }
 
+    /**
+     * 监听网络恢复以便重试
+     */
     private func observeNetworkForRecovery() {
         cancelRetry()
         networkObserver = NotificationCenter.default.addObserver(
@@ -686,6 +916,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         }
     }
 
+    /**
+     * 获取已加载时间范围的最大结束时间
+     */
     private func loadedTimeRanges(of playerItem: AVPlayerItem) -> TimeInterval {
         var maxTime: TimeInterval = 0
         for timeRange in playerItem.loadedTimeRanges {
@@ -701,10 +934,22 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
 
 // MARK: - Time Observer Token
 
+/**
+ * 时间观察者令牌，用于移除观察
+ */
 public class TimeObserverToken {
+    /**
+     * 观察者唯一 key
+     */
     let key: String
+    /**
+     * 关联的引擎插件
+     */
     nonisolated(unsafe) weak var engine: PlayerEngineCorePlugin?
 
+    /**
+     * 初始化
+     */
     init(key: String, engine: PlayerEngineCorePlugin) {
         self.key = key
         self.engine = engine
@@ -713,7 +958,13 @@ public class TimeObserverToken {
 
 // MARK: - CMTime Extension
 
+/**
+ * CMTime 扩展
+ */
 extension CMTime {
+    /**
+     * 是否为有效数值
+     */
     var isNumeric: Bool {
         return !isIndefinite && timescale != 0
     }

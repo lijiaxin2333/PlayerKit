@@ -60,7 +60,6 @@ public final class PlayerProcessPlugin: BasePlugin, PlayerProcessService {
     public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
 
-        // 添加时间观察者
         let interval = (configModel as? PlayerProcessConfigModel)?.updateInterval ?? 0.1
         timeObserver = engineService?.addPeriodicTimeObserver(interval: interval, queue: .main) { [weak self] time in
             guard let self = self else { return }
@@ -88,7 +87,6 @@ public final class PlayerProcessPlugin: BasePlugin, PlayerProcessService {
     }
 
     public func removeProgressObserver(_ observer: AnyObject?) {
-        // 简化处理，清空所有观察者
         progressHandlers.removeAll()
     }
 

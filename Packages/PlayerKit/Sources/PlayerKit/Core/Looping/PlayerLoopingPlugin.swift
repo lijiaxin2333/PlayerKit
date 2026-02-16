@@ -9,6 +9,9 @@ import Foundation
 import AVFoundation
 import UIKit
 
+/**
+ * 循环播放插件
+ */
 @MainActor
 public final class PlayerLoopingPlugin: BasePlugin, PlayerLoopingService {
 
@@ -16,12 +19,21 @@ public final class PlayerLoopingPlugin: BasePlugin, PlayerLoopingService {
 
     // MARK: - Properties
 
+    /**
+     * 引擎服务依赖
+     */
     @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
 
+    /**
+     * 循环模式
+     */
     private var _loopingMode: PlayerLoopingMode = .none
 
     // MARK: - PlayerLoopingService
 
+    /**
+     * 循环模式
+     */
     public var loopingMode: PlayerLoopingMode {
         get { _loopingMode }
         set {
@@ -31,6 +43,9 @@ public final class PlayerLoopingPlugin: BasePlugin, PlayerLoopingService {
         }
     }
 
+    /**
+     * 是否循环播放
+     */
     public var isLooping: Bool {
         return loopingMode != .none
     }
@@ -43,10 +58,16 @@ public final class PlayerLoopingPlugin: BasePlugin, PlayerLoopingService {
 
     // MARK: - Plugin Lifecycle
 
+    /**
+     * 插件加载完成
+     */
     public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
     }
 
+    /**
+     * 应用配置
+     */
     public override func config(_ configModel: Any?) {
         super.config(configModel)
 
@@ -58,6 +79,9 @@ public final class PlayerLoopingPlugin: BasePlugin, PlayerLoopingService {
 
     // MARK: - PlayerLoopingService
 
+    /**
+     * 切换循环模式（none -> one -> all -> none）
+     */
     public func toggleLooping() {
         switch loopingMode {
         case .none:
@@ -69,6 +93,9 @@ public final class PlayerLoopingPlugin: BasePlugin, PlayerLoopingService {
         }
     }
 
+    /**
+     * 设置循环模式
+     */
     public func setLoopingMode(_ mode: PlayerLoopingMode) {
         loopingMode = mode
     }

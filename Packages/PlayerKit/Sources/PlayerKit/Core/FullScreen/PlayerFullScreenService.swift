@@ -9,59 +9,84 @@ import Foundation
 import AVFoundation
 import UIKit
 
-// MARK: - 全屏状态
-
+/**
+ * 全屏状态枚举
+ */
 public enum PlayerFullScreenState: Int {
     case normal = 0
     case fullScreen
     case transitioning
 }
 
-// MARK: - 全屏方向
-
+/**
+ * 全屏方向枚举
+ */
 public enum PlayerFullScreenOrientation {
-    case portrait       // 竖屏
-    case landscapeLeft  // 横屏左
-    case landscapeRight // 横屏右
-    case auto           // 自动
+    case portrait
+    case landscapeLeft
+    case landscapeRight
+    case auto
 }
 
-// MARK: - 全屏服务
-
+/**
+ * 全屏管理服务协议
+ */
 @MainActor
 public protocol PlayerFullScreenService: PluginService {
 
-    /// 当前全屏状态
+    /**
+     * 当前全屏状态
+     */
     var fullScreenState: PlayerFullScreenState { get }
 
-    /// 是否全屏
+    /**
+     * 是否全屏
+     */
     var isFullScreen: Bool { get }
 
-    /// 支持的全屏方向
+    /**
+     * 支持的全屏方向
+     */
     var supportedOrientation: PlayerFullScreenOrientation { get set }
 
-    /// 进入全屏
+    /**
+     * 进入全屏
+     */
     func enterFullScreen(orientation: PlayerFullScreenOrientation, animated: Bool)
 
-    /// 退出全屏
+    /**
+     * 退出全屏
+     */
     func exitFullScreen(animated: Bool)
 
-    /// 切换全屏
+    /**
+     * 切换全屏
+     */
     func toggleFullScreen(orientation: PlayerFullScreenOrientation, animated: Bool)
 }
 
-// MARK: - 配置模型
-
+/**
+ * 全屏配置模型
+ */
 public class PlayerFullScreenConfigModel {
 
-    /// 支持的全屏方向
+    /**
+     * 支持的全屏方向
+     */
     public var supportedOrientation: PlayerFullScreenOrientation = .auto
 
-    /// 进入全屏是否动画
+    /**
+     * 进入全屏是否动画
+     */
     public var animated: Bool = true
 
-    /// 是否自动旋转
+    /**
+     * 是否自动旋转
+     */
     public var autoRotate: Bool = true
 
+    /**
+     * 初始化配置
+     */
     public init() {}
 }

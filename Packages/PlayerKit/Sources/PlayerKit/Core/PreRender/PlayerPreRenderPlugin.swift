@@ -9,33 +9,36 @@ import Foundation
 import AVFoundation
 import UIKit
 
+/**
+ * 预渲染插件，提供视频 URL 的预加载与预渲染能力
+ */
 @MainActor
 public final class PlayerPreRenderPlugin: BasePlugin, PlayerPreRenderService {
 
     public typealias ConfigModelType = PlayerPreRenderConfigModel
 
-    // MARK: - Properties
-
+    /** 引擎核心服务依赖 */
     @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
 
+    /** 是否启用预渲染 */
     private var _isPreRenderEnabled: Bool = false
+    /** 当前预渲染的 URL */
     private var prerenderURL: URL?
+    /** 预渲染完成的播放项 */
     private var prerenderPlayerItem: AVPlayerItem?
 
-    // MARK: - PlayerPreRenderService
-
+    /** 是否启用预渲染 */
     public var isPreRenderEnabled: Bool {
         get { _isPreRenderEnabled }
         set { _isPreRenderEnabled = newValue }
     }
 
-    // MARK: - Initialization
-
+    /**
+     * 初始化插件
+     */
     public required override init() {
         super.init()
     }
-
-    // MARK: - Plugin Lifecycle
 
     public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
@@ -48,8 +51,9 @@ public final class PlayerPreRenderPlugin: BasePlugin, PlayerPreRenderService {
         _isPreRenderEnabled = config.enabled
     }
 
-    // MARK: - PlayerPreRenderService
-
+    /**
+     * 对指定 URL 进行预渲染
+     */
     public func prerenderURL(_ url: URL) {
         guard isPreRenderEnabled else {
             print("[PlayerPreRenderPlugin] 预渲染未启用")
@@ -59,10 +63,8 @@ public final class PlayerPreRenderPlugin: BasePlugin, PlayerPreRenderService {
         prerenderURL = url
         print("[PlayerPreRenderPlugin] 开始预渲染: \(url.lastPathComponent)")
 
-        // 创建 AVAsset 并开始加载
         let asset = AVAsset(url: url)
 
-        // 预加载关键属性
         let keys = [
             "playable",
             "duration",
@@ -87,11 +89,9 @@ public final class PlayerPreRenderPlugin: BasePlugin, PlayerPreRenderService {
             if isReady {
                 print("[PlayerPreRenderPlugin] 预渲染完成，时长: \(CMTimeGetSeconds(asset.duration))秒")
 
-                // 创建预渲染的播放项（但不关联到播放器）
                 let playerItem = AVPlayerItem(asset: asset)
                 self.prerenderPlayerItem = playerItem
 
-                // 预加载到内存（播放一小段然后暂停）
                 if let player = self.engineService?.avPlayer {
                     player.replaceCurrentItem(with: playerItem)
                     player.preroll(atRate: 1.0) { finished in
@@ -102,20 +102,25 @@ public final class PlayerPreRenderPlugin: BasePlugin, PlayerPreRenderService {
         }
     }
 
+    /**
+     * 取消当前预渲染
+     */
     public func cancelPrerender() {
         prerenderURL = nil
         prerenderPlayerItem = nil
         print("[PlayerPreRenderPlugin] 取消预渲染")
     }
 
-    // MARK: - Public Methods
-
-    /// 获取预渲染的播放项
+    /**
+     * 获取预渲染完成的播放项
+     */
     public func prerenderedPlayerItem() -> AVPlayerItem? {
         return prerenderPlayerItem
     }
 
-    /// 检查 URL 是否已预渲染
+    /**
+     * 检查指定 URL 是否已预渲染
+     */
     public func isPrerendered(_ url: URL) -> Bool {
         return prerenderURL == url && prerenderPlayerItem != nil
     }

@@ -1,28 +1,27 @@
-//
-//  PlayerResolutionPlugin.swift
-//  playerkit
-//
-//  分辨率/清晰度组件实现
-//
-
 import Foundation
 import AVFoundation
 import UIKit
 
+/**
+ * 分辨率/清晰度插件，负责切换视频分辨率和获取可用分辨率列表
+ */
 @MainActor
 public final class PlayerResolutionPlugin: BasePlugin, PlayerResolutionService {
 
+    /** 配置模型类型 */
     public typealias ConfigModelType = PlayerResolutionConfigModel
 
-    // MARK: - Properties
-
+    /** 引擎核心服务 */
     @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
 
+    /** 当前选中的分辨率 */
     private var _currentResolution: PlayerResolutionInfo?
+    /** 可用的分辨率列表 */
     private var _availableResolutions: [PlayerResolutionInfo] = []
 
-    // MARK: - PlayerResolutionService
-
+    /**
+     * 当前分辨率
+     */
     public var currentResolution: PlayerResolutionInfo? {
         get { _currentResolution }
         set {
@@ -33,28 +32,35 @@ public final class PlayerResolutionPlugin: BasePlugin, PlayerResolutionService {
         }
     }
 
+    /**
+     * 可用的分辨率列表
+     */
     public var availableResolutions: [PlayerResolutionInfo] {
         get { _availableResolutions }
         set { _availableResolutions = newValue }
     }
 
-    // MARK: - Initialization
-
+    /**
+     * 初始化
+     */
     public required override init() {
         super.init()
     }
 
-    // MARK: - Plugin Lifecycle
-
+    /**
+     * 插件加载完成，自动获取分辨率列表
+     */
     public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
 
-        // 自动获取分辨率列表
         fetchResolutions { [weak self] resolutions in
             self?.availableResolutions = resolutions
         }
     }
 
+    /**
+     * 配置插件，应用默认分辨率
+     */
     public override func config(_ configModel: Any?) {
         super.config(configModel)
 
@@ -63,29 +69,25 @@ public final class PlayerResolutionPlugin: BasePlugin, PlayerResolutionService {
         _currentResolution = config.defaultResolution
     }
 
-    // MARK: - PlayerResolutionService
-
+    /**
+     * 设置分辨率并切换播放
+     */
     public func setResolution(_ resolution: PlayerResolutionInfo) {
         guard _currentResolution != resolution else { return }
 
         _currentResolution = resolution
         context?.post(.playerResolutionDidChange, object: resolution, sender: self)
 
-        // 切换分辨率逻辑
         if !resolution.isAuto,
            let currentItem = engineService?.avPlayer?.currentItem {
-            // 重新创建播放项以切换清晰度
             let currentTime = engineService?.currentTime ?? 0
             let wasPlaying = engineService?.playbackState == .playing
 
-            // 创建新的资源
             let asset = AVAsset(url: (currentItem.asset as? AVURLAsset)?.url ?? URL(string: "")!)
             let newItem = AVPlayerItem(asset: asset)
 
-            // 保存当前时间并替换播放项
             engineService?.replaceCurrentItem(with: newItem)
 
-            // Seek 回原位置
             if currentTime > 0 {
                 engineService?.seek(to: currentTime) { [weak self] finished in
                     if finished, wasPlaying {
@@ -100,12 +102,13 @@ public final class PlayerResolutionPlugin: BasePlugin, PlayerResolutionService {
         }
     }
 
+    /**
+     * 获取可用分辨率列表
+     */
     public func fetchResolutions(completion: @escaping ([PlayerResolutionInfo]) -> Void) {
-        // 从当前视频资源中获取分辨率信息
         guard let player = engineService?.avPlayer,
               let currentItem = player.currentItem,
               let asset = currentItem.asset as? AVURLAsset else {
-            // 返回模拟数据
             let mockResolutions = [
                 PlayerResolutionInfo(width: 1920, height: 1080, bitrate: 2000000, displayName: "1080P"),
                 PlayerResolutionInfo(width: 1280, height: 720, bitrate: 1200000, displayName: "720P"),
@@ -118,30 +121,24 @@ public final class PlayerResolutionPlugin: BasePlugin, PlayerResolutionService {
             return
         }
 
-        // 异步加载资源信息
         asset.loadValuesAsynchronously(forKeys: ["availableMediaCharacteristicsWithMediaSelectionOptions"]) { [weak self] in
             guard let self = self else { return }
 
             var resolutions: [PlayerResolutionInfo] = [.auto]
 
-            // 获取视频轨道
             if asset.statusOfValue(forKey: "availableMediaCharacteristicsWithMediaSelectionOptions", error: nil) == .loaded {
                 guard let mediaSelectionGroup = asset.mediaSelectionGroup(forMediaCharacteristic: AVMediaCharacteristic.visual) else {
-                    context?.post(.playerDidFetchResolutions, object: resolutions, sender: self)
+                    self.context?.post(.playerDidFetchResolutions, object: resolutions, sender: self)
                     return
                 }
 
                 for option in mediaSelectionGroup.options {
-                    // 从选项中提取分辨率信息
                     let displayName = option.displayName
 
-                    // 尝试从元数据中解析分辨率
                     var width = 0
                     var height = 0
 
-                    // 如果无法获取，使用默认值
                     if width == 0 || height == 0 {
-                        // 根据显示名称推断分辨率
                         if displayName.contains("1080") {
                             width = 1920
                             height = 1080
@@ -166,7 +163,6 @@ public final class PlayerResolutionPlugin: BasePlugin, PlayerResolutionService {
                     resolutions.append(info)
                 }
             } else {
-                // 从 asset 的 tracks 中获取分辨率
                 for track in asset.tracks(withMediaType: .video) {
                     let size = track.naturalSize.appSize(track.preferredTransform)
                     let info = PlayerResolutionInfo(
@@ -179,7 +175,6 @@ public final class PlayerResolutionPlugin: BasePlugin, PlayerResolutionService {
                 }
             }
 
-            // 如果没有找到任何分辨率，返回默认列表
             if resolutions.count == 1 {
                 resolutions = [
                     .auto,
@@ -202,15 +197,25 @@ public final class PlayerResolutionPlugin: BasePlugin, PlayerResolutionService {
     }
 }
 
-// MARK: - AVAssetTrack Extension
-
+/**
+ * AVAssetTrack 扩展，获取应用变换后的实际尺寸
+ */
 private extension AVAssetTrack {
+    /**
+     * 获取应用 preferredTransform 后的实际尺寸
+     */
     func naturalSize() -> CGSize {
         return naturalSize.appSize(preferredTransform)
     }
 }
 
+/**
+ * CGSize 扩展，应用变换
+ */
 private extension CGSize {
+    /**
+     * 应用 CGAffineTransform 后的尺寸
+     */
     func appSize(_ transform: CGAffineTransform) -> CGSize {
         let appSize = CGRect(origin: .zero, size: self).applying(transform)
         return CGSize(width: abs(appSize.width), height: abs(appSize.height))

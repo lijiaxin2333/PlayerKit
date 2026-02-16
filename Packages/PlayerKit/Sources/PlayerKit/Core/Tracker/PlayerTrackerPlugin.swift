@@ -10,28 +10,31 @@ import AVFoundation
 import UIKit
 
 @MainActor
+/**
+ * 埋点插件，管理埋点节点注册与事件上报，支持多节点参数聚合
+ */
 public final class PlayerTrackerPlugin: BasePlugin, PlayerTrackerService {
 
+    /** 配置模型类型 */
     public typealias ConfigModelType = PlayerTrackerConfigModel
 
-    // MARK: - Properties
-
+    /** 已注册的埋点节点，按节点名索引 */
     private var trackerNodes: [PlayerTrackerNodeName: AnyObject] = [:]
-
-    // MARK: - Initialization
 
     public required override init() {
         super.init()
     }
 
-    // MARK: - Plugin Lifecycle
-
+    /**
+     * 应用配置模型
+     */
     public override func config(_ configModel: Any?) {
         super.config(configModel)
     }
 
-    // MARK: - PlayerTrackerService
-
+    /**
+     * 注册埋点节点
+     */
     public func registerTrackerNode(_ node: AnyObject) {
         guard let nodeProtocol = node as? PlayerTrackerNodeProtocol else {
             print("[PlayerTrackerPlugin] ⚠️ 节点未实现 PlayerTrackerNodeProtocol: \(node)")
@@ -44,6 +47,9 @@ public final class PlayerTrackerPlugin: BasePlugin, PlayerTrackerService {
         print("[PlayerTrackerPlugin] ✓ 注册节点: \(nodeName)")
     }
 
+    /**
+     * 移除埋点节点
+     */
     public func unregisterTrackerNode(_ node: AnyObject) {
         guard let nodeProtocol = node as? PlayerTrackerNodeProtocol else { return }
 
@@ -53,12 +59,14 @@ public final class PlayerTrackerPlugin: BasePlugin, PlayerTrackerService {
         print("[PlayerTrackerPlugin] ✗ 移除节点: \(nodeName)")
     }
 
+    /**
+     * 发送埋点事件，自动合并所有节点的参数
+     */
     public func sendEvent(_ eventName: String, params: [String: Any]? = nil) {
         guard let config = configModel as? PlayerTrackerConfigModel, config.enabled else { return }
 
         var finalParams = params ?? [:]
 
-        // 自动添加所有节点的参数
         for (nodeName, node) in trackerNodes {
             if let trackerNode = node as? PlayerTrackerNodeProtocol,
                let nodeParams = trackerNode.trackerNodeParams() {
@@ -66,12 +74,14 @@ public final class PlayerTrackerPlugin: BasePlugin, PlayerTrackerService {
             }
         }
 
-        // 打印埋点信息
         print("[PlayerTrackerPlugin] 📊 埋点上报")
         print("  ├─ 事件: \(eventName)")
         print("  └─ 参数: \(finalParams)")
     }
 
+    /**
+     * 发送埋点事件，可指定节点并自定义参数
+     */
     public func sendEvent(_ eventName: String,
                    selectKeys: [PlayerTrackerNodeName]? = nil,
                    paramsMaker: (([String: Any]) -> Void)? = nil) {
@@ -79,7 +89,6 @@ public final class PlayerTrackerPlugin: BasePlugin, PlayerTrackerService {
 
         var finalParams: [String: Any] = [:]
 
-        // 选择指定节点的参数
         if let selectKeys = selectKeys {
             for nodeName in selectKeys {
                 if let node = trackerNodes[nodeName],
@@ -90,10 +99,8 @@ public final class PlayerTrackerPlugin: BasePlugin, PlayerTrackerService {
             }
         }
 
-        // 允许修改参数
         paramsMaker?(finalParams)
 
-        // 打印埋点信息
         print("[PlayerTrackerPlugin] 📊 埋点上报")
         print("  ├─ 事件: \(eventName)")
         if let selectKeys = selectKeys {
@@ -102,6 +109,9 @@ public final class PlayerTrackerPlugin: BasePlugin, PlayerTrackerService {
         print("  └─ 参数: \(finalParams)")
     }
 
+    /**
+     * 获取指定节点的参数聚合结果
+     */
     public func paramsForNodes(_ nodeNames: [PlayerTrackerNodeName]) -> [String: Any] {
         var params: [String: Any] = [:]
 
@@ -116,6 +126,9 @@ public final class PlayerTrackerPlugin: BasePlugin, PlayerTrackerService {
         return params
     }
 
+    /**
+     * 检查指定节点是否已注册
+     */
     public func hasTrackerNode(_ nodeName: PlayerTrackerNodeName) -> Bool {
         return trackerNodes[nodeName] != nil
     }

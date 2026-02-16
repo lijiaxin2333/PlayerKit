@@ -1,9 +1,11 @@
 import UIKit
 
+/** UIView 字符串标签关联键 */
 private var stringTagKey: UInt8 = 0
 
 public extension UIView {
 
+    /** 视图的字符串标签，用于标识视图层级类型 */
     var ttv_stringTag: String? {
         get {
             return objc_getAssociatedObject(self, &stringTagKey) as? String
@@ -14,9 +16,11 @@ public extension UIView {
     }
 }
 
+/** 触摸忽略视图，自身不接收触摸事件但子视图可以 */
 @MainActor
 public final class PlayerTouchIgnoringView: UIView {
 
+    /** 命中测试，如果命中自身则返回 nil 以忽略触摸 */
     public override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         let hitTestView = super.hitTest(point, with: event)
         if hitTestView == self {
@@ -26,13 +30,18 @@ public final class PlayerTouchIgnoringView: UIView {
     }
 }
 
+/** 播放器容器视图，包含手势层、内容层和控制层三个子层 */
 @MainActor
 public final class PlayerContainerView: UIView {
 
+    /** 手势响应视图层 */
     public let gestureView: PlayerTouchIgnoringView
+    /** 视频内容容器层 */
     public let containerView: UIView
+    /** 播控 UI 层 */
     public let controlView: PlayerTouchIgnoringView
 
+    /** 使用 frame 初始化容器视图 */
     public override init(frame: CGRect) {
         gestureView = PlayerTouchIgnoringView()
         gestureView.backgroundColor = .clear
@@ -51,6 +60,7 @@ public final class PlayerContainerView: UIView {
         setupView()
     }
 
+    /** 使用 NSCoder 初始化容器视图 */
     public required init?(coder: NSCoder) {
         gestureView = PlayerTouchIgnoringView()
         gestureView.backgroundColor = .clear
@@ -69,6 +79,7 @@ public final class PlayerContainerView: UIView {
         setupView()
     }
 
+    /** 配置子视图布局约束 */
     private func setupView() {
         addSubview(gestureView)
         addSubview(containerView)
@@ -94,12 +105,14 @@ public final class PlayerContainerView: UIView {
         gestureView.isUserInteractionEnabled = false
     }
 
+    /** 是否允许滚动穿透，启用时禁止自身用户交互 */
     public var scrollPassthroughEnabled: Bool = true {
         didSet {
             isUserInteractionEnabled = !scrollPassthroughEnabled
         }
     }
 
+    /** 添加子视图到指定视图层级 */
     public func addSubview(_ view: UIView, toLayer viewType: PlayerViewType) {
         view.translatesAutoresizingMaskIntoConstraints = false
         view.ttv_stringTag = viewType.rawValue
@@ -119,6 +132,7 @@ public final class PlayerContainerView: UIView {
         }
     }
 
+    /** 获取指定类型的视图 */
     public func view(for viewType: PlayerViewType) -> UIView? {
         switch viewType {
         case .gestureView:
@@ -132,20 +146,24 @@ public final class PlayerContainerView: UIView {
         }
     }
 
+    /** 是否启用手势交互 */
     public var isGestureEnabled: Bool = true {
         didSet {
             gestureView.isUserInteractionEnabled = isGestureEnabled
         }
     }
 
+    /** 是否显示播控 UI */
     public var isControlVisible: Bool = true {
         didSet {
             controlView.isHidden = !isControlVisible
         }
     }
 
+    /** 布局就绪回调，首次有效布局时触发 */
     public var onLayoutReady: (() -> Void)?
 
+    /** 布局子视图时检查并触发布局就绪回调 */
     public override func layoutSubviews() {
         super.layoutSubviews()
         if bounds.width > 0 && bounds.height > 0 {

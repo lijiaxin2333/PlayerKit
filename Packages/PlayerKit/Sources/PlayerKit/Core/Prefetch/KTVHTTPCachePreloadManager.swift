@@ -1,31 +1,61 @@
 import Foundation
 import KTVHTTPCache
 
+/**
+ * 队列条目，表示待预加载的 URL 及其优先级
+ */
 private struct QueueEntry: Sendable {
+    /** 待预加载的 URL */
     let url: URL
+    /** 预加载优先级 */
     var priority: PreloadPriority
+    /** 入队时间戳 */
     let enqueuedAt: UInt64
 }
 
+/**
+ * 运行中任务的句柄
+ */
 private final class RunningHandle {
+    /** 目标 URL */
     let url: URL
+    /** 已接收字节数 */
     var receivedBytes: Int64 = 0
+    /** URL 会话数据任务 */
     var task: URLSessionDataTask?
+
+    /**
+     * 初始化句柄
+     */
     init(url: URL) { self.url = url }
 }
 
+/**
+ * 基于 KTVHTTPCache 的预加载管理器，支持窗口更新和优先级调度
+ */
 public actor KTVHTTPCachePreloadManager: PreloadManaging {
+    /** 预加载配置 */
     private let config: PreloadConfig
+    /** URL 会话 */
     private let session: URLSession
 
+    /** URL 到预加载状态的映射 */
     private var statusMap: [URL: PreloadStatus] = [:]
+    /** 排队等待的 URL 及其条目 */
     private var queued: [URL: QueueEntry] = [:]
+    /** 正在运行的预加载任务 */
     private var running: [URL: RunningHandle] = [:]
+    /** 已完成的 URL 集合 */
     private var completed: Set<URL> = []
+    /** 追踪顺序列表，用于 LRU 淘汰 */
     private var trackedOrder: [URL] = []
 
+    /** 上一窗口的 URL 集合 */
     private var lastWindowSet: Set<URL> = []
 
+    /**
+     * 使用配置初始化预加载管理器
+     */
     public init(config: PreloadConfig) {
         self.config = config
         let cfg = URLSessionConfiguration.default
@@ -35,10 +65,16 @@ public actor KTVHTTPCachePreloadManager: PreloadManaging {
         self.session = URLSession(configuration: cfg)
     }
 
+    /**
+     * 获取指定 URL 的预加载状态
+     */
     public func status(of url: URL) async -> PreloadStatus {
         return statusMap[url] ?? .idle
     }
 
+    /**
+     * 更新预加载窗口，根据焦点索引调整待预加载范围
+     */
     public func updateWindow(urlsInOrder: [URL], focusIndex: Int) async {
         guard !urlsInOrder.isEmpty else { return }
         let lower = max(0, focusIndex - config.windowBehind)
@@ -88,6 +124,9 @@ public actor KTVHTTPCachePreloadManager: PreloadManaging {
         schedule()
     }
 
+    /**
+     * 预加载指定 URL
+     */
     public func preload(url: URL, priority: PreloadPriority) async {
         if completed.contains(url) {
             activateTracking(for: url)
@@ -109,6 +148,9 @@ public actor KTVHTTPCachePreloadManager: PreloadManaging {
         schedule()
     }
 
+    /**
+     * 提升指定 URL 的优先级为紧急
+     */
     public func prioritize(url: URL) async {
         if completed.contains(url) || running[url] != nil { return }
 
@@ -138,6 +180,9 @@ public actor KTVHTTPCachePreloadManager: PreloadManaging {
         schedule()
     }
 
+    /**
+     * 取消指定 URL 的预加载
+     */
     public func cancel(url: URL) async {
         queued.removeValue(forKey: url)
         if let handle = running.removeValue(forKey: url) {
@@ -146,6 +191,9 @@ public actor KTVHTTPCachePreloadManager: PreloadManaging {
         clearIdleState(for: url)
     }
 
+    /**
+     * 取消所有预加载任务
+     */
     public func cancelAll() async {
         queued.removeAll()
         for (_, handle) in running { handle.task?.cancel() }
@@ -156,8 +204,9 @@ public actor KTVHTTPCachePreloadManager: PreloadManaging {
         trackedOrder.removeAll()
     }
 
-    // MARK: - Scheduling
-
+    /**
+     * 调度待执行任务，按优先级启动新的预加载
+     */
     private func schedule() {
         guard running.count < config.maxConcurrent else { return }
         let need = config.maxConcurrent - running.count
@@ -177,6 +226,9 @@ public actor KTVHTTPCachePreloadManager: PreloadManaging {
         }
     }
 
+    /**
+     * 启动指定 URL 的预加载任务
+     */
     private func startPreload(url: URL) {
         let proxy = KTVHTTPCacheProbe.proxyURL(for: url)
 
@@ -201,6 +253,9 @@ public actor KTVHTTPCachePreloadManager: PreloadManaging {
         task.resume()
     }
 
+    /**
+     * 处理预加载任务完成（成功、失败或取消）
+     */
     private func finishTask(url: URL, data: Data?, response: URLResponse?, error: Error?, handle: RunningHandle?) {
         running.removeValue(forKey: url)
 
@@ -226,13 +281,17 @@ public actor KTVHTTPCachePreloadManager: PreloadManaging {
         schedule()
     }
 
-    // MARK: - Utils
-
+    /**
+     * 激活 URL 的追踪，并裁剪超出限制的旧项
+     */
     private func activateTracking(for url: URL) {
         touchTracked(url)
         trimTracked(excluding: Set(running.keys))
     }
 
+    /**
+     * 更新 URL 的追踪顺序（LRU）
+     */
     private func touchTracked(_ url: URL) {
         if let idx = trackedOrder.firstIndex(of: url) {
             trackedOrder.remove(at: idx)
@@ -240,10 +299,16 @@ public actor KTVHTTPCachePreloadManager: PreloadManaging {
         trackedOrder.append(url)
     }
 
+    /**
+     * 从追踪列表中移除 URL
+     */
     private func removeTracked(_ url: URL) {
         trackedOrder.removeAll { $0 == url }
     }
 
+    /**
+     * 裁剪追踪列表，移除超出限制的项（保护正在运行的除外）
+     */
     private func trimTracked(excluding protected: Set<URL>) {
         guard trackedOrder.count > config.maxTrackedURLs else { return }
         while trackedOrder.count > config.maxTrackedURLs {
@@ -253,17 +318,26 @@ public actor KTVHTTPCachePreloadManager: PreloadManaging {
         }
     }
 
+    /**
+     * 清除指定 URL 的状态
+     */
     private func purgeState(for url: URL) {
         queued.removeValue(forKey: url)
         completed.remove(url)
         statusMap.removeValue(forKey: url)
     }
 
+    /**
+     * 清除空闲状态（未在运行）的 URL
+     */
     private func clearIdleState(for url: URL) {
         purgeState(for: url)
         removeTracked(url)
     }
 
+    /**
+     * 获取当前单调时间戳（纳秒）
+     */
     private func nowTick() -> UInt64 {
         var t = timespec()
         clock_gettime(CLOCK_MONOTONIC_RAW, &t)

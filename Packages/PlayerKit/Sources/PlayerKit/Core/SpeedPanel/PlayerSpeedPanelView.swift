@@ -1,18 +1,30 @@
 import UIKit
 
 @MainActor
+/**
+ * 倍速选择面板视图，从底部弹出的倍速选择 UI，支持多种倍率
+ */
 final class PlayerSpeedPanelView: UIView {
 
+    /** 选中某倍速时的回调 */
     var onSelectSpeed: ((Float) -> Void)?
+    /** 点击遮罩关闭时的回调 */
     var onDismiss: (() -> Void)?
 
+    /** 底部内容容器视图 */
     private let containerView = UIView()
+    /** 半透明遮罩视图 */
     private let dimView = UIView()
+    /** 标题标签 */
     private let titleLabel = UILabel()
+    /** 倍速按钮水平栈 */
     private let speedStack = UIStackView()
+    /** 倍速按钮数组 */
     private var speedButtons: [UIButton] = []
+    /** 面板高度 */
     private let panelHeight: CGFloat = 260
 
+    /** 支持的倍速与显示文案 */
     private let speeds: [(Float, String)] = [
         (0.5, "0.5x"),
         (0.75, "0.75x"),
@@ -30,6 +42,9 @@ final class PlayerSpeedPanelView: UIView {
 
     required init?(coder: NSCoder) { fatalError() }
 
+    /**
+     * 构建 UI，包括遮罩、容器、标题、倍速按钮和长按提示
+     */
     private func setupUI() {
         dimView.backgroundColor = UIColor.black.withAlphaComponent(0.4)
         dimView.translatesAutoresizingMaskIntoConstraints = false
@@ -110,6 +125,9 @@ final class PlayerSpeedPanelView: UIView {
         ])
     }
 
+    /**
+     * 根据当前倍速更新按钮选中状态
+     */
     func updateSelection(currentSpeed: Float) {
         let currentTag = Int(currentSpeed * 100)
         for btn in speedButtons {
@@ -123,6 +141,9 @@ final class PlayerSpeedPanelView: UIView {
         }
     }
 
+    /**
+     * 以从底部滑入动画展示面板
+     */
     func showAnimated() {
         containerView.transform = CGAffineTransform(translationX: 0, y: panelHeight)
         dimView.alpha = 0
@@ -132,6 +153,9 @@ final class PlayerSpeedPanelView: UIView {
         }
     }
 
+    /**
+     * 以滑出动画关闭面板
+     */
     func dismissAnimated(completion: (() -> Void)? = nil) {
         UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseIn, animations: {
             self.containerView.transform = CGAffineTransform(translationX: 0, y: self.panelHeight)
@@ -142,12 +166,18 @@ final class PlayerSpeedPanelView: UIView {
         }
     }
 
+    /**
+     * 倍速按钮点击处理
+     */
     @objc private func speedButtonTapped(_ sender: UIButton) {
         let rate = Float(sender.tag) / 100.0
         updateSelection(currentSpeed: rate)
         onSelectSpeed?(rate)
     }
 
+    /**
+     * 遮罩点击处理，触发关闭
+     */
     @objc private func dimTapped() {
         onDismiss?()
     }

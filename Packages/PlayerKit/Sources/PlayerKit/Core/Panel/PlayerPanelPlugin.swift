@@ -1,30 +1,35 @@
-//
-//  PlayerPanelPlugin.swift
-//  playerkit
-//
-//  面板管理组件实现
-//
-
 import Foundation
 import AVFoundation
 import UIKit
 
-// MARK: - 面板容器视图
-
+/**
+ * 面板容器视图，用于承载面板内容并处理背景点击
+ */
 private class PanelContainerView: UIView {
+    /** 内容视图 */
     internal let contentView = UIView()
+    /** 背景点击回调 */
     private var backgroundTapAction: (() -> Void)?
 
+    /**
+     * 指定 frame 初始化
+     */
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
     }
 
+    /**
+     * 从 coder 初始化
+     */
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setupUI()
     }
 
+    /**
+     * 设置 UI 布局
+     */
     private func setupUI() {
         backgroundColor = .black.withAlphaComponent(0.5)
 
@@ -39,6 +44,9 @@ private class PanelContainerView: UIView {
         ])
     }
 
+    /**
+     * 设置面板内容视图
+     */
     func setContent(_ panelView: UIView) {
         contentView.subviews.forEach { $0.removeFromSuperview() }
         panelView.translatesAutoresizingMaskIntoConstraints = false
@@ -52,48 +60,62 @@ private class PanelContainerView: UIView {
         ])
     }
 
+    /**
+     * 设置背景点击动作
+     */
     func setBackgroundTapAction(_ action: @escaping () -> Void) {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleBackgroundTap))
         addGestureRecognizer(tapGesture)
         backgroundTapAction = action
     }
 
+    /**
+     * 处理背景点击
+     */
     @objc private func handleBackgroundTap() {
         backgroundTapAction?()
     }
 }
 
-// MARK: - 面板管理组件
-
+/**
+ * 面板管理插件，负责显示、隐藏播放器上的浮层面板
+ */
 @MainActor
 public final class PlayerPanelPlugin: BasePlugin, PlayerPanelService {
 
+    /** 配置模型类型 */
     public typealias ConfigModelType = PlayerPanelConfigModel
 
-    // MARK: - Properties
-
+    /** 引擎核心服务 */
     @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
 
+    /** 当前可见的面板容器映射 */
     private var visiblePanels: [String: PanelContainerView] = [:]
 
-    // MARK: - Initialization
-
+    /**
+     * 初始化
+     */
     public required override init() {
         super.init()
     }
 
-    // MARK: - Plugin Lifecycle
-
+    /**
+     * 插件加载完成
+     */
     public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
     }
 
+    /**
+     * 配置插件
+     */
     public override func config(_ configModel: Any?) {
         super.config(configModel)
     }
 
-    // MARK: - PlayerPanelService
-
+    /**
+     * 在指定位置显示面板
+     */
     public func showPanel(_ panel: AnyObject, at position: PlayerPanelPosition, animated: Bool) {
         guard let playerView = engineService?.playerView,
               let panelView = panel as? UIView else {
@@ -101,15 +123,12 @@ public final class PlayerPanelPlugin: BasePlugin, PlayerPanelService {
             return
         }
 
-        // 创建容器
         let container = PanelContainerView(frame: playerView.bounds)
         container.translatesAutoresizingMaskIntoConstraints = false
         container.alpha = 0
 
-        // 设置面板内容
         container.setContent(panelView)
 
-        // 设置背景点击关闭
         if let config = configModel as? PlayerPanelConfigModel, config.tapBackgroundToHide {
             container.setBackgroundTapAction { [weak self] in
                 self?.hidePanel(panel, animated: true)
@@ -128,7 +147,6 @@ public final class PlayerPanelPlugin: BasePlugin, PlayerPanelService {
         let key = UUID().uuidString
         visiblePanels[key] = container
 
-        // 动画显示
         if animated {
             UIView.animate(withDuration: 0.25) {
                 container.alpha = 1
@@ -140,6 +158,9 @@ public final class PlayerPanelPlugin: BasePlugin, PlayerPanelService {
         print("[PlayerPanelPlugin] 显示面板: \(panel) at \(position)")
     }
 
+    /**
+     * 隐藏指定面板
+     */
     public func hidePanel(_ panel: AnyObject, animated: Bool) {
         guard let panelView = panel as? UIView else { return }
 
@@ -162,6 +183,9 @@ public final class PlayerPanelPlugin: BasePlugin, PlayerPanelService {
         print("[PlayerPanelPlugin] 隐藏面板")
     }
 
+    /**
+     * 隐藏所有面板
+     */
     public func hideAllPanels(animated: Bool) {
         let panels = visiblePanels.values
 

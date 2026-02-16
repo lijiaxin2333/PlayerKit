@@ -12,7 +12,7 @@ import UIKit
 // MARK: - 播放控制服务
 
 @MainActor
-public protocol PlayerPlaybackControlService: CCLCompService {
+public protocol PlayerPlaybackControlService: PluginService {
 
     /// 是否正在播放
     var isPlaying: Bool { get }

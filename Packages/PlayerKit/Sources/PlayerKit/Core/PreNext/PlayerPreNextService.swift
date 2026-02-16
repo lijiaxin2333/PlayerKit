@@ -26,7 +26,7 @@ public struct PlayerPreNextItem {
 // MARK: - 预加载下一个服务
 
 @MainActor
-public protocol PlayerPreNextService: CCLCompService {
+public protocol PlayerPreNextService: PluginService {
 
     /// 下一个播放项
     var nextItem: PlayerPreNextItem? { get set }

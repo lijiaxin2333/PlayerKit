@@ -22,7 +22,7 @@ public enum PlayerPanelPosition {
 // MARK: - 面板服务
 
 @MainActor
-public protocol PlayerPanelService: CCLCompService {
+public protocol PlayerPanelService: PluginService {
 
     /// 显示面板
     func showPanel(_ panel: AnyObject, at position: PlayerPanelPosition, animated: Bool)

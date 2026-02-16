@@ -1,13 +1,13 @@
 import Foundation
 
 @MainActor
-public protocol TypedPlayerProtocol: CCLContextHolder {
+public protocol TypedPlayerProtocol: ContextHolder {
 }
 
 @MainActor
-public protocol ScenePlayerProtocol: CCLContextHolder {
+public protocol ScenePlayerProtocol: ContextHolder {
 
-    var context: CCLPublicContext { get }
+    var context: PublicContext { get }
 
     var typedPlayer: (any TypedPlayerProtocol)? { get }
 
@@ -26,22 +26,22 @@ public protocol ScenePlayerProtocol: CCLContextHolder {
 public extension ScenePlayerProtocol {
 
     /// Post 事件到 context
-    func post(_ event: CCLEvent, object: Any? = nil, sender: AnyObject) {
+    func post(_ event: Event, object: Any? = nil, sender: AnyObject) {
         context.post(event, object: object, sender: sender)
     }
 
     /// 添加事件监听
-    func add(_ observer: AnyObject, event: CCLEvent, handler: @escaping CCLEventHandlerBlock) -> AnyObject? {
+    func add(_ observer: AnyObject, event: Event, handler: @escaping EventHandlerBlock) -> AnyObject? {
         context.add(observer, event: event, handler: handler)
     }
 
     /// 添加事件监听（带选项）
-    func add(_ observer: AnyObject, event: CCLEvent, option: CCLEventOption, handler: @escaping CCLEventHandlerBlock) -> AnyObject? {
+    func add(_ observer: AnyObject, event: Event, option: EventOption, handler: @escaping EventHandlerBlock) -> AnyObject? {
         context.add(observer, event: event, option: option, handler: handler)
     }
 
     /// 添加多个事件监听
-    func add(_ observer: AnyObject, events: [CCLEvent], handler: @escaping CCLEventHandlerBlock) -> AnyObject? {
+    func add(_ observer: AnyObject, events: [Event], handler: @escaping EventHandlerBlock) -> AnyObject? {
         context.add(observer, events: events, handler: handler)
     }
 
@@ -61,7 +61,7 @@ public extension ScenePlayerProtocol {
     }
 
     /// 配置组件
-    func configComp<Service: CCLCompService>(serviceProtocol: Service.Type, withModel configModel: Any?) {
-        context.configComp(serviceProtocol: serviceProtocol, withModel: configModel)
+    func configPlugin<Service: PluginService>(serviceProtocol: Service.Type, withModel configModel: Any?) {
+        context.configPlugin(serviceProtocol: serviceProtocol, withModel: configModel)
     }
 }

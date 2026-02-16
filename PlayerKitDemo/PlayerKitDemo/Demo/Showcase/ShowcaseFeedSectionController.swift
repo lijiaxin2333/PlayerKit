@@ -75,7 +75,7 @@ final class ShowcaseFeedSectionController: BaseListSectionController, FeedAutoPl
         if let vm = feedViewModel,
            let plugin: ShowcaseFeedPlaybackPluginProtocol = vm.listContext?.responderForProtocol(ShowcaseFeedPlaybackPluginProtocol.self) {
             let preRenderConfig = ShowcaseFeedPreRenderConfigModel(playbackPlugin: plugin)
-            feedCell.sceneContext.configComp(serviceProtocol: ShowcaseFeedPreRenderService.self, withModel: preRenderConfig)
+            feedCell.sceneContext.configPlugin(serviceProtocol: ShowcaseFeedPreRenderService.self, withModel: preRenderConfig)
         }
     }
 

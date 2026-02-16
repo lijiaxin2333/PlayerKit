@@ -25,7 +25,7 @@ public protocol PlayerPreloadTask: AnyObject {
 }
 
 @MainActor
-public protocol PlayerPreloadService: CCLCompService {
+public protocol PlayerPreloadService: PluginService {
 
     var maxConcurrentCount: Int { get set }
 

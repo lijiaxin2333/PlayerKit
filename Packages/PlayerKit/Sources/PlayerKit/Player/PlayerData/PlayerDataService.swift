@@ -83,7 +83,7 @@ public struct AnySendable: Sendable {
 
 /// 播放器数据服务协议 - 管理播放器数据
 @MainActor
-public protocol PlayerDataService: CCLCompService {
+public protocol PlayerDataService: PluginService {
 
     /// 当前数据模型
     var dataModel: PlayerDataModel { get }

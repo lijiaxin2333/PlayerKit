@@ -29,7 +29,7 @@ public enum PlayerFullScreenOrientation {
 // MARK: - 全屏服务
 
 @MainActor
-public protocol PlayerFullScreenService: CCLCompService {
+public protocol PlayerFullScreenService: PluginService {
 
     /// 当前全屏状态
     var fullScreenState: PlayerFullScreenState { get }

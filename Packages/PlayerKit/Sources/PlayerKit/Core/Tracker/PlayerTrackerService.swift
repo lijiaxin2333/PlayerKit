@@ -40,7 +40,7 @@ public protocol PlayerTrackerNodeProtocol: AnyObject {
 // MARK: - 埋点服务
 
 @MainActor
-public protocol PlayerTrackerService: CCLCompService {
+public protocol PlayerTrackerService: PluginService {
 
     /// 注册埋点节点
     func registerTrackerNode(_ node: AnyObject)

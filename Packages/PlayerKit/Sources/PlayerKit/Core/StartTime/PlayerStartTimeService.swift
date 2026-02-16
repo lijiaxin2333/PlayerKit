@@ -12,7 +12,7 @@ public protocol PlayerStartTimeGuard: AnyObject {
 }
 
 @MainActor
-public protocol PlayerStartTimeService: CCLCompService {
+public protocol PlayerStartTimeService: PluginService {
 
     var startTime: TimeInterval { get }
 

@@ -19,7 +19,7 @@ public enum PlayerMediaControlType {
 // MARK: - 媒体控制服务
 
 @MainActor
-public protocol PlayerMediaControlService: CCLCompService {
+public protocol PlayerMediaControlService: PluginService {
 
     /// 当前音量（0-1）
     var volume: Float { get set }

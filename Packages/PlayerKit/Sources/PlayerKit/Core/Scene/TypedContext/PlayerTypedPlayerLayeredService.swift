@@ -1,16 +1,16 @@
 import Foundation
 
-public extension CCLEvent {
-    static let typedPlayerDidAddToSceneSticky: CCLEvent = "TypedPlayerDidAddToSceneSticky"
-    static let typedPlayerWillRemoveFromScene: CCLEvent = "TypedPlayerWillRemoveFromScene"
+public extension Event {
+    static let typedPlayerDidAddToSceneSticky: Event = "TypedPlayerDidAddToSceneSticky"
+    static let typedPlayerWillRemoveFromScene: Event = "TypedPlayerWillRemoveFromScene"
 }
 
 @MainActor
-public protocol PlayerTypedPlayerLayeredService: CCLCompService {
+public protocol PlayerTypedPlayerLayeredService: PluginService {
 
     var hasPlayer: Bool { get }
 
-    var typedContext: CCLContextProtocol? { get }
+    var typedContext: ContextProtocol? { get }
 
     typealias ConfigTypedPlayerBlock = () -> Void
     typealias ResetTypedPlayerBlock = () -> Void

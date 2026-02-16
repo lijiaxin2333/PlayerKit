@@ -2,7 +2,7 @@ import Foundation
 import UIKit
 
 @MainActor
-public protocol PlayerSnapshotService: CCLCompService {
+public protocol PlayerSnapshotService: PluginService {
 
     func currentFrameImage(size: CGSize?) -> UIImage?
 

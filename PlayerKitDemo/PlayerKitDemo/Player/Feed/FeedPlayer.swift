@@ -6,7 +6,7 @@ public class FeedPlayerConfiguration: NSObject {
 
     public var createForPreRender: Bool = false
 
-    public var compBlackList: Set<String> = []
+    public var pluginBlackList: Set<String> = []
 
     public var prerenderKey: String?
 
@@ -20,23 +20,23 @@ public class FeedPlayerConfiguration: NSObject {
 }
 
 @MainActor
-public final class FeedPlayer: CCLContextHolder, TypedPlayerProtocol {
+public final class FeedPlayer: ContextHolder, TypedPlayerProtocol {
 
-    public let context: CCLPublicContext
+    public let context: PublicContext
 
     private(set) var player: Player?
     private let configuration: FeedPlayerConfiguration
 
     public init(configuration: FeedPlayerConfiguration = FeedPlayerConfiguration()) {
         self.configuration = configuration
-        let ctx = CCLContext(name: "FeedPlayer")
+        let ctx = Context(name: "FeedPlayer")
         self.context = ctx
         setupPlayer()
     }
 
     public init(adoptingPlayer player: Player, configuration: FeedPlayerConfiguration = FeedPlayerConfiguration()) {
         self.configuration = configuration
-        let ctx = CCLContext(name: "FeedPlayer")
+        let ctx = Context(name: "FeedPlayer")
         self.context = ctx
         self.player = player
 
@@ -47,7 +47,7 @@ public final class FeedPlayer: CCLContextHolder, TypedPlayerProtocol {
                 let configModel = PlayerEngineCoreConfigModel()
                 configModel.autoPlay = self.configuration.autoPlay
                 configModel.isLooping = self.configuration.looping
-                player.context.configComp(serviceProtocol: PlayerEngineCoreService.self, withModel: configModel)
+                player.context.configPlugin(serviceProtocol: PlayerEngineCoreService.self, withModel: configModel)
             }
         )
     }
@@ -56,14 +56,14 @@ public final class FeedPlayer: CCLContextHolder, TypedPlayerProtocol {
         let player = Player(name: "FeedPlayer.Base.\(UUID().uuidString)")
         self.player = player
 
-        (context as? CCLContext)?.addSubContext(
+        (context as? Context)?.addSubContext(
             player.context,
             buildBlock: { [weak self] subContext, superContext in
                 guard let self = self else { return }
                 let configModel = PlayerEngineCoreConfigModel()
                 configModel.autoPlay = self.configuration.autoPlay
                 configModel.isLooping = self.configuration.looping
-                player.context.configComp(serviceProtocol: PlayerEngineCoreService.self, withModel: configModel)
+                player.context.configPlugin(serviceProtocol: PlayerEngineCoreService.self, withModel: configModel)
             }
         )
     }

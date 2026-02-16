@@ -12,7 +12,7 @@ import UIKit
 // MARK: - 调试服务
 
 @MainActor
-public protocol PlayerDebugService: CCLCompService {
+public protocol PlayerDebugService: PluginService {
 
     /// 是否启用调试模式
     var isDebugEnabled: Bool { get set }

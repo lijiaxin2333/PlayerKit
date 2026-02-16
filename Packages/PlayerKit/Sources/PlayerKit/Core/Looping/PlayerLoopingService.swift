@@ -20,7 +20,7 @@ public enum PlayerLoopingMode {
 // MARK: - 循环播放服务
 
 @MainActor
-public protocol PlayerLoopingService: CCLCompService {
+public protocol PlayerLoopingService: PluginService {
 
     /// 循环模式
     var loopingMode: PlayerLoopingMode { get set }

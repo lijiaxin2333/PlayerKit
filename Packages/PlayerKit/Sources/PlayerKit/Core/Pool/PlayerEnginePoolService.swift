@@ -1,7 +1,7 @@
 import Foundation
 
 @MainActor
-public protocol PlayerEnginePoolService: CCLCompService {
+public protocol PlayerEnginePoolService: PluginService {
 
     var maxCapacity: Int { get set }
 

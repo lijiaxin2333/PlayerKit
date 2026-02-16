@@ -12,7 +12,7 @@ import UIKit
 // MARK: - 播放结束视图服务
 
 @MainActor
-public protocol PlayerFinishViewService: CCLCompService {
+public protocol PlayerFinishViewService: PluginService {
 
     /// 显示结束视图
     func showFinishView()

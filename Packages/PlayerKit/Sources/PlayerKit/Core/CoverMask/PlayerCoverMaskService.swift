@@ -12,7 +12,7 @@ import UIKit
 // MARK: - 遮罩视图服务
 
 @MainActor
-public protocol PlayerCoverMaskService: CCLCompService {
+public protocol PlayerCoverMaskService: PluginService {
 
     /// 显示遮罩
     func showCoverMask(_ mask: AnyObject)

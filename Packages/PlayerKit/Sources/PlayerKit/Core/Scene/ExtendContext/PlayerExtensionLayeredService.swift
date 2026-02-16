@@ -1,16 +1,16 @@
 import Foundation
 
-public extension CCLEvent {
-    static let extensionDidAddToContextSticky: CCLEvent = "ExtensionDidAddToContextSticky"
-    static let extensionWillRemoveFromContext: CCLEvent = "ExtensionWillRemoveFromContext"
+public extension Event {
+    static let extensionDidAddToContextSticky: Event = "ExtensionDidAddToContextSticky"
+    static let extensionWillRemoveFromContext: Event = "ExtensionWillRemoveFromContext"
 }
 
 @MainActor
-public protocol PlayerExtensionLayeredService: CCLCompService {
+public protocol PlayerExtensionLayeredService: PluginService {
 
     var hasExtended: Bool { get }
 
-    var baseContext: CCLPublicContext? { get }
+    var baseContext: PublicContext? { get }
 
     func execExtend(_ extendBlock: (() -> Void)?, execUnExtend unExtendBlock: (() -> Void)?)
 

@@ -1,7 +1,7 @@
 import Foundation
 
 @MainActor
-public protocol PlayerPrefetchService: CCLCompService {
+public protocol PlayerPrefetchService: PluginService {
     var prefetchConfig: PreloadConfig { get set }
     func updateWindow(urls: [URL], focusIndex: Int)
     func prioritize(url: URL)

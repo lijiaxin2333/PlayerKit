@@ -12,7 +12,7 @@ import UIKit
 // MARK: - 预渲染服务
 
 @MainActor
-public protocol PlayerPreRenderService: CCLCompService {
+public protocol PlayerPreRenderService: PluginService {
 
     /// 是否启用预渲染
     var isPreRenderEnabled: Bool { get set }

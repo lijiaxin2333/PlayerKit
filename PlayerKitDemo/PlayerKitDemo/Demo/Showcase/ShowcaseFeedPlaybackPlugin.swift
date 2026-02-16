@@ -4,11 +4,11 @@ import PlayerKit
 import ListKit
 
 @MainActor
-final class ShowcasePlaybackRegProvider: CCLRegisterProvider {
-    func registerComps(with registerSet: CCLCompRegisterSet) {
-        registerSet.addEntry(compClass: PlayerEnginePoolComp.self, serviceType: PlayerEnginePoolService.self)
-        registerSet.addEntry(compClass: PlayerPreRenderManagerComp.self, serviceType: PlayerPreRenderManagerService.self)
-        registerSet.addEntry(compClass: PlayerPrefetchComp.self, serviceType: PlayerPrefetchService.self)
+final class ShowcasePlaybackRegProvider: RegisterProvider {
+    func registerPlugins(with registerSet: PluginRegisterSet) {
+        registerSet.addEntry(pluginClass: PlayerEnginePoolPlugin.self, serviceType: PlayerEnginePoolService.self)
+        registerSet.addEntry(pluginClass: PlayerPreRenderManagerPlugin.self, serviceType: PlayerPreRenderManagerService.self)
+        registerSet.addEntry(pluginClass: PlayerPrefetchPlugin.self, serviceType: PlayerPrefetchService.self)
     }
 }
 
@@ -77,7 +77,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
     private let maxAutoPlayRetries = 2
 
     init(configuration: Configuration = Configuration()) {
-        let ctx = CCLContext(name: "ShowcasePlaybackServices")
+        let ctx = Context(name: "ShowcasePlaybackServices")
 
         let provider = ShowcasePlaybackRegProvider()
         ctx.addRegProvider(provider)
@@ -94,10 +94,10 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         preRender.maxPreRenderCount = configuration.preRenderMaxCount
         preRender.preRenderTimeout = configuration.preRenderTimeout
         let preRenderConfig = PlayerPreRenderManagerConfigModel(enginePool: pool, poolIdentifier: "showcase")
-        ctx.configComp(serviceProtocol: PlayerPreRenderManagerService.self, withModel: preRenderConfig)
+        ctx.configPlugin(serviceProtocol: PlayerPreRenderManagerService.self, withModel: preRenderConfig)
 
-        if let prefetchComp = prefetch as? PlayerPrefetchComp {
-            prefetchComp.prefetchConfig = PreloadConfig(
+        if let prefetchPlugin = prefetch as? PlayerPrefetchPlugin {
+            prefetchPlugin.prefetchConfig = PreloadConfig(
                 maxConcurrent: configuration.prefetchMaxConcurrent,
                 bytesPerURL: configuration.prefetchBytesPerURL,
                 windowAhead: configuration.prefetchWindowAhead,
@@ -363,9 +363,9 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
             }
         )
 
-        if let autoPlayComp = targetCell?.sceneContext.context.resolveService(ShowcaseAutoPlayNextService.self) {
+        if let autoPlayPlugin = targetCell?.sceneContext.context.resolveService(ShowcaseAutoPlayNextService.self) {
             let autoPlayConfig = ShowcaseAutoPlayNextConfigModel(totalCount: videos.count, isEnabled: true)
-            (autoPlayComp as? CCLBaseComp)?.configModel = autoPlayConfig
+            (autoPlayPlugin as? BasePlugin)?.configModel = autoPlayConfig
         }
     }
 

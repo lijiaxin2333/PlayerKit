@@ -1,7 +1,7 @@
 import Foundation
 
 @MainActor
-public protocol PlayerScenePlayerProcessService: CCLCompService {
+public protocol PlayerScenePlayerProcessService: PluginService {
 
     func execPlay(
         isAutoPlay: Bool,

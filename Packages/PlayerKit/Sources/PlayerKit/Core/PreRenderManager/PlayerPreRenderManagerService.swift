@@ -38,7 +38,7 @@ public class PlayerPreRenderManagerConfigModel {
 }
 
 @MainActor
-public protocol PlayerPreRenderManagerService: CCLCompService {
+public protocol PlayerPreRenderManagerService: PluginService {
 
     var maxPreRenderCount: Int { get set }
 

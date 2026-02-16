@@ -14,7 +14,7 @@ public class PlayerConfiguration: NSObject {
     public var createForPreRender: Bool = false
 
     /// 要屏蔽的模块注册信息ID，一般为服务名
-    public var compBlackList: Set<String> = []
+    public var pluginBlackList: Set<String> = []
 
     /// 预渲染key
     public var prerenderKey: String?

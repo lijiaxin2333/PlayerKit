@@ -26,7 +26,7 @@ public struct PlayerSpeedOption: Equatable {
 // MARK: - 倍速服务
 
 @MainActor
-public protocol PlayerSpeedService: CCLCompService {
+public protocol PlayerSpeedService: PluginService {
 
     /// 当前倍速
     var currentSpeed: Float { get set }

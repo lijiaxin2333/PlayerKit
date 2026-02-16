@@ -13,7 +13,7 @@ public protocol PlayerSceneProtocol: AnyObject {
 }
 
 @MainActor
-public protocol PlayerSceneManagerService: CCLCompService {
+public protocol PlayerSceneManagerService: PluginService {
 
     var activeScenes: [PlayerSceneProtocol] { get }
 

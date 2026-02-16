@@ -25,7 +25,7 @@ public protocol PlayerControlViewProtocol: UIView {
 // MARK: - 播控视图服务
 
 @MainActor
-public protocol PlayerControlViewService: CCLCompService {
+public protocol PlayerControlViewService: PluginService {
 
     /// 播控视图
     var controlView: UIView? { get }

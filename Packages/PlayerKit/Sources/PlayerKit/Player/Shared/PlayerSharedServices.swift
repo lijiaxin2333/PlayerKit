@@ -32,10 +32,10 @@ public struct PlayerType: Hashable, Sendable {
 
 /// 当前播放器共享服务协议 - 管理全局的当前播放器实例
 @MainActor
-public protocol PlayerSharedCurrentPlayerService: CCLCompService {
+public protocol PlayerSharedCurrentPlayerService: PluginService {
 
     /// 当前播放器
-    var currentPlayer: CCLContextHolder? { get }
+    var currentPlayer: ContextHolder? { get }
 
     /// 当前播放器类型
     var currentPlayerType: PlayerType? { get }
@@ -44,7 +44,7 @@ public protocol PlayerSharedCurrentPlayerService: CCLCompService {
     /// - Parameters:
     ///   - player: 播放器实例
     ///   - type: 播放器类型
-    func setCurrentPlayer(_ player: CCLContextHolder?, type: PlayerType?)
+    func setCurrentPlayer(_ player: ContextHolder?, type: PlayerType?)
 
     /// 清除当前播放器
     func clearCurrentPlayer()
@@ -54,7 +54,7 @@ public protocol PlayerSharedCurrentPlayerService: CCLCompService {
 
 /// 全屏共享服务协议 - 管理全局全屏状态
 @MainActor
-public protocol PlayerSharedFullScreenService: CCLCompService {
+public protocol PlayerSharedFullScreenService: PluginService {
 
     /// 是否全屏
     var isFullScreen: Bool { get }
@@ -78,7 +78,7 @@ public protocol PlayerSharedFullScreenService: CCLCompService {
 /// 倍速共享服务协议（简化版）- 管理全局倍速设置
 /// 注意：完整版在 PlayerSpeedService.swift 中定义为 PlayerSharedSpeedService
 @MainActor
-public protocol PlayerSharedSpeedServiceSimple: CCLCompService {
+public protocol PlayerSharedSpeedServiceSimple: PluginService {
 
     /// 当前倍速
     var currentSpeed: Float { get }
@@ -101,7 +101,7 @@ public protocol PlayerSharedSpeedServiceSimple: CCLCompService {
 
 /// 循环播放共享服务协议 - 管理全局循环播放设置
 @MainActor
-public protocol PlayerSharedLoopingService: CCLCompService {
+public protocol PlayerSharedLoopingService: PluginService {
 
     /// 是否循环播放
     var isLooping: Bool { get }
@@ -118,7 +118,7 @@ public protocol PlayerSharedLoopingService: CCLCompService {
 
 /// 定时关闭共享服务协议 - 管理定时关闭功能
 @MainActor
-public protocol PlayerSharedTimedOffService: CCLCompService {
+public protocol PlayerSharedTimedOffService: PluginService {
 
     /// 定时关闭时间（秒）
     var timedOffInterval: TimeInterval? { get }

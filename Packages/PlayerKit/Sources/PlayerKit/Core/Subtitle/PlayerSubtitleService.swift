@@ -39,7 +39,7 @@ public struct PlayerSubtitleCue: Sendable {
 }
 
 @MainActor
-public protocol PlayerSubtitleService: CCLCompService {
+public protocol PlayerSubtitleService: PluginService {
 
     var isEnabled: Bool { get set }
 

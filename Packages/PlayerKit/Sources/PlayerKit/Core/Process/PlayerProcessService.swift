@@ -20,7 +20,7 @@ public enum PlayerProgressState {
 // MARK: - 进度管理服务
 
 @MainActor
-public protocol PlayerProcessService: CCLCompService {
+public protocol PlayerProcessService: PluginService {
 
     /// 当前进度（0-1）
     var progress: Double { get }

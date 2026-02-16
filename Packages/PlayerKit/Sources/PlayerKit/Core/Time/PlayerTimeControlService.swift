@@ -21,7 +21,7 @@ public enum PlayerTimeStyle {
 // MARK: - 时间控制服务
 
 @MainActor
-public protocol PlayerTimeControlService: CCLCompService {
+public protocol PlayerTimeControlService: PluginService {
 
     /// 当前播放时间（秒）
     var currentTime: TimeInterval { get }

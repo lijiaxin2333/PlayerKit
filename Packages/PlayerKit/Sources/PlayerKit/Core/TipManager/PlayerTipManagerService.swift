@@ -22,7 +22,7 @@ public enum PlayerTipType {
 // MARK: - 提示管理服务
 
 @MainActor
-public protocol PlayerTipManagerService: CCLCompService {
+public protocol PlayerTipManagerService: PluginService {
 
     /// 显示提示
     func showTip(_ type: PlayerTipType, message: String)

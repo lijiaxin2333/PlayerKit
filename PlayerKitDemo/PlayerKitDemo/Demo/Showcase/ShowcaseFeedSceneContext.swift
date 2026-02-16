@@ -1,39 +1,39 @@
 import UIKit
 import PlayerKit
 
-public extension CCLEvent {
-    static let showcaseFeedDataDidUpdate: CCLEvent = "ShowcaseFeedDataDidUpdate"
-    static let showcaseFeedDataWillUpdate: CCLEvent = "ShowcaseFeedDataWillUpdate"
-    static let showcaseFeedCellViewDidSet: CCLEvent = "ShowcaseFeedCellViewDidSet"
-    static let showcaseFeedCellViewDidSetSticky: CCLEvent = "ShowcaseFeedCellViewDidSetSticky"
-    static let cellPrepareForReuse: CCLEvent = "CellPrepareForReuse"
-    static let cellWillDisplay: CCLEvent = "CellWillDisplay"
-    static let cellDidEndDisplaying: CCLEvent = "CellDidEndDisplaying"
-    static let showcaseOverlayDidTapLike: CCLEvent = "ShowcaseOverlayDidTapLike"
-    static let showcaseOverlayDidTapComment: CCLEvent = "ShowcaseOverlayDidTapComment"
-    static let showcaseOverlayDidTapShare: CCLEvent = "ShowcaseOverlayDidTapShare"
-    static let showcaseOverlayDidTapAvatar: CCLEvent = "ShowcaseOverlayDidTapAvatar"
-    static let showcaseOverlayDidTapDetail: CCLEvent = "ShowcaseOverlayDidTapDetail"
-    static let showcaseAutoPlayNextRequest: CCLEvent = "ShowcaseAutoPlayNextRequest"
+public extension Event {
+    static let showcaseFeedDataDidUpdate: Event = "ShowcaseFeedDataDidUpdate"
+    static let showcaseFeedDataWillUpdate: Event = "ShowcaseFeedDataWillUpdate"
+    static let showcaseFeedCellViewDidSet: Event = "ShowcaseFeedCellViewDidSet"
+    static let showcaseFeedCellViewDidSetSticky: Event = "ShowcaseFeedCellViewDidSetSticky"
+    static let cellPrepareForReuse: Event = "CellPrepareForReuse"
+    static let cellWillDisplay: Event = "CellWillDisplay"
+    static let cellDidEndDisplaying: Event = "CellDidEndDisplaying"
+    static let showcaseOverlayDidTapLike: Event = "ShowcaseOverlayDidTapLike"
+    static let showcaseOverlayDidTapComment: Event = "ShowcaseOverlayDidTapComment"
+    static let showcaseOverlayDidTapShare: Event = "ShowcaseOverlayDidTapShare"
+    static let showcaseOverlayDidTapAvatar: Event = "ShowcaseOverlayDidTapAvatar"
+    static let showcaseOverlayDidTapDetail: Event = "ShowcaseOverlayDidTapDetail"
+    static let showcaseAutoPlayNextRequest: Event = "ShowcaseAutoPlayNextRequest"
 }
 
 @MainActor
-final class ShowcaseFeedSceneRegProvider: CCLRegisterProvider {
-    func registerComps(with registerSet: CCLCompRegisterSet) {
-        registerSet.addEntry(compClass: PlayerTypedPlayerLayeredComp.self, serviceType: PlayerTypedPlayerLayeredService.self)
-        registerSet.addEntry(compClass: PlayerScenePlayerProcessComp.self, serviceType: PlayerScenePlayerProcessService.self)
-        registerSet.addEntry(compClass: ShowcaseFeedDataComp.self, serviceType: ShowcaseFeedDataService.self)
-        registerSet.addEntry(compClass: ShowcaseFeedCellViewComp.self, serviceType: ShowcaseFeedCellViewService.self)
-        registerSet.addEntry(compClass: ShowcaseFeedOverlayComp.self, serviceType: ShowcaseFeedOverlayService.self)
-        registerSet.addEntry(compClass: ShowcaseAutoPlayNextComp.self, serviceType: ShowcaseAutoPlayNextService.self)
-        registerSet.addEntry(compClass: ShowcaseFeedPreRenderComp.self, serviceType: ShowcaseFeedPreRenderService.self)
+final class ShowcaseFeedSceneRegProvider: RegisterProvider {
+    func registerPlugins(with registerSet: PluginRegisterSet) {
+        registerSet.addEntry(pluginClass: PlayerTypedPlayerLayeredPlugin.self, serviceType: PlayerTypedPlayerLayeredService.self)
+        registerSet.addEntry(pluginClass: PlayerScenePlayerProcessPlugin.self, serviceType: PlayerScenePlayerProcessService.self)
+        registerSet.addEntry(pluginClass: ShowcaseFeedDataPlugin.self, serviceType: ShowcaseFeedDataService.self)
+        registerSet.addEntry(pluginClass: ShowcaseFeedCellViewPlugin.self, serviceType: ShowcaseFeedCellViewService.self)
+        registerSet.addEntry(pluginClass: ShowcaseFeedOverlayPlugin.self, serviceType: ShowcaseFeedOverlayService.self)
+        registerSet.addEntry(pluginClass: ShowcaseAutoPlayNextPlugin.self, serviceType: ShowcaseAutoPlayNextService.self)
+        registerSet.addEntry(pluginClass: ShowcaseFeedPreRenderPlugin.self, serviceType: ShowcaseFeedPreRenderService.self)
     }
 }
 
 @MainActor
 final class ShowcaseFeedSceneContext: ScenePlayerProtocol {
 
-    let context: CCLPublicContext
+    let context: PublicContext
     private var _typedPlayer: FeedPlayer?
     private let regProvider = ShowcaseFeedSceneRegProvider()
 
@@ -46,7 +46,7 @@ final class ShowcaseFeedSceneContext: ScenePlayerProtocol {
     }
 
     init() {
-        let ctx = CCLContext(name: "ShowcaseFeedSceneContext")
+        let ctx = Context(name: "ShowcaseFeedSceneContext")
         self.context = ctx
         ctx.holder = self
         ctx.addRegProvider(regProvider)
@@ -100,15 +100,15 @@ final class ShowcaseFeedSceneContext: ScenePlayerProtocol {
 @MainActor
 extension ShowcaseFeedSceneContext {
 
-    func post(_ event: CCLEvent, object: Any? = nil, sender: AnyObject) {
+    func post(_ event: Event, object: Any? = nil, sender: AnyObject) {
         context.post(event, object: object, sender: sender)
     }
 
-    func add(_ observer: AnyObject, event: CCLEvent, handler: @escaping CCLEventHandlerBlock) -> AnyObject? {
+    func add(_ observer: AnyObject, event: Event, handler: @escaping EventHandlerBlock) -> AnyObject? {
         context.add(observer, event: event, handler: handler)
     }
 
-    func configComp<T>(serviceProtocol: T.Type, withModel configModel: Any?) {
-        context.configComp(serviceProtocol: serviceProtocol, withModel: configModel)
+    func configPlugin<T>(serviceProtocol: T.Type, withModel configModel: Any?) {
+        context.configPlugin(serviceProtocol: serviceProtocol, withModel: configModel)
     }
 }

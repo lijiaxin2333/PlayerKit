@@ -21,7 +21,7 @@ public enum PlayerAppState {
 // MARK: - App 前后台服务
 
 @MainActor
-public protocol PlayerAppActiveService: CCLCompService {
+public protocol PlayerAppActiveService: PluginService {
 
     /// 当前 App 状态
     var appState: PlayerAppState { get }

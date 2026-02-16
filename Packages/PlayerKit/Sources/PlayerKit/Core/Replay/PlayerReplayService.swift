@@ -12,7 +12,7 @@ import UIKit
 // MARK: - 重播服务
 
 @MainActor
-public protocol PlayerReplayService: CCLCompService {
+public protocol PlayerReplayService: PluginService {
 
     /// 是否可以重播
     var canReplay: Bool { get }

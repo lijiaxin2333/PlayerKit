@@ -4,7 +4,7 @@ import PlayerKit
 
 public class FeedSceneConfiguration {
 
-    public var compBlackList: Set<String> = []
+    public var pluginBlackList: Set<String> = []
 
     public var autoPlay: Bool = true
 
@@ -12,17 +12,17 @@ public class FeedSceneConfiguration {
 }
 
 @MainActor
-final class FeedSceneRegProvider: CCLRegisterProvider {
-    func registerComps(with registerSet: CCLCompRegisterSet) {
-        registerSet.addEntry(compClass: PlayerTypedPlayerLayeredComp.self, serviceType: PlayerTypedPlayerLayeredService.self)
-        registerSet.addEntry(compClass: PlayerScenePlayerProcessComp.self, serviceType: PlayerScenePlayerProcessService.self)
+final class FeedSceneRegProvider: RegisterProvider {
+    func registerPlugins(with registerSet: PluginRegisterSet) {
+        registerSet.addEntry(pluginClass: PlayerTypedPlayerLayeredPlugin.self, serviceType: PlayerTypedPlayerLayeredService.self)
+        registerSet.addEntry(pluginClass: PlayerScenePlayerProcessPlugin.self, serviceType: PlayerScenePlayerProcessService.self)
     }
 }
 
 @MainActor
 public final class FeedSceneContext: ScenePlayerProtocol {
 
-    public let context: CCLPublicContext
+    public let context: PublicContext
 
     private var _typedPlayer: FeedPlayer?
     private let configuration: FeedSceneConfiguration
@@ -30,7 +30,7 @@ public final class FeedSceneContext: ScenePlayerProtocol {
 
     public init(configuration: FeedSceneConfiguration = FeedSceneConfiguration()) {
         self.configuration = configuration
-        let ctx = CCLContext(name: "FeedScene")
+        let ctx = Context(name: "FeedScene")
         self.context = ctx
         ctx.addRegProvider(regProvider)
     }
@@ -54,12 +54,12 @@ public final class FeedSceneContext: ScenePlayerProtocol {
         if _typedPlayer === feedPlayer { return }
         removeTypedPlayer()
         _typedPlayer = feedPlayer
-        (context as? CCLContext)?.addSubContext(feedPlayer.context)
+        (context as? Context)?.addSubContext(feedPlayer.context)
     }
 
     public func removeTypedPlayer() {
         guard let feedPlayer = _typedPlayer else { return }
-        (context as? CCLContext)?.removeSubContext(feedPlayer.context)
+        (context as? Context)?.removeSubContext(feedPlayer.context)
         _typedPlayer = nil
     }
 

@@ -21,7 +21,7 @@ public enum PlayerToastStyle {
 // MARK: - Toast 服务
 
 @MainActor
-public protocol PlayerToastService: CCLCompService {
+public protocol PlayerToastService: PluginService {
 
     /// 显示 Toast
     func showToast(_ message: String, style: PlayerToastStyle, duration: TimeInterval)

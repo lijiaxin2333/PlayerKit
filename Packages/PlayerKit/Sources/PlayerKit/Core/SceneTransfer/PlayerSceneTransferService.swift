@@ -27,7 +27,7 @@ public struct PlayerTransferState {
 }
 
 @MainActor
-public protocol PlayerSceneTransferService: CCLCompService {
+public protocol PlayerSceneTransferService: PluginService {
 
     func transferEngine(
         from sourcePlayer: Player,

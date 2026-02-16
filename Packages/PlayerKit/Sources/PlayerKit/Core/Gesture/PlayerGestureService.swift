@@ -23,7 +23,7 @@ public protocol PlayerGestureHandler: AnyObject {
 }
 
 @MainActor
-public protocol PlayerGestureService: CCLCompService {
+public protocol PlayerGestureService: PluginService {
 
     var gestureView: UIView? { get set }
 

@@ -41,7 +41,7 @@ public enum PlayerScalingMode: Int {
 // MARK: - 播放引擎核心服务
 
 @MainActor
-public protocol PlayerEngineCoreService: CCLCompService {
+public protocol PlayerEngineCoreService: PluginService {
 
     // MARK: - 播放器实例
 

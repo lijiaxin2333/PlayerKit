@@ -2,31 +2,31 @@ import UIKit
 import PlayerKit
 
 @MainActor
-final class ShowcaseDetailRegProvider: CCLRegisterProvider {
+final class ShowcaseDetailRegProvider: RegisterProvider {
 
-    func registerComps(with registerSet: CCLCompRegisterSet) {
+    func registerPlugins(with registerSet: PluginRegisterSet) {
         registerSet.addEntry(
-            compClass: ShowcaseDetailControlComp.self,
+            pluginClass: ShowcaseDetailControlPlugin.self,
             serviceType: ShowcaseDetailControlService.self
         )
         registerSet.addEntry(
-            compClass: ShowcaseDetailLongPressSpeedComp.self,
+            pluginClass: ShowcaseDetailLongPressSpeedPlugin.self,
             serviceType: ShowcaseDetailLongPressSpeedService.self
         )
     }
 }
 
 @MainActor
-final class ShowcaseDetailSceneBaseRegProvider: CCLRegisterProvider {
-    func registerComps(with registerSet: CCLCompRegisterSet) {
-        registerSet.addEntry(compClass: PlayerTypedPlayerLayeredComp.self, serviceType: PlayerTypedPlayerLayeredService.self)
+final class ShowcaseDetailSceneBaseRegProvider: RegisterProvider {
+    func registerPlugins(with registerSet: PluginRegisterSet) {
+        registerSet.addEntry(pluginClass: PlayerTypedPlayerLayeredPlugin.self, serviceType: PlayerTypedPlayerLayeredService.self)
     }
 }
 
 @MainActor
-final class ShowcaseDetailSceneContext: CCLContextHolder {
+final class ShowcaseDetailSceneContext: ContextHolder {
 
-    let context: CCLPublicContext
+    let context: PublicContext
     private let baseRegProvider = ShowcaseDetailSceneBaseRegProvider()
     private let regProvider = ShowcaseDetailRegProvider()
     private weak var _feedPlayer: FeedPlayer?
@@ -36,7 +36,7 @@ final class ShowcaseDetailSceneContext: CCLContextHolder {
     ]
 
     init() {
-        let ctx = CCLContext(name: "ShowcaseDetailSceneContext")
+        let ctx = Context(name: "ShowcaseDetailSceneContext")
         self.context = ctx
         ctx.holder = self
         ctx.addRegProvider(baseRegProvider)

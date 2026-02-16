@@ -12,19 +12,19 @@ import UIKit
 // MARK: - Context 管理服务
 
 @MainActor
-public protocol PlayerContextService: CCLCompService {
+public protocol PlayerContextService: PluginService {
 
     /// 获取 Context
-    var playerContext: CCLContextProtocol? { get }
+    var playerContext: ContextProtocol? { get }
 
     /// 添加子 Context
-    func addSubContext(_ context: CCLPublicContext)
+    func addSubContext(_ context: PublicContext)
 
     /// 移除子 Context
-    func removeSubContext(_ context: CCLPublicContext)
+    func removeSubContext(_ context: PublicContext)
 
     /// 绑定共享 Context
-    func bindSharedContext(_ context: CCLSharedContextProtocol)
+    func bindSharedContext(_ context: SharedContextProtocol)
 }
 
 // MARK: - 配置模型

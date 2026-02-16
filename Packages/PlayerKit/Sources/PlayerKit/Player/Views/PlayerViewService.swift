@@ -24,7 +24,7 @@ public protocol PlayerActionViewProtocol: AnyObject {
 
 /// 播放器视图服务协议 - 管理播放器视图层级
 @MainActor
-public protocol PlayerViewService: CCLCompService {
+public protocol PlayerViewService: PluginService {
 
     /// 视图容器
     var containerView: UIView { get }

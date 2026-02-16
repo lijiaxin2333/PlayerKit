@@ -25,7 +25,7 @@ public struct PlayerQosMetrics {
 // MARK: - QoS 服务
 
 @MainActor
-public protocol PlayerQosService: CCLCompService {
+public protocol PlayerQosService: PluginService {
 
     /// 当前 QoS 指标
     var qosMetrics: PlayerQosMetrics { get }

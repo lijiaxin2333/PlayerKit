@@ -37,7 +37,7 @@ public struct PlayerResolutionInfo: Equatable {
 // MARK: - 分辨率服务
 
 @MainActor
-public protocol PlayerResolutionService: CCLCompService {
+public protocol PlayerResolutionService: PluginService {
 
     /// 当前分辨率
     var currentResolution: PlayerResolutionInfo? { get }

@@ -6,7 +6,7 @@ import ListKit
 
 /// Showcase Feed Cell
 /// 实现 ListCellProtocol，遵循 ListKit 标准模式
-/// 播放器相关逻辑通过 sceneContext + Comp 架构处理
+/// 播放器相关逻辑通过 sceneContext + Plugin 架构处理
 @MainActor
 final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
 

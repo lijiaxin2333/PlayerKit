@@ -93,7 +93,7 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
         if let h = pinchHandler { gestureService.removeHandler(h) }
     }
 
-    // MARK: - Register & Setup Detail Control Comp
+    // MARK: - Register & Setup Detail Control Plugin
 
     private func setupDetailControl() {
         guard let feedPlayer = feedPlayer else { return }
@@ -107,7 +107,7 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
             videoIndex: videoIndex,
             gestureView: view
         )
-        detailSceneContext.context.configComp(serviceProtocol: ShowcaseDetailControlService.self, withModel: controlConfig)
+        detailSceneContext.context.configPlugin(serviceProtocol: ShowcaseDetailControlService.self, withModel: controlConfig)
 
         detailControl?.onPlaybackStateChanged = { [weak self] isPlaying in
             guard let self = self else { return }

@@ -54,7 +54,7 @@ public struct EventOption: OptionSet {
     }
 
     /** 无特殊选项 */
-    public static let none = EventOption(rawValue: 0)
+    public static let none = EventOption([])
 
     /** 注册时立即执行一次回调 */
     public static let execWhenAdd = EventOption(rawValue: 1 << 0)

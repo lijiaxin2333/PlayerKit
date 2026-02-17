@@ -12,7 +12,7 @@ public final class PlayerResolutionPlugin: BasePlugin, PlayerResolutionService {
     public typealias ConfigModelType = PlayerResolutionConfigModel
 
     /** 引擎核心服务 */
-    @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
 
     /** 当前选中的分辨率 */
     private var _currentResolution: PlayerResolutionInfo?

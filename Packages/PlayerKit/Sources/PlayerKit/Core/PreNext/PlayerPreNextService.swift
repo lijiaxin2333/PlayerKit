@@ -11,7 +11,7 @@ import UIKit
 
 // MARK: - 预加载下一个视频信息
 
-public struct PlayerPreNextItem {
+public struct PlayerPreNextItem: Sendable {
     public let url: URL
     public let title: String?
     public let thumbnailURL: URL?

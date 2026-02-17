@@ -86,8 +86,8 @@ public final class PlayerFinishViewPlugin: BasePlugin, PlayerFinishViewService {
 
     // MARK: - Properties
 
-    @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
-    @PlayerPlugin(serviceType: PlayerPlaybackControlService.self) private var playbackControlService: PlayerPlaybackControlService?
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
+    @PlayerPlugin private var playbackControlService: PlayerPlaybackControlService?
 
     private var finishView: PlayerFinishView?
     private var isShowing: Bool = false

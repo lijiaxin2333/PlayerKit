@@ -16,7 +16,7 @@ public final class PlayerProcessPlugin: BasePlugin, PlayerProcessService {
 
     // MARK: - Properties
 
-    @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
 
     public var progressState: PlayerProgressState = .idle
     private var progressHandlers: [String: (Double, TimeInterval) -> Void] = [:]

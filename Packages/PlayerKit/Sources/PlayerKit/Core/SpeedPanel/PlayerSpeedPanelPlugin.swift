@@ -4,8 +4,8 @@ import UIKit
 @MainActor
 public final class PlayerSpeedPanelPlugin: BasePlugin, PlayerSpeedPanelService {
 
-    @PlayerPlugin(serviceType: PlayerSpeedService.self) private var speedService: PlayerSpeedService?
-    @PlayerPlugin(serviceType: PlayerGestureService.self) private var gestureService: PlayerGestureService?
+    @PlayerPlugin private var speedService: PlayerSpeedService?
+    @PlayerPlugin private var gestureService: PlayerGestureService?
 
     private var panelView: PlayerSpeedPanelView?
 

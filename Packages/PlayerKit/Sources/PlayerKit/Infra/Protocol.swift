@@ -44,7 +44,7 @@ public protocol EventHandlerProtocol: AnyObject {
 public typealias EventHandlerBlock = (_ object: Any?, _ event: Event) -> Void
 
 /** 事件监听选项，控制事件处理器的行为 */
-public struct EventOption: OptionSet {
+public struct EventOption: OptionSet, Sendable {
     /** 选项原始值 */
     public let rawValue: UInt
 
@@ -107,7 +107,7 @@ public protocol PluginRegisterProtocol: AnyObject {
 }
 
 /** 插件创建选项，控制插件的创建时机 */
-public struct PluginCreateOption: OptionSet {
+public struct PluginCreateOption: OptionSet, Sendable {
     /** 选项原始值 */
     public let rawValue: UInt
 
@@ -124,7 +124,7 @@ public struct PluginCreateOption: OptionSet {
 }
 
 /** 插件创建类型，定义插件实例的创建时机策略 */
-public struct PluginCreateType: OptionSet {
+public struct PluginCreateType: OptionSet, Sendable {
     /** 选项原始值 */
     public let rawValue: UInt
 
@@ -218,6 +218,7 @@ public protocol SharedContextProtocol: ServiceDiscovery, PluginRegisterProtocol 
 }
 
 /** Context 持有者协议，持有并暴露 Context 实例 */
+@MainActor
 public protocol ContextHolder: AnyObject {
 
     /** 持有的 Context 实例 */

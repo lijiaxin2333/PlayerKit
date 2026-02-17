@@ -47,7 +47,7 @@ public final class PlayerSubtitlePlugin: BasePlugin, PlayerSubtitleService {
     /** 播放进度时间观察者 */
     private var timeObserver: AnyObject?
 
-    @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engine: PlayerEngineCoreService?
+    @PlayerPlugin private var engine: PlayerEngineCoreService?
 
     /** 对外暴露的字幕视图 */
     public var subtitleView: UIView? { subtitleLabel }

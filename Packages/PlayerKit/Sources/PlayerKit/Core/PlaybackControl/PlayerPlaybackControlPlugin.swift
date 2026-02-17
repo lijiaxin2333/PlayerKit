@@ -22,7 +22,7 @@ public final class PlayerPlaybackControlPlugin: BasePlugin, PlayerPlaybackContro
     /**
      * 引擎服务依赖
      */
-    @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
 
 
     // MARK: - PlayerPlaybackControlService

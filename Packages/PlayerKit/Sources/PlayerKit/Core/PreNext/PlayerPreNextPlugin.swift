@@ -16,8 +16,8 @@ public final class PlayerPreNextPlugin: BasePlugin, PlayerPreNextService {
 
     // MARK: - Properties
 
-    @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
-    @PlayerPlugin(serviceType: PlayerProcessService.self) private var processService: PlayerProcessService?
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
+    @PlayerPlugin private var processService: PlayerProcessService?
 
     private var _nextItem: PlayerPreNextItem?
     private var _isPreloading: Bool = false

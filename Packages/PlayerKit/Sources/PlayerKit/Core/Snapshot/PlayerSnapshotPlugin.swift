@@ -9,7 +9,7 @@ import AVFoundation
 public final class PlayerSnapshotPlugin: BasePlugin, PlayerSnapshotService {
 
     /** 引擎核心服务 */
-    @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engine: PlayerEngineCoreService?
+    @PlayerPlugin private var engine: PlayerEngineCoreService?
 
     /**
      * 初始化

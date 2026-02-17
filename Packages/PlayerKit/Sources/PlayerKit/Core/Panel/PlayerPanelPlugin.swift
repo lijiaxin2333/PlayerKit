@@ -87,7 +87,7 @@ public final class PlayerPanelPlugin: BasePlugin, PlayerPanelService {
     public typealias ConfigModelType = PlayerPanelConfigModel
 
     /** 引擎核心服务 */
-    @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
 
     /** 当前可见的面板容器映射 */
     private var visiblePanels: [String: PanelContainerView] = [:]

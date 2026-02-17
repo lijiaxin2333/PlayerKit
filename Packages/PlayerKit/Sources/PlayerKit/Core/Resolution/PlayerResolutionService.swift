@@ -5,7 +5,7 @@ import UIKit
 /**
  * 分辨率信息结构体
  */
-public struct PlayerResolutionInfo: Equatable {
+public struct PlayerResolutionInfo: Equatable, Sendable {
     /** 宽度（像素） */
     public let width: Int
     /** 高度（像素） */

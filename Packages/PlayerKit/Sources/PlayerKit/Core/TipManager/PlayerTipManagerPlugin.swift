@@ -103,7 +103,7 @@ public final class PlayerTipManagerPlugin: BasePlugin, PlayerTipManagerService {
     public typealias ConfigModelType = PlayerTipManagerConfigModel
 
     /** 播放引擎服务，用于获取播放器视图 */
-    @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
 
     /** 当前显示的提示视图，按类型索引 */
     private var visibleTips: [PlayerTipType: TipView] = [:]

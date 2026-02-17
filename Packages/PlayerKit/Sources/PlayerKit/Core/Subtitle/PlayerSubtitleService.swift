@@ -4,7 +4,7 @@ import UIKit
 /**
  * 字幕格式枚举
  */
-public enum PlayerSubtitleFormat: Int {
+public enum PlayerSubtitleFormat: Int, Sendable {
     /** SRT 格式 */
     case srt = 0
     /** VTT 格式 */

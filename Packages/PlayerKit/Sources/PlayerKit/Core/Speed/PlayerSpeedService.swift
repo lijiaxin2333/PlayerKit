@@ -14,7 +14,7 @@ import UIKit
 /**
  * 倍速选项结构体
  */
-public struct PlayerSpeedOption: Equatable {
+public struct PlayerSpeedOption: Equatable, Sendable {
     /**
      * 播放速率
      */

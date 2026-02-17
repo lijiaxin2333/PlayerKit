@@ -17,7 +17,7 @@ public final class PlayerFullScreenPlugin: BasePlugin, PlayerFullScreenService {
 
     // MARK: - Properties
 
-    @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
 
     private var _fullScreenState: PlayerFullScreenState = .normal
     private var _supportedOrientation: PlayerFullScreenOrientation = .auto

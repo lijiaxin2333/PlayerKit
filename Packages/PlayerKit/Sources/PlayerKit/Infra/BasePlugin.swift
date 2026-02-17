@@ -83,6 +83,7 @@ open class SharedBasePlugin: BasePlugin {
     }
 }
 
+/* MARK: 默认实现 */
 extension PluginProtocol {
 
     /** 默认空实现：插件加载完成 */

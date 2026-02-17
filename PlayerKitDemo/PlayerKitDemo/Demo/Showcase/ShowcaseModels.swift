@@ -46,43 +46,61 @@ final class ShowcaseDataSource: @unchecked Sendable {
     private static let hardcodedUserId = "17724881673477143"
     private static let hardcodedToken = "0ne33834d51c9046138e3117ad1bfed1dd"
 
-    private(set) var videos: [ShowcaseVideo] = []
-    private(set) var isLoading = false
-    private(set) var hasMore = true
+    private let lock = NSLock()
+    private var _videos: [ShowcaseVideo] = []
+    private var _isLoading = false
+    private var _hasMore = true
+    private var _token: String?
+    private var _userId: String?
+    private var _cursor: String = ""
+    private var _pageNo: Int = 1
+    private let _pageSize: Int = 10
+    private var _feedIdSet = Set<String>()
 
-    private var token: String?
-    private var userId: String?
-    private var cursor: String = ""
-    private var pageNo: Int = 1
-    private let pageSize: Int = 10
-    private var feedIdSet = Set<String>()
+    var videos: [ShowcaseVideo] {
+        lock.lock(); defer { lock.unlock() }
+        return _videos
+    }
+    var isLoading: Bool {
+        lock.lock(); defer { lock.unlock() }
+        return _isLoading
+    }
+    var hasMore: Bool {
+        lock.lock(); defer { lock.unlock() }
+        return _hasMore
+    }
 
-    func fetchFeed(completion: @escaping ([ShowcaseVideo], Bool) -> Void) {
-        guard !isLoading else { return }
-        isLoading = true
-
-        if token == nil {
-            token = Self.hardcodedToken
-            userId = Self.hardcodedUserId
+    func fetchFeed(completion: @escaping @Sendable ([ShowcaseVideo], Bool) -> Void) {
+        lock.lock()
+        guard !_isLoading else { lock.unlock(); return }
+        _isLoading = true
+        if _token == nil {
+            _token = Self.hardcodedToken
+            _userId = Self.hardcodedUserId
         }
+        lock.unlock()
         requestFeed(completion: completion)
     }
 
-    func loadMore(completion: @escaping ([ShowcaseVideo], Bool) -> Void) {
-        guard !isLoading, hasMore else { return }
-        isLoading = true
+    func loadMore(completion: @escaping @Sendable ([ShowcaseVideo], Bool) -> Void) {
+        lock.lock()
+        guard !_isLoading, _hasMore else { lock.unlock(); return }
+        _isLoading = true
+        lock.unlock()
         requestFeed(completion: completion)
     }
 
     func reset() {
-        videos = []
-        cursor = ""
-        pageNo = 1
-        hasMore = true
-        feedIdSet = []
+        lock.lock()
+        _videos = []
+        _cursor = ""
+        _pageNo = 1
+        _hasMore = true
+        _feedIdSet = []
+        lock.unlock()
     }
 
-    private func guestLogin(completion: @escaping (Bool) -> Void) {
+    private func guestLogin(completion: @escaping @Sendable (Bool) -> Void) {
         guard let url = URL(string: Self.baseURL + Self.guestLoginPath) else {
             completion(false)
             return
@@ -106,16 +124,27 @@ final class ShowcaseDataSource: @unchecked Sendable {
                 completion(false)
                 return
             }
-            self.token = token
-            self.userId = userId
+            self.lock.lock()
+            self._token = token
+            self._userId = userId
+            self.lock.unlock()
             completion(true)
         }.resume()
     }
 
-    private func requestFeed(completion: @escaping ([ShowcaseVideo], Bool) -> Void) {
+    private func requestFeed(completion: @escaping @Sendable ([ShowcaseVideo], Bool) -> Void) {
+        lock.lock()
+        let token = _token
+        let userId = _userId
+        let pageNo = _pageNo
+        let cursor = _cursor
+        lock.unlock()
+
         guard let url = URL(string: Self.baseURL + Self.feedPath),
               let token = token, let userId = userId else {
-            isLoading = false
+            lock.lock()
+            _isLoading = false
+            lock.unlock()
             DispatchQueue.main.async { completion([], false) }
             return
         }
@@ -134,7 +163,7 @@ final class ShowcaseDataSource: @unchecked Sendable {
         let body: [String: Any] = [
             "scene": "StoryPage",
             "pageNo": pageNo,
-            "pageSize": pageSize,
+            "pageSize": _pageSize,
             "cursor": cursor,
             "userFeature": [
                 "labelIds": [] as [String],
@@ -145,20 +174,23 @@ final class ShowcaseDataSource: @unchecked Sendable {
         request.timeoutInterval = 15
 
         URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
-            defer { self?.isLoading = false }
             guard let self = self, let data = data, error == nil else {
+                self?.lock.lock()
+                self?._isLoading = false
+                self?.lock.unlock()
                 DispatchQueue.main.async { completion([], false) }
                 return
             }
             let (parsed, newCursor, more) = Self.parseFeedResponse(data)
 
-            let unique = parsed.filter { self.feedIdSet.insert($0.feedId).inserted }
-
-            self.cursor = newCursor
-            self.hasMore = more
-            if more { self.pageNo += 1 }
-
-            self.videos.append(contentsOf: unique)
+            self.lock.lock()
+            let unique = parsed.filter { self._feedIdSet.insert($0.feedId).inserted }
+            self._cursor = newCursor
+            self._hasMore = more
+            if more { self._pageNo += 1 }
+            self._videos.append(contentsOf: unique)
+            self._isLoading = false
+            self.lock.unlock()
 
             DispatchQueue.main.async {
                 completion(unique, more)

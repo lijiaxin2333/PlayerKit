@@ -1,7 +1,7 @@
 import UIKit
 
 /** UIView 字符串标签关联键 */
-private var stringTagKey: UInt8 = 0
+private nonisolated(unsafe) var stringTagKey: UInt8 = 0
 
 public extension UIView {
 

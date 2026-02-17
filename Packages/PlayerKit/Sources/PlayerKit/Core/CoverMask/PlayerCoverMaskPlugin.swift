@@ -46,7 +46,7 @@ public final class PlayerCoverMaskPlugin: BasePlugin, PlayerCoverMaskService {
     /**
      * 播放引擎核心服务
      */
-    @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
 
     /**
      * 遮罩视图字典，key 为唯一标识

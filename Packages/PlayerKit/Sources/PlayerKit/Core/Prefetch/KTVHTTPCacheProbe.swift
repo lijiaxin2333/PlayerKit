@@ -6,7 +6,7 @@ import KTVHTTPCache
  */
 public enum KTVHTTPCacheProbe {
     /** 代理是否已启动 */
-    private static var started = false
+    private nonisolated(unsafe) static var started = false
 
     /**
      * 如需则启动 KTVHTTPCache 代理

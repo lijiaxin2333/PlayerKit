@@ -128,7 +128,7 @@ public final class PlayerToastPlugin: BasePlugin, PlayerToastService {
     public typealias ConfigModelType = PlayerToastConfigModel
 
     /** 播放引擎服务，用于获取播放器视图 */
-    @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
 
     /** 当前显示的 Toast 视图 */
     private var currentToastView: ToastView?

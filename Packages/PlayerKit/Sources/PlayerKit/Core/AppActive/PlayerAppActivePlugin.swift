@@ -25,7 +25,7 @@ public final class PlayerAppActivePlugin: BasePlugin, PlayerAppActiveService {
     /**
      * 播放引擎核心服务
      */
-    @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
 
     /**
      * 当前应用状态

@@ -12,7 +12,7 @@ public final class PlayerMediaControlPlugin: BasePlugin, PlayerMediaControlServi
     public typealias ConfigModelType = PlayerMediaControlConfigModel
 
     /** 引擎核心服务 */
-    @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
 
     /** 当前音量值 */
     private var _volume: Float = 1.0

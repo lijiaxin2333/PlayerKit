@@ -16,7 +16,7 @@ public final class PlayerQosPlugin: BasePlugin, PlayerQosService {
 
     // MARK: - Properties
 
-    @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
 
     private var _qosMetrics: PlayerQosMetrics = PlayerQosMetrics()
     private var isMonitoring: Bool = false

@@ -22,7 +22,7 @@ public final class PlayerLoopingPlugin: BasePlugin, PlayerLoopingService {
     /**
      * 引擎服务依赖
      */
-    @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
 
     /**
      * 循环模式

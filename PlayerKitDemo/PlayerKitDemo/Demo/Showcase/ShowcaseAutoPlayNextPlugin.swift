@@ -20,8 +20,8 @@ final class ShowcaseAutoPlayNextConfigModel {
 @MainActor
 final class ShowcaseAutoPlayNextPlugin: BasePlugin, ShowcaseAutoPlayNextService {
 
-    @PlayerPlugin(serviceType: ShowcaseFeedDataService.self) private var dataService: ShowcaseFeedDataService?
-    @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
+    @PlayerPlugin private var dataService: ShowcaseFeedDataService?
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
 
     private var _isEnabled: Bool = true
     private var _totalCount: Int = 0

@@ -19,7 +19,7 @@ public final class PlayerStartTimePlugin: BasePlugin, PlayerStartTimeService {
     public var cacheProgressEnabled: Bool = false
 
     /** 播放引擎服务，用于 seek 和获取当前播放信息 */
-    @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engine: PlayerEngineCoreService?
+    @PlayerPlugin private var engine: PlayerEngineCoreService?
 
     public required override init() {
         super.init()

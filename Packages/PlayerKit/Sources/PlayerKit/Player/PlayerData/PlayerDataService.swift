@@ -65,7 +65,7 @@ public struct PlayerDataModel: Sendable {
 }
 
 /** 可发送的任意值包装器，用于在 Sendable 上下文中传递任意类型 */
-public struct AnySendable: Sendable {
+public struct AnySendable: @unchecked Sendable {
     /** 内部存储的值 */
     private let _value: Any
 

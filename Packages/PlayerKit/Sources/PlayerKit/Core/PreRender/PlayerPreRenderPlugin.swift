@@ -18,7 +18,7 @@ public final class PlayerPreRenderPlugin: BasePlugin, PlayerPreRenderService {
     public typealias ConfigModelType = PlayerPreRenderConfigModel
 
     /** 引擎核心服务依赖 */
-    @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
 
     /** 是否启用预渲染 */
     private var _isPreRenderEnabled: Bool = false

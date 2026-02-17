@@ -8,8 +8,8 @@ final class ShowcaseFeedListViewModel: BaseListViewModel {
     private(set) var isLoadingMore = false
     private var lastLoadMoreTriggeredCount: Int = -1
 
-    var onDataLoaded: ((_ isFirstLoad: Bool) -> Void)?
-    var onLoadError: (() -> Void)?
+    var onDataLoaded: (@MainActor (_ isFirstLoad: Bool) -> Void)?
+    var onLoadError: (@MainActor () -> Void)?
 
     required init() {
         super.init()
@@ -20,17 +20,19 @@ final class ShowcaseFeedListViewModel: BaseListViewModel {
         refreshState = .isLoading
         ShowcaseDataSource.shared.reset()
         ShowcaseDataSource.shared.fetchFeed { [weak self] newVideos, _ in
-            guard let self = self else { return }
-            self.refreshState = .isNotLoading
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                self.refreshState = .isNotLoading
 
-            guard !newVideos.isEmpty else {
-                self.onLoadError?()
-                return
-            }
+                guard !newVideos.isEmpty else {
+                    self.onLoadError?()
+                    return
+                }
 
-            self.videos = ShowcaseDataSource.shared.videos
-            self.buildSectionViewModels { [weak self] in
-                self?.onDataLoaded?(true)
+                self.videos = ShowcaseDataSource.shared.videos
+                self.buildSectionViewModels { [weak self] in
+                    self?.onDataLoaded?(true)
+                }
             }
         }
     }
@@ -47,19 +49,21 @@ final class ShowcaseFeedListViewModel: BaseListViewModel {
         loadMoreState = .isLoading
 
         ShowcaseDataSource.shared.loadMore { [weak self] newVideos, _ in
-            guard let self = self else { return }
-            self.isLoadingMore = false
-            self.loadMoreState = .isNotLoading
-            guard !newVideos.isEmpty else { return }
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                self.isLoadingMore = false
+                self.loadMoreState = .isNotLoading
+                guard !newVideos.isEmpty else { return }
 
-            self.videos = ShowcaseDataSource.shared.videos
-            let startIndex = self.videos.count - newVideos.count
-            let newViewModels = newVideos.enumerated().compactMap { offset, video -> BaseListSectionViewModel? in
-                let data = ShowcaseFeedSectionData(video: video, index: startIndex + offset)
-                return self.createSectionViewModel(forData: data)
-            }
-            self.appendSectionViewModels(newViewModels, animated: false) { [weak self] _ in
-                self?.onDataLoaded?(false)
+                self.videos = ShowcaseDataSource.shared.videos
+                let startIndex = self.videos.count - newVideos.count
+                let newViewModels = newVideos.enumerated().compactMap { offset, video -> BaseListSectionViewModel? in
+                    let data = ShowcaseFeedSectionData(video: video, index: startIndex + offset)
+                    return self.createSectionViewModel(forData: data)
+                }
+                self.appendSectionViewModels(newViewModels, animated: false) { [weak self] _ in
+                    self?.onDataLoaded?(false)
+                }
             }
         }
     }

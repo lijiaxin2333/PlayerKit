@@ -22,7 +22,7 @@ public final class PlayerSpeedPlugin: BasePlugin, PlayerSpeedService {
     /**
      * 引擎服务依赖
      */
-    @PlayerPlugin(serviceType: PlayerEngineCoreService.self) private var engineService: PlayerEngineCoreService?
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
 
     /**
      * 当前倍速

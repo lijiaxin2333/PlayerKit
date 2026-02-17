@@ -15,8 +15,6 @@ public final class Context: PublicContext, ExtendContext {
         let pluginClass: AnyClass
         /** 服务协议类型 */
         let protocolType: Any.Type
-        /** 服务标识键 */
-        let key: String
         /** 插件创建选项 */
         var options: PluginCreateOption
         /** 插件创建类型 */
@@ -24,19 +22,18 @@ public final class Context: PublicContext, ExtendContext {
         /** 配置模型 */
         var configModel: Any?
 
+        /** 服务标识键，从协议类型自动推断 */
+        var key: String {
+            _typeName(protocolType, qualified: false)
+        }
+
         /** 初始化服务条目 */
         init(pluginClass: AnyClass, protocolType: Any.Type, options: PluginCreateOption, createType: PluginCreateType, configModel: Any?) {
             self.pluginClass = pluginClass
             self.protocolType = protocolType
-            self.key = _typeName(protocolType, qualified: false)
             self.options = options
             self.createType = createType
             self.configModel = configModel
-        }
-
-        /** 返回条目的唯一标识符 */
-        func identifier() -> String {
-            return key
         }
     }
 
@@ -352,7 +349,7 @@ public final class Context: PublicContext, ExtendContext {
         entry.configModel = configModel
         services[key] = entry
 
-        if let plugin = pluginInstances[entry.identifier()] {
+        if let plugin = pluginInstances[entry.key] {
             plugin.config(configModel)
         } else if entry.createType.contains(.whenFirstConfig) {
             _createPluginInstance(for: entry)
@@ -394,7 +391,7 @@ public final class Context: PublicContext, ExtendContext {
             configModel: nil
         )
 
-        let entryKey = entry.identifier()
+        let entryKey = entry.key
         services[entryKey] = entry
 
         if entry.createType.contains(.whenRegistered) {
@@ -630,7 +627,7 @@ public final class Context: PublicContext, ExtendContext {
 
     /** 获取或按需创建插件实例 */
     private func _getOrCreatePlugin(for entry: ServiceEntry) -> BasePlugin? {
-        let key = entry.identifier()
+        let key = entry.key
 
         if let plugin = pluginInstances[key] {
             return plugin
@@ -646,7 +643,7 @@ public final class Context: PublicContext, ExtendContext {
     /** 创建插件实例，执行加载回调并发送服务加载事件 */
     @discardableResult
     private func _createPluginInstance(for entry: ServiceEntry) -> BasePlugin? {
-        let key = entry.identifier()
+        let key = entry.key
 
         if let plugin = pluginInstances[key] {
             return plugin
@@ -686,7 +683,7 @@ public final class Context: PublicContext, ExtendContext {
 
     /** 移除插件实例并触发卸载回调 */
     private func _removePluginInstance(for entry: ServiceEntry) {
-        let key = entry.identifier()
+        let key = entry.key
         if let plugin = pluginInstances.removeValue(forKey: key) {
             plugin.pluginWillUnload(self)
         }
@@ -705,7 +702,7 @@ public final class Context: PublicContext, ExtendContext {
         }
 
         for (key, entry) in services {
-            if pluginInstances[entry.identifier()] != nil {
+            if pluginInstances[entry.key] != nil {
                 let serviceEvent = "ServiceDidLoadEvent_\(key)"
                 if shouldIterate {
                     toContext._postForReissue(serviceEvent, object: nil)

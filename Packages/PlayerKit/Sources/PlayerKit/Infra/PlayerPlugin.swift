@@ -29,16 +29,6 @@ extension BasePlugin {
     }
 }
 
-// MARK: - 便捷方法扩展
-
-extension BasePlugin {
-
-    /** 遍历属性包装器并注入 Context，实现自动依赖注入 */
-    internal func setupPropertyWrappers() {
-        // 使用 Macro 后不再需要反射注入，此方法保留为空以保持兼容性
-    }
-}
-
 /// 插件依赖注入宏，自动从 Context 解析服务实例
 ///
 /// 使用示例：

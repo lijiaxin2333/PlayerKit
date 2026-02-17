@@ -40,9 +40,8 @@ open class BasePlugin: NSObject, PluginProtocol {
         self._configModel = configModel
     }
 
-    /** 插件加载完成回调，初始化属性包装器的依赖注入 */
+    /** 插件加载完成回调 */
     open func pluginDidLoad(_ context: ContextProtocol) {
-        setupPropertyWrappers()
     }
 
     /** 插件即将卸载回调，子类可重写以执行清理操作 */

@@ -107,6 +107,8 @@ public protocol PlayerDataService: PluginService {
 
     /** 清除所有数据 */
     func clearData()
+
+    func updatePlayerInfo()
 }
 
 /** 数据模型即将更新事件 */

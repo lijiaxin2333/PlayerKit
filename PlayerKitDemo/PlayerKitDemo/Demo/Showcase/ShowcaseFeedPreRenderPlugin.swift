@@ -89,7 +89,7 @@ final class ShowcaseFeedPreRenderPlugin: BasePlugin, ShowcaseFeedPreRenderServic
         guard let preRenderedPlayer = plugin.preRenderManager.consumePreRendered(identifier: identifier) else { return }
         let config = FeedPlayerConfiguration()
         config.autoPlay = false
-        config.looping = true
+        config.looping = false
         let feedPlayer = FeedPlayer(adoptingPlayer: preRenderedPlayer, configuration: config)
         feedPlayer.bindPool(plugin.enginePool, identifier: "showcase")
         plugin.restorePlayer(feedPlayer, at: index)

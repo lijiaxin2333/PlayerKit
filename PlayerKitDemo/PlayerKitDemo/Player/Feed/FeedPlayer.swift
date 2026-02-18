@@ -111,11 +111,6 @@ public final class FeedPlayer: ContextHolder, TypedPlayerProtocol {
 
     // MARK: - Public API
 
-    public func setVideoURL(_ url: URL) {
-        dataService?.setVideoURL(url)
-        engineService?.setURL(url)
-    }
-
     public func play() {
         engineService?.play()
     }

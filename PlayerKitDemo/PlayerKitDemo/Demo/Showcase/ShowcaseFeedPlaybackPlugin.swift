@@ -316,7 +316,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
 
     func playVideo(at index: Int, in collectionView: UICollectionView, videos: [ShowcaseVideo]) {
         guard index >= 0, index < videos.count else { return }
-        guard let url = videos[index].url else { return }
+        guard videos[index].url != nil else { return }
         let video = videos[index]
 
         PLog.scrollPlay(index)
@@ -350,10 +350,8 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
                 let feedPlayer = self.obtainTypedPlayer(for: index, videos: videos)
                 targetCell?.addTypedPlayerIfNeeded(feedPlayer)
             },
-            attach: { [weak self] in
-                guard let self = self else { return }
+            attach: {
                 targetCell?.attachPlayerView()
-                self.configureEngine(for: targetCell, fallbackURL: url)
             },
             checkDataValid: {
                 return targetCell?.checkDataValid(video: video) ?? false
@@ -382,40 +380,6 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         typedPlayers[index] = player
     }
 
-    private func configureEngine(for cell: ShowcaseFeedCell?, fallbackURL: URL) {
-        guard let feedPlayer = cell?.feedPlayer else { return }
-
-        let effectiveURL: URL
-        if let playerDataURL = feedPlayer.dataService?.getVideoURL() {
-            effectiveURL = playerDataURL
-        } else {
-            effectiveURL = fallbackURL
-        }
-
-        let needsSetURL = feedPlayer.engineService?.currentURL != effectiveURL
-        PLog.play(cell?.videoIndex ?? -1, needsSetURL: needsSetURL, isReadyForDisplay: feedPlayer.engineService?.isReadyForDisplay ?? false, currentURL: effectiveURL.absoluteString, playerViewFrame: feedPlayer.engineService?.playerView?.frame.debugDescription ?? "nil", playerViewInHierarchy: feedPlayer.engineService?.playerView?.superview != nil)
-
-        if needsSetURL {
-            feedPlayer.setVideoURL(effectiveURL)
-        }
-        feedPlayer.engineService?.isLooping = false
-        feedPlayer.engineService?.volume = 1.0
-
-        if !needsSetURL && isNearEnd(feedPlayer) {
-            feedPlayer.engineService?.avPlayer?.seek(to: .zero, toleranceBefore: .zero, toleranceAfter: .zero, completionHandler: { _ in })
-        }
-    }
-
-    private func isNearEnd(_ feedPlayer: FeedPlayer) -> Bool {
-        let state = feedPlayer.engineService?.playbackState ?? .stopped
-        if state == .stopped { return true }
-        guard let duration = feedPlayer.engineService?.avPlayer?.currentItem?.duration,
-              duration.isNumeric, CMTimeGetSeconds(duration) > 0 else { return false }
-        let current = feedPlayer.engineService?.currentTime ?? 0
-        let total = CMTimeGetSeconds(duration)
-        return total - current < 0.5
-    }
-
     // MARK: - Obtain
 
     private func obtainTypedPlayer(for index: Int, videos: [ShowcaseVideo]) -> FeedPlayer {
@@ -428,7 +392,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         if let preRenderedPlayer = preRenderManager.consumePreRendered(identifier: preRenderId) {
             let config = FeedPlayerConfiguration()
             config.autoPlay = false
-            config.looping = true
+            config.looping = false
             let feedPlayer = FeedPlayer(adoptingPlayer: preRenderedPlayer, configuration: config)
             feedPlayer.bindPool(enginePool, identifier: poolIdentifier)
             typedPlayers[index] = feedPlayer
@@ -439,7 +403,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         if let takenPlayer = preRenderManager.takePlayer(identifier: preRenderId) {
             let config = FeedPlayerConfiguration()
             config.autoPlay = false
-            config.looping = true
+            config.looping = false
             let feedPlayer = FeedPlayer(adoptingPlayer: takenPlayer, configuration: config)
             feedPlayer.bindPool(enginePool, identifier: poolIdentifier)
             typedPlayers[index] = feedPlayer
@@ -449,7 +413,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
 
         let config = FeedPlayerConfiguration()
         config.autoPlay = false
-        config.looping = true
+        config.looping = false
         let feedPlayer = FeedPlayer(configuration: config)
         feedPlayer.bindPool(enginePool, identifier: poolIdentifier)
         feedPlayer.acquireEngine()

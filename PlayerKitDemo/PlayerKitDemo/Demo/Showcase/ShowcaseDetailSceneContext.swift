@@ -31,9 +31,7 @@ final class ShowcaseDetailSceneContext: ContextHolder {
     private let regProvider = ShowcaseDetailRegProvider()
     private weak var _feedPlayer: FeedPlayer?
 
-    private static let detailBlacklist: Set<String> = [
-        _typeName(PlayerSpeedPanelService.self, qualified: false)
-    ]
+    private static let detailBlacklist: Set<String> = [String(reflecting: PlayerSpeedPanelService.self)]
 
     init() {
         let ctx = Context(name: "ShowcaseDetailSceneContext")

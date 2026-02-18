@@ -293,13 +293,13 @@ public final class PluginRegEntryInfo {
     public init(pluginClass: AnyClass, serviceType: Any.Type?, options: PluginCreateOption = []) {
         self.pluginClass = pluginClass
         self.serviceType = serviceType
-        self.serviceKey = serviceType.map { _typeName($0, qualified: false) }
+        self.serviceKey = serviceType.map { String(reflecting: $0) }
         self.options = options
     }
 
     /** 返回注册条目的唯一标识符 */
     public var identifier: String {
-        serviceKey ?? NSStringFromClass(pluginClass)
+        serviceKey ?? String(reflecting: pluginClass)
     }
 }
 

@@ -20,7 +20,7 @@ public final class Context: PublicContext, ExtendContext {
         var createType: PluginCreateType
         var configModel: Any?
 
-        var key: String { _typeName(serviceType, qualified: false) }
+        var key: String { String(reflecting: serviceType) }
     }
 
     // MARK: - Properties
@@ -83,8 +83,16 @@ public final class Context: PublicContext, ExtendContext {
 
     // MARK: - Type Key Helper
 
+    /// 统一的类型 Key 生成，使用公开 API String(reflecting:)
+    /// 输出格式: "PlayerKit.PlayerSpeedService"
     private static func typeKey(_ type: Any.Type) -> String {
-        _typeName(type, qualified: false)
+        String(reflecting: type)
+    }
+
+    /// 统一的类 Key 生成，使用公开 API String(reflecting:)
+    /// 输出格式: "PlayerKit.PlayerSpeedPlugin"
+    private static func classKey(_ cls: AnyClass) -> String {
+        String(reflecting: cls)
     }
 
     // MARK: - SubContext
@@ -355,7 +363,8 @@ public final class Context: PublicContext, ExtendContext {
                 removePlugin(for: entry)
                 services.removeValue(forKey: key)
             }
-            services.filter { NSStringFromClass($0.value.pluginClass) == key }.forEach {
+            // 同时检查类名匹配
+            services.filter { Self.classKey($0.value.pluginClass) == key }.forEach {
                 removePlugin(for: $0.value)
                 services.removeValue(forKey: $0.key)
             }
@@ -430,8 +439,8 @@ public final class Context: PublicContext, ExtendContext {
         for group in regSet.allCreateGroups() {
             batchRegister(createType: group.createType, events: group.createEvents) { _ in
                 for entry in regSet.entries(for: group) {
-                    let key = entry.serviceKey ?? NSStringFromClass(entry.pluginClass)
-                    let clsName = NSStringFromClass(entry.pluginClass)
+                    let key = entry.serviceKey ?? Self.classKey(entry.pluginClass)
+                    let clsName = Self.classKey(entry.pluginClass)
 
                     guard !blacklist.contains(key), !blacklist.contains(clsName) else { continue }
 
@@ -450,7 +459,7 @@ public final class Context: PublicContext, ExtendContext {
         let key = Self.typeKey(serviceType)
         let effectiveBL = blacklist ?? lastBlacklist ?? self.blacklist
 
-        if let bl = effectiveBL, bl.contains(key) || bl.contains(NSStringFromClass(cls)) { return }
+        if let bl = effectiveBL, bl.contains(key) || bl.contains(Self.classKey(cls)) { return }
 
         var createType: PluginCreateType = options.contains(.whenRegistered) || options.isEmpty ? [.whenRegistered] : []
         createType.formUnion(batchCreateType)

@@ -93,11 +93,9 @@ open class BaseListSectionViewModel: NSObject,
     }
 
     /// 返回对应的 SectionController 类型
-    /// 默认按照类名约定自动匹配：XxxSectionViewModel -> XxxSectionController
+    /// 子类必须重写此方法返回对应的 Controller 类型
     open class func sectionControllerClass() -> BaseListSectionController.Type? {
-        let vmClassName = NSStringFromClass(self)
-        let scClassName = vmClassName.replacingOccurrences(of: "SectionViewModel", with: "SectionController")
-        return NSClassFromString(scClassName) as? BaseListSectionController.Type
+        nil
     }
 
     // MARK: - Model Operations

@@ -90,22 +90,8 @@ public protocol PlayerDataService: PluginService {
     /** 数据是否已准备就绪 */
     var isDataReady: Bool { get }
 
-    /** 更新完整数据模型 */
     func updateDataModel(_ model: PlayerDataModel)
 
-    /** 设置视频 URL */
-    func setVideoURL(_ url: URL?)
-
-    /** 设置视频 ID */
-    func setVid(_ vid: String?)
-
-    /** 获取视频 URL */
-    func getVideoURL() -> URL?
-
-    /** 获取视频尺寸 */
-    func getVideoSize() -> (width: Int, height: Int)
-
-    /** 清除所有数据 */
     func clearData()
 
     func updatePlayerInfo()

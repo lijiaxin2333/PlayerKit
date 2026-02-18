@@ -23,6 +23,7 @@ public final class PlayerPlaybackControlPlugin: BasePlugin, PlayerPlaybackContro
      * 引擎服务依赖
      */
     @PlayerPlugin private var engineService: PlayerEngineCoreService?
+    @PlayerPlugin private var dataService: PlayerDataService?
 
 
     // MARK: - PlayerPlaybackControlService
@@ -84,6 +85,7 @@ public final class PlayerPlaybackControlPlugin: BasePlugin, PlayerPlaybackContro
      * 播放
      */
     public func play() {
+        dataService?.updatePlayerInfo()
         engineService?.play()
     }
 

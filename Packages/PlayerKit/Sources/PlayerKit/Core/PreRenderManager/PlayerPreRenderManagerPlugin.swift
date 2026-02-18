@@ -103,9 +103,14 @@ public final class PlayerPreRenderManagerPlugin: BasePlugin, PlayerPreRenderMana
 
         entries[identifier] = entry
 
-        player.engineService?.setURL(url)
-        player.engineService?.volume = 0
-        player.engineService?.isLooping = true
+        let engineConfig = PlayerEngineCoreConfigModel()
+        engineConfig.isLooping = true
+        engineConfig.initialVolume = 0
+        player.context.configPlugin(serviceProtocol: PlayerEngineCoreService.self, withModel: engineConfig)
+
+        let dataConfig = PlayerDataConfigModel()
+        dataConfig.initialDataModel = PlayerDataModel(videoURL: url)
+        player.dataService?.config(dataConfig)
 
         let entryCreated = entry.createTime
         PLog.preRenderStart(identifier, activeCount: entries.count)

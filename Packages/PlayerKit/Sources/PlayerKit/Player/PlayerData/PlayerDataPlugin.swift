@@ -65,25 +65,6 @@ public final class PlayerDataPlugin: BasePlugin, PlayerDataService {
         context?.post(PlayerDataModelChangedEvent, object: model, sender: self)
     }
 
-    public func setVideoURL(_ url: URL?) {
-        _dataModel.videoURL = url
-        updatePlayerInfo()
-        context?.post(PlayerDataModelChangedEvent, object: _dataModel, sender: self)
-    }
-
-    public func setVid(_ vid: String?) {
-        _dataModel.vid = vid
-        context?.post(PlayerDataModelChangedEvent, object: _dataModel, sender: self)
-    }
-
-    public func getVideoURL() -> URL? {
-        return _dataModel.videoURL
-    }
-
-    public func getVideoSize() -> (width: Int, height: Int) {
-        return (_dataModel.videoWidth, _dataModel.videoHeight)
-    }
-
     public func clearData() {
         _dataModel = PlayerDataModel()
         _isDataReady = false

@@ -46,6 +46,10 @@ final class ShowcaseFeedListViewController: BaseListViewController<ShowcaseFeedL
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         navigationController?.setNavigationBarHidden(false, animated: animated)
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
         if isMovingFromParent || isBeingDismissed {
             cleanupOnExit()
         }

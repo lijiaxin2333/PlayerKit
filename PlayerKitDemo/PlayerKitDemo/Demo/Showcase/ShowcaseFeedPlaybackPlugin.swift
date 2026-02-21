@@ -131,12 +131,16 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
     // MARK: - ListProtocol Lifecycle
 
     func viewDidAppear(byViewController viewController: UIViewController) {
-        autoPlayIfNeeded()
+        if currentPlayingIndex >= 0 {
+            resumeCurrentPlayback()
+        } else {
+            autoPlayIfNeeded()
+        }
     }
 
     func viewWillDisappear(byViewController viewController: UIViewController) {
         if transferringPlayer == nil {
-            pauseCurrent()
+            pauseCurrentPlayback()
         }
     }
 
@@ -345,6 +349,14 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
     func pauseCurrent() {
         guard currentPlayingIndex >= 0 else { return }
         stopCell(at: currentPlayingIndex)
+    }
+
+    private func pauseCurrentPlayback() {
+        currentPlayingCell?.feedPlayer?.pause()
+    }
+
+    private func resumeCurrentPlayback() {
+        currentPlayingCell?.feedPlayer?.engineService?.play()
     }
 
     // MARK: - PreRender Adjacent

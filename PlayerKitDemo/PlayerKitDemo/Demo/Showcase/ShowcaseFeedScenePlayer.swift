@@ -3,7 +3,6 @@ import PlayerKit
 
 public extension Event {
     static let showcaseFeedDataDidUpdate: Event = "ShowcaseFeedDataDidUpdate"
-    static let showcaseFeedDataWillUpdate: Event = "ShowcaseFeedDataWillUpdate"
     static let showcaseFeedCellViewDidSet: Event = "ShowcaseFeedCellViewDidSet"
     static let showcaseFeedCellViewDidSetSticky: Event = "ShowcaseFeedCellViewDidSetSticky"
     static let cellPrepareForReuse: Event = "CellPrepareForReuse"
@@ -50,6 +49,8 @@ final class ShowcaseFeedScenePlayer: ScenePlayerProtocol {
         self.context = ctx
         ctx.holder = self
         ctx.addRegProvider(regProvider)
+        let typedPlayer = createTypedPlayer(prerenderKey: nil)
+        addTypedPlayer(typedPlayer)
     }
 
     // MARK: - PlayerScenePlayerProtocol

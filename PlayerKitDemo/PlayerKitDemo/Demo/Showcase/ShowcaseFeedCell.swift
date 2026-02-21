@@ -1,6 +1,4 @@
 import UIKit
-import AVFoundation
-import IGListKit
 import PlayerKit
 import ListKit
 
@@ -15,15 +13,15 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
     // MARK: - ListCellProtocol
 
     private var _cellViewModel: ShowcaseFeedCellViewModel?
+    private var hasAppear = false
+    var isTransferringPlayer = false
 
     /// 绑定 CellViewModel
     func bindCellViewModel(_ cellViewModel: ListCellViewModelProtocol) {
         guard let vm = cellViewModel as? ShowcaseFeedCellViewModel else { return }
         _cellViewModel = vm
 
-        // 通知播放器层更新数据
-        let model = ShowcaseFeedDataConfigModel(video: vm.video, index: vm.videoIndex)
-        scenePlayer.post(.showcaseFeedDataWillUpdate, object: model, sender: self)
+        configSceneData(video: vm.video, index: vm.videoIndex)
     }
 
     /// 获取当前绑定的 CellViewModel
@@ -33,12 +31,18 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
 
     /// Cell 即将显示
     func cellWillDisplay(duplicateReload: Bool) {
+        if hasAppear { return }
+        hasAppear = true
         scenePlayer.post(.cellWillDisplay, sender: self)
     }
 
     /// Cell 已移出屏幕
     func cellDidEndDisplaying(duplicateReload: Bool) {
+        if !hasAppear { return }
+        hasAppear = false
         scenePlayer.post(.cellDidEndDisplaying, sender: self)
+        if isTransferringPlayer { return }
+        stopAndDetachPlayer()
     }
 
     /// VC viewWillAppear
@@ -59,7 +63,6 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
     private let _playerContainer = UIView()
 
     var feedPlayer: FeedPlayer? { scenePlayer.feedPlayer }
-    var playerContainerView: UIView? { _playerContainer }
 
     /// 当前视频索引（兼容旧代码）
     var videoIndex: Int {
@@ -96,6 +99,63 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         scenePlayer.addTypedPlayer(typedPlayer)
     }
 
+    func startPlay(
+        isAutoPlay: Bool,
+        video: ShowcaseVideo,
+        index: Int,
+        playbackPlugin: ShowcaseFeedPlaybackPluginProtocol
+    ) {
+        guard let processService = scenePlayer.resolveService(PlayerScenePlayerProcessService.self) else { return }
+        processService.execPlay(
+            isAutoPlay: isAutoPlay,
+            prepare: nil,
+            createIfNeeded: { [weak self] in
+                guard let self = self else { return }
+                self.prepareTypedPlayerIfNeeded(video: video, index: index, playbackPlugin: playbackPlugin)
+            },
+            attach: { [weak self] in
+                self?.attachPlayerView()
+            },
+            checkDataValid: { [weak self] in
+                self?.checkDataValid(video: video) ?? false
+            },
+            setDataIfNeeded: { [weak self] in
+                self?.setDataIfNeeded(video: video, index: index)
+            }
+        )
+    }
+
+    private func prepareTypedPlayerIfNeeded(
+        video: ShowcaseVideo,
+        index: Int,
+        playbackPlugin: ShowcaseFeedPlaybackPluginProtocol
+    ) {
+        if !scenePlayer.hasTypedPlayer() {
+            let typedPlayer = scenePlayer.createTypedPlayer(prerenderKey: video.feedId)
+            scenePlayer.addTypedPlayer(typedPlayer)
+        }
+
+        guard let feedPlayer = scenePlayer.feedPlayer else { return }
+        if feedPlayer.engineService != nil { return }
+
+        let identifier = "showcase_\(index)"
+        if let preRenderedPlayer = playbackPlugin.preRenderManager.consumePreRendered(identifier: identifier),
+           preRenderedPlayer.engineService?.currentURL == video.url {
+            let config = FeedPlayerConfiguration()
+            config.autoPlay = false
+            config.looping = false
+            config.prerenderKey = video.feedId
+            let adoptedPlayer = FeedPlayer(adoptingPlayer: preRenderedPlayer, configuration: config)
+            adoptedPlayer.bindPool(playbackPlugin.enginePool, identifier: "showcase")
+            scenePlayer.addTypedPlayer(adoptedPlayer)
+            return
+        }
+
+        playbackPlugin.preRenderManager.cancelPreRender(identifier: identifier)
+        feedPlayer.bindPool(playbackPlugin.enginePool, identifier: "showcase")
+        _ = feedPlayer.acquireEngine()
+    }
+
     func attachPlayerView() {
         guard let feedPlayer = scenePlayer.feedPlayer else { return }
         guard let pv = feedPlayer.playerView else { return }
@@ -120,6 +180,31 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         scenePlayer.removeTypedPlayer()
     }
 
+    func stopAndDetachPlayer() {
+        guard let player = scenePlayer.feedPlayer else { return }
+        player.pause()
+        player.playbackControlService?.stop()
+        player.recycleEngine()
+        _playerContainer.subviews.forEach { $0.removeFromSuperview() }
+    }
+
+    func stopAndRemovePlayer() {
+        stopAndDetachPlayer()
+        scenePlayer.removeTypedPlayer()
+    }
+
+    func canDetachPlayer() -> Bool {
+        guard let feedPlayer = feedPlayer else { return false }
+        guard feedPlayer.engineService != nil else { return false }
+        return scenePlayer.resolveService(PlayerPlaybackControlService.self)?.isPlaying == true
+    }
+
+    func attachTransferredPlayer(_ player: FeedPlayer) {
+        isTransferringPlayer = false
+        addTypedPlayerIfNeeded(player)
+        attachPlayerView()
+    }
+
     // MARK: - 兼容方法（保持原有调用方式）
 
     /// 检查数据是否有效
@@ -131,24 +216,27 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
     /// 设置数据（如果需要）
     func setDataIfNeeded(video: ShowcaseVideo, index: Int) {
         guard let vm = _cellViewModel else { return }
-        // 如果数据相同，不需要更新
         guard vm.video.feedId != video.feedId else { return }
-        // 更新 ViewModel
         vm.update(video: video, index: index)
-        // 通知播放器层
+        configSceneData(video: video, index: index)
+    }
+
+    private func configSceneData(video: ShowcaseVideo, index: Int) {
         let model = ShowcaseFeedDataConfigModel(video: video, index: index)
-        scenePlayer.post(.showcaseFeedDataWillUpdate, object: model, sender: self)
+        scenePlayer.context.configPlugin(serviceProtocol: ShowcaseFeedDataService.self, withModel: model)
     }
 
     // MARK: - Reuse
 
     override func prepareForReuse() {
         super.prepareForReuse()
+        hasAppear = false
+        isTransferringPlayer = false
         if let index = _cellViewModel?.videoIndex {
             PLog.prepareForReuse(index)
         }
         scenePlayer.post(.cellPrepareForReuse, sender: self)
-        detachPlayer()
+        stopAndRemovePlayer()
         _cellViewModel = nil
     }
 }

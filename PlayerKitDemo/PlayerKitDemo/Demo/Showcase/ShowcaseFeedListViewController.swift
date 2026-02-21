@@ -55,7 +55,7 @@ final class ShowcaseFeedListViewController: BaseListViewController<ShowcaseFeedL
         if let cv = baseCollectionView {
             for cell in cv.visibleCells {
                 if let feedCell = cell as? ShowcaseFeedCell {
-                    feedCell.detachPlayer()
+                    feedCell.stopAndRemovePlayer()
                 }
             }
         }

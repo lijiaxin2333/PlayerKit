@@ -62,9 +62,6 @@ final class ShowcaseFeedPreRenderPlugin: BasePlugin, ShowcaseFeedPreRenderServic
         guard let video = dataService?.video, let url = video.url else { return }
         guard let index = dataService?.videoIndex, index >= 0 else { return }
 
-        guard sceneContext?.feedPlayer == nil else { return }
-        guard plugin.typedPlayers[index] == nil else { return }
-
         let identifier = "showcase_\(index)"
         let state = plugin.preRenderManager.state(for: identifier)
         guard state == .idle || state == .cancelled || state == .expired || state == .failed else { return }
@@ -76,14 +73,7 @@ final class ShowcaseFeedPreRenderPlugin: BasePlugin, ShowcaseFeedPreRenderServic
         guard let plugin = playbackPlugin else { return }
         guard let index = dataService?.videoIndex, index >= 0 else { return }
         guard let sceneCtx = sceneContext else { return }
-        guard sceneCtx.feedPlayer == nil else { return }
-
-        if let existing = plugin.typedPlayers[index] {
-            guard existing.playerView != nil else { return }
-            sceneCtx.addTypedPlayer(existing)
-            attachPlayerViewToContainer(existing)
-            return
-        }
+        guard sceneCtx.feedPlayer?.engineService == nil else { return }
 
         let identifier = "showcase_\(index)"
         guard let preRenderedPlayer = plugin.preRenderManager.consumePreRendered(identifier: identifier) else { return }
@@ -92,7 +82,6 @@ final class ShowcaseFeedPreRenderPlugin: BasePlugin, ShowcaseFeedPreRenderServic
         config.looping = false
         let feedPlayer = FeedPlayer(adoptingPlayer: preRenderedPlayer, configuration: config)
         feedPlayer.bindPool(plugin.enginePool, identifier: "showcase")
-        plugin.restorePlayer(feedPlayer, at: index)
         sceneCtx.addTypedPlayer(feedPlayer)
         attachPlayerViewToContainer(feedPlayer)
     }

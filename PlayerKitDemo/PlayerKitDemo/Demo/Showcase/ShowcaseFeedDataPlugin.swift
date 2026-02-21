@@ -32,25 +32,10 @@ final class ShowcaseFeedDataPlugin: BasePlugin, ShowcaseFeedDataService {
         super.init()
     }
 
-    override func pluginDidLoad(_ context: ContextProtocol) {
-        super.pluginDidLoad(context)
-        context.add(self, event: .showcaseFeedDataWillUpdate) { [weak self] object, _ in
-            guard let self = self, let model = object as? ShowcaseFeedDataConfigModel else { return }
-            self._video = model.video
-            self._videoIndex = model.index
-            self.context?.post(.showcaseFeedDataDidUpdate, object: model.video, sender: self)
-            self.syncToPlayerData()
-        }
-    }
-
     override func config(_ configModel: Any?) {
         super.config(configModel)
         guard let model = configModel as? ShowcaseFeedDataConfigModel else { return }
-        context?.post(.showcaseFeedDataWillUpdate, object: model, sender: self)
-        _video = model.video
-        _videoIndex = model.index
-        context?.post(.showcaseFeedDataDidUpdate, object: model.video, sender: self)
-        syncToPlayerData()
+        applyModel(model)
     }
 
     func clearData() {
@@ -74,5 +59,12 @@ final class ShowcaseFeedDataPlugin: BasePlugin, ShowcaseFeedDataService {
         config.initialDataModel = dataModel
 
         playerDataService.config(config)
+    }
+
+    private func applyModel(_ model: ShowcaseFeedDataConfigModel) {
+        _video = model.video
+        _videoIndex = model.index
+        context?.post(.showcaseFeedDataDidUpdate, object: model.video, sender: self)
+        syncToPlayerData()
     }
 }

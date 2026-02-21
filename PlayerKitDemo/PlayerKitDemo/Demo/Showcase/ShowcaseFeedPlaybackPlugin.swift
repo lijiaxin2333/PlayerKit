@@ -1,5 +1,4 @@
 import UIKit
-import AVFoundation
 import PlayerKit
 import ListKit
 
@@ -15,15 +14,11 @@ final class ShowcasePlaybackRegProvider: RegisterProvider {
 @MainActor
 protocol ShowcaseFeedPlaybackPluginProtocol: AnyObject {
     var currentPlayingIndex: Int { get }
-    var typedPlayers: [Int: FeedPlayer] { get }
     var transferringPlayer: FeedPlayer? { get set }
     var enginePool: PlayerEnginePoolService { get }
     var preRenderManager: PlayerPreRenderManagerService { get }
     func playVideo(at index: Int, in collectionView: UICollectionView, videos: [ShowcaseVideo])
     func pauseCurrent()
-    func removePlayer(at index: Int)
-    func restorePlayer(_ player: FeedPlayer, at index: Int)
-    func evictDistantPlayers(in collectionView: UICollectionView)
     func preRenderAdjacent(currentIndex: Int, videos: [ShowcaseVideo])
     func updatePrefetchWindow(videos: [ShowcaseVideo], focusIndex: Int)
 }
@@ -62,15 +57,13 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
     weak var listContext: ListContext?
 
     private(set) var currentPlayingIndex: Int = -1
-    private(set) var typedPlayers: [Int: FeedPlayer] = [:]
+    private weak var currentPlayingCell: ShowcaseFeedCell?
     var transferringPlayer: FeedPlayer?
 
     let enginePool: PlayerEnginePoolService
     let preRenderManager: PlayerPreRenderManagerService
     let prefetchManager: PlayerPrefetchService
 
-    private let keepDistance = 3
-    private let poolIdentifier = "showcase"
     private var pendingScrollTasks: [() -> Void] = []
     private var cellEventObserverIndex: Int = -1
     private var autoPlayRetryCount = 0
@@ -124,13 +117,9 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
     func listContextDidLoad() {}
 
     func cleanup() {
-        for (_, player) in typedPlayers {
-            player.destroyPlayer()
-            player.cleanup()
-        }
-        typedPlayers.removeAll()
         transferringPlayer = nil
         currentPlayingIndex = -1
+        currentPlayingCell = nil
         pendingScrollTasks.removeAll()
         autoPlayRetryCount = 0
 
@@ -211,7 +200,6 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         }
         listenCellEvents(at: clampedPage, in: cv)
 
-        evictDistantPlayers(in: cv)
         preRenderAdjacent(currentIndex: clampedPage, videos: videos)
         updatePrefetchWindow(videos: videos, focusIndex: clampedPage)
 
@@ -254,9 +242,10 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         guard let sc = ctx.sectionController(forSectionViewModel: sectionVMs[index]) else { return }
         guard let cell = sc.cell(atIndex: 0) as? ShowcaseFeedCell else { return }
         guard let feedPlayer = cell.feedPlayer else { return }
+        guard cell.canDetachPlayer() else { return }
 
+        cell.isTransferringPlayer = true
         cell.detachPlayer()
-        removePlayer(at: index)
         transferringPlayer = feedPlayer
         let transferIndex = index
 
@@ -267,7 +256,6 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         detailVC.allVideos = videos
         detailVC.onWillDismiss = { [weak self] in
             guard let self = self, let ctx = self.listContext else { return }
-            self.restorePlayer(feedPlayer, at: transferIndex)
             self.transferringPlayer = nil
 
             guard let vm = ctx.listViewModel() else { return }
@@ -275,8 +263,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
             if transferIndex < sectionVMs.count {
                 if let sc = ctx.sectionController(forSectionViewModel: sectionVMs[transferIndex]),
                    let feedCell = sc.cell(atIndex: 0) as? ShowcaseFeedCell {
-                    feedCell.addTypedPlayerIfNeeded(feedPlayer)
-                    feedCell.attachPlayerView()
+                    feedCell.attachTransferredPlayer(feedPlayer)
                 }
             }
         }
@@ -317,18 +304,17 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
     func playVideo(at index: Int, in collectionView: UICollectionView, videos: [ShowcaseVideo]) {
         guard index >= 0, index < videos.count else { return }
         guard videos[index].url != nil else { return }
-        let video = videos[index]
 
         PLog.scrollPlay(index)
 
         if currentPlayingIndex >= 0, currentPlayingIndex != index {
-            typedPlayers[currentPlayingIndex]?.pause()
+            stopCell(at: currentPlayingIndex)
         }
 
         currentPlayingIndex = index
 
         let targetCell = collectionView.cellForItem(at: IndexPath(item: 0, section: index)) as? ShowcaseFeedCell
-        guard let processService = targetCell?.scenePlayer.context.resolveService(PlayerScenePlayerProcessService.self) else {
+        guard let targetCell = targetCell else {
             // Cell not yet available (layout timing race). Retry once on next run loop.
             if autoPlayRetryCount < maxAutoPlayRetries {
                 autoPlayRetryCount += 1
@@ -341,27 +327,16 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         }
 
         autoPlayRetryCount = 0
+        currentPlayingCell = targetCell
 
-        processService.execPlay(
+        targetCell.startPlay(
             isAutoPlay: true,
-            prepare: nil,
-            createIfNeeded: { [weak self] in
-                guard let self = self else { return }
-                let feedPlayer = self.obtainTypedPlayer(for: index, videos: videos)
-                targetCell?.addTypedPlayerIfNeeded(feedPlayer)
-            },
-            attach: {
-                targetCell?.attachPlayerView()
-            },
-            checkDataValid: {
-                return targetCell?.checkDataValid(video: video) ?? false
-            },
-            setDataIfNeeded: {
-                targetCell?.setDataIfNeeded(video: video, index: index)
-            }
+            video: videos[index],
+            index: index,
+            playbackPlugin: self
         )
 
-        if let autoPlayPlugin = targetCell?.scenePlayer.context.resolveService(ShowcaseAutoPlayNextService.self) {
+        if let autoPlayPlugin = targetCell.scenePlayer.context.resolveService(ShowcaseAutoPlayNextService.self) {
             let autoPlayConfig = ShowcaseAutoPlayNextConfigModel(totalCount: videos.count, isEnabled: true)
             (autoPlayPlugin as? BasePlugin)?.configModel = autoPlayConfig
         }
@@ -369,75 +344,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
 
     func pauseCurrent() {
         guard currentPlayingIndex >= 0 else { return }
-        typedPlayers[currentPlayingIndex]?.pause()
-    }
-
-    func removePlayer(at index: Int) {
-        typedPlayers.removeValue(forKey: index)
-    }
-
-    func restorePlayer(_ player: FeedPlayer, at index: Int) {
-        typedPlayers[index] = player
-    }
-
-    // MARK: - Obtain
-
-    private func obtainTypedPlayer(for index: Int, videos: [ShowcaseVideo]) -> FeedPlayer {
-        if let existing = typedPlayers[index] {
-            PLog.obtain(index, source: "existing", poolCount: enginePool.count, playersAlive: Array(typedPlayers.keys))
-            return existing
-        }
-
-        let preRenderId = "showcase_\(index)"
-        if let preRenderedPlayer = preRenderManager.consumePreRendered(identifier: preRenderId) {
-            let config = FeedPlayerConfiguration()
-            config.autoPlay = false
-            config.looping = false
-            let feedPlayer = FeedPlayer(adoptingPlayer: preRenderedPlayer, configuration: config)
-            feedPlayer.bindPool(enginePool, identifier: poolIdentifier)
-            typedPlayers[index] = feedPlayer
-            PLog.obtain(index, source: "preRendered", poolCount: enginePool.count, playersAlive: Array(typedPlayers.keys))
-            return feedPlayer
-        }
-
-        if let takenPlayer = preRenderManager.takePlayer(identifier: preRenderId) {
-            let config = FeedPlayerConfiguration()
-            config.autoPlay = false
-            config.looping = false
-            let feedPlayer = FeedPlayer(adoptingPlayer: takenPlayer, configuration: config)
-            feedPlayer.bindPool(enginePool, identifier: poolIdentifier)
-            typedPlayers[index] = feedPlayer
-            PLog.obtain(index, source: "taken_preparing", poolCount: enginePool.count, playersAlive: Array(typedPlayers.keys))
-            return feedPlayer
-        }
-
-        let config = FeedPlayerConfiguration()
-        config.autoPlay = false
-        config.looping = false
-        let feedPlayer = FeedPlayer(configuration: config)
-        feedPlayer.bindPool(enginePool, identifier: poolIdentifier)
-        feedPlayer.acquireEngine()
-        typedPlayers[index] = feedPlayer
-        PLog.obtain(index, source: "new", poolCount: enginePool.count, playersAlive: Array(typedPlayers.keys))
-        return feedPlayer
-    }
-
-    // MARK: - Eviction
-
-    func evictDistantPlayers(in collectionView: UICollectionView) {
-        let lo = currentPlayingIndex - keepDistance
-        let hi = currentPlayingIndex + keepDistance
-        var evicted: [Int] = []
-        for idx in Array(typedPlayers.keys) where idx < lo || idx > hi {
-            guard let feedPlayer = typedPlayers.removeValue(forKey: idx) else { continue }
-            if let cell = collectionView.cellForItem(at: IndexPath(item: 0, section: idx)) as? ShowcaseFeedCell,
-               cell.feedPlayer === feedPlayer {
-                cell.detachPlayer()
-            }
-            feedPlayer.recycleEngine()
-            evicted.append(idx)
-        }
-        PLog.evict(evicted, poolCountAfter: enginePool.count)
+        stopCell(at: currentPlayingIndex)
     }
 
     // MARK: - PreRender Adjacent
@@ -456,7 +363,6 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         for offset in [-1, 1, -2, 2] {
             let idx = currentIndex + offset
             guard idx >= 0, idx < videos.count else { continue }
-            guard typedPlayers[idx] == nil else { continue }
             guard let url = videos[idx].url else { continue }
             let identifier = "showcase_\(idx)"
             let state = preRenderManager.state(for: identifier)
@@ -480,5 +386,21 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
     private func videosFromContext() -> [ShowcaseVideo] {
         guard let vm = listContext?.listViewModel() as? ShowcaseFeedListViewModel else { return [] }
         return vm.videos
+    }
+
+    private func stopCell(at index: Int) {
+        guard let ctx = listContext else { return }
+        guard let cv = ctx.scrollView() as? UICollectionView else { return }
+        if let cell = cv.cellForItem(at: IndexPath(item: 0, section: index)) as? ShowcaseFeedCell {
+            cell.stopAndDetachPlayer()
+            if currentPlayingCell === cell {
+                currentPlayingCell = nil
+            }
+            return
+        }
+        if currentPlayingCell?.videoIndex == index {
+            currentPlayingCell?.stopAndDetachPlayer()
+            currentPlayingCell = nil
+        }
     }
 }

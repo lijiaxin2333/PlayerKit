@@ -12,7 +12,12 @@ protocol FeedAutoPlayProtocol: AnyObject {
 }
 
 @MainActor
-final class ShowcaseFeedSectionController: BaseListSectionController, FeedAutoPlayProtocol {
+final class ShowcaseFeedSectionController: BaseListSectionController, FeedAutoPlayProtocol, ListSectionControllerWorkingRangeDelegate {
+
+    required init() {
+        super.init()
+        sectionWorkingRangeDelegate = self
+    }
 
     private var feedViewModel: ShowcaseFeedSectionViewModel? {
         viewModel as? ShowcaseFeedSectionViewModel
@@ -38,7 +43,7 @@ final class ShowcaseFeedSectionController: BaseListSectionController, FeedAutoPl
 
     func finishPlayForFeedAutoPlay() {
         guard let cell = feedCell else { return }
-        cell.detachPlayer()
+        cell.stopAndDetachPlayer()
     }
 
     var isFeedAutoPlaying: Bool {
@@ -89,6 +94,18 @@ final class ShowcaseFeedSectionController: BaseListSectionController, FeedAutoPl
     override func sectionDidEndDisplayingCell(_ cell: UICollectionViewCell, index: Int, model: AnyObject) {
         guard let feedCell = cell as? ShowcaseFeedCell else { return }
         feedCell.cellDidEndDisplaying(duplicateReload: false)
+    }
+
+    func sectionControllerWillEnterWorkingRange(_ sectionController: BaseListSectionController) {
+        guard sectionController === self else { return }
+        guard let feedCell = feedCell else { return }
+        if let vm = feedViewModel,
+           let plugin: ShowcaseFeedPlaybackPluginProtocol = vm.listContext?.responderForProtocol(ShowcaseFeedPlaybackPluginProtocol.self) {
+            let preRenderConfig = ShowcaseFeedPreRenderConfigModel(playbackPlugin: plugin)
+            feedCell.scenePlayer.context.configPlugin(serviceProtocol: ShowcaseFeedPreRenderService.self, withModel: preRenderConfig)
+            plugin.preRenderAdjacent(currentIndex: vm.videoIndex, videos: videosFromContext())
+        }
+        feedCell.scenePlayer.resolveService(ShowcaseFeedPreRenderService.self)?.attachPrerenderPlayerView()
     }
 
     override func didSelectItem(atIndex index: Int, model: AnyObject) {}

@@ -167,6 +167,11 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         preSectionViewModels: [BaseListSectionViewModel]?
     ) {
         if preSectionViewModels == nil || preSectionViewModels?.isEmpty == true {
+            let videos = videosFromContext()
+            if !videos.isEmpty {
+                preRenderAdjacent(currentIndex: 0, videos: videos)
+                updatePrefetchWindow(videos: videos, focusIndex: 0)
+            }
             DispatchQueue.main.async { [weak self] in
                 self?.autoPlayIfNeeded()
             }

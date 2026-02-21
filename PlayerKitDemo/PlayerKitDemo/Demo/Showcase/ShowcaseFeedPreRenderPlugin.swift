@@ -5,7 +5,8 @@ import PlayerKit
 protocol ShowcaseFeedPreRenderService: PluginService {
     var playbackPlugin: ShowcaseFeedPlaybackPluginProtocol? { get }
     func prerenderCurrentVideo()
-    func attachPrerenderPlayerView()
+    @discardableResult
+    func attachPrerenderPlayerView() -> Bool
     func removePrerenderPlayerView()
 }
 
@@ -34,19 +35,25 @@ final class ShowcaseFeedPreRenderPlugin: BasePlugin, ShowcaseFeedPreRenderServic
         context?.resolveService(ShowcaseFeedDataService.self)
     }
 
+    private var preRenderReadyToken: AnyObject?
+
     override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
 
         context.add(self, event: .cellWillDisplay) { [weak self] _, _ in
             self?.prerenderCurrentVideo()
-            self?.attachPrerenderPlayerView()
+            if self?.attachPrerenderPlayerView() == false {
+                self?.waitForPreRenderReady()
+            }
         }
 
         context.add(self, event: .cellDidEndDisplaying) { [weak self] _, _ in
+            self?.stopWaitingPreRenderReady()
             self?.removePrerenderPlayerView()
         }
 
         context.add(self, event: .cellPrepareForReuse) { [weak self] _, _ in
+            self?.stopWaitingPreRenderReady()
             self?.removePrerenderPlayerView()
         }
     }
@@ -69,14 +76,17 @@ final class ShowcaseFeedPreRenderPlugin: BasePlugin, ShowcaseFeedPreRenderServic
         plugin.preRenderManager.preRender(url: url, identifier: identifier)
     }
 
-    func attachPrerenderPlayerView() {
-        guard let plugin = playbackPlugin else { return }
-        guard let index = dataService?.videoIndex, index >= 0 else { return }
-        guard let sceneCtx = sceneContext else { return }
-        guard sceneCtx.feedPlayer?.engineService == nil else { return }
+    @discardableResult
+    func attachPrerenderPlayerView() -> Bool {
+        guard let plugin = playbackPlugin else { return false }
+        guard let index = dataService?.videoIndex, index >= 0 else { return false }
+        guard let sceneCtx = sceneContext else { return false }
+        guard let container = playerContainerView else { return false }
+        let hasPlayerView = container.subviews.contains(where: { $0 is PlayerEngineRenderView })
+        guard !hasPlayerView else { return true }
 
         let identifier = "showcase_\(index)"
-        guard let preRenderedPlayer = plugin.preRenderManager.consumePreRendered(identifier: identifier) else { return }
+        guard let preRenderedPlayer = plugin.preRenderManager.consumePreRendered(identifier: identifier) else { return false }
         let config = FeedPlayerConfiguration()
         config.autoPlay = false
         config.looping = false
@@ -84,6 +94,28 @@ final class ShowcaseFeedPreRenderPlugin: BasePlugin, ShowcaseFeedPreRenderServic
         feedPlayer.bindPool(plugin.enginePool, identifier: "showcase")
         sceneCtx.addTypedPlayer(feedPlayer)
         attachPlayerViewToContainer(feedPlayer)
+        return true
+    }
+
+    private func waitForPreRenderReady() {
+        stopWaitingPreRenderReady()
+        guard let plugin = playbackPlugin else { return }
+        guard let index = dataService?.videoIndex, index >= 0 else { return }
+        let identifier = "showcase_\(index)"
+
+        let managerCtx = (plugin.preRenderManager as? BasePlugin)?.context
+        preRenderReadyToken = managerCtx?.add(self, event: .playerPreRenderReady) { [weak self] object, _ in
+            guard let self = self else { return }
+            guard let readyId = object as? String, readyId == identifier else { return }
+            self.stopWaitingPreRenderReady()
+            self.attachPrerenderPlayerView()
+        }
+    }
+
+    private func stopWaitingPreRenderReady() {
+        guard let token = preRenderReadyToken else { return }
+        (playbackPlugin?.preRenderManager as? BasePlugin)?.context?.removeHandler(token)
+        preRenderReadyToken = nil
     }
 
     func removePrerenderPlayerView() {

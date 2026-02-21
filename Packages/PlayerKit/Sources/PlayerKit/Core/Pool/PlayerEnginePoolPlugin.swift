@@ -7,7 +7,12 @@ import UIKit
 @MainActor
 public final class PlayerEnginePoolPlugin: BasePlugin, PlayerEnginePoolService {
 
-    /** 引擎池存储，按标识符分组 */
+    /** 引擎池存储，按标识符分组, 不同场景提供独立的池子
+     pool = {
+     "feed":     [Engine A, Engine B],      // feed 流场景的引擎
+     "detail":   [Engine C],                // 详情页场景的引擎
+     }
+     */
     private var pool: [String: [PoolEntry]] = [:]
     /** 池的最大容量 */
     private var _maxCapacity: Int = 4

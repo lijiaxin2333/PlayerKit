@@ -96,6 +96,16 @@ public final class Player: ContextHolder {
         pool.enqueue(engine, identifier: id)
     }
 
+    @discardableResult
+    public func adoptEngine(from source: Player) -> Bool {
+        recycleEngine()
+        context.detachInstance(for: PlayerEngineCoreService.self)
+        guard let engine = source.context.detachInstance(for: PlayerEngineCoreService.self) else { return false }
+        context.registerInstance(engine, protocol: PlayerEngineCoreService.self)
+        (engine as? PlayerEngineCoreService)?.volume = 1.0
+        return true
+    }
+
     // MARK: - 便捷服务访问
 
     /** 数据服务，管理视频数据模型 */

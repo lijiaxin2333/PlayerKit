@@ -31,6 +31,7 @@ public final class FeedPlayer: ContextHolder, TypedPlayerProtocol {
         self.configuration = configuration
         let ctx = Context(name: "FeedPlayer")
         self.context = ctx
+        ctx.holder = self
         setupPlayer()
     }
 
@@ -38,6 +39,7 @@ public final class FeedPlayer: ContextHolder, TypedPlayerProtocol {
         self.configuration = configuration
         let ctx = Context(name: "FeedPlayer")
         self.context = ctx
+        ctx.holder = self
         self.player = player
 
         ctx.addSubContext(
@@ -81,6 +83,16 @@ public final class FeedPlayer: ContextHolder, TypedPlayerProtocol {
 
     public func recycleEngine() {
         player?.recycleEngine()
+    }
+
+    @discardableResult
+    public func adoptEngine(from source: Player) -> Bool {
+        guard let result = player?.adoptEngine(from: source), result else { return false }
+        let configModel = PlayerEngineCoreConfigModel()
+        configModel.autoPlay = configuration.autoPlay
+        configModel.isLooping = configuration.looping
+        player?.context.configPlugin(serviceProtocol: PlayerEngineCoreService.self, withModel: configModel)
+        return true
     }
 
     // MARK: - Service Access

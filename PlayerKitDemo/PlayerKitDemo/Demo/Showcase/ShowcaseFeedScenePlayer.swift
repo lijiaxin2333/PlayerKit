@@ -49,8 +49,6 @@ final class ShowcaseFeedScenePlayer: ScenePlayerProtocol {
         self.context = ctx
         ctx.holder = self
         ctx.addRegProvider(regProvider)
-        let typedPlayer = createTypedPlayer(prerenderKey: nil)
-        addTypedPlayer(typedPlayer)
     }
 
     // MARK: - PlayerScenePlayerProtocol

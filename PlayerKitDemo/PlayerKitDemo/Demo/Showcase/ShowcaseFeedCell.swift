@@ -36,13 +36,10 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         scenePlayer.post(.cellWillDisplay, sender: self)
     }
 
-    /// Cell 已移出屏幕
     func cellDidEndDisplaying(duplicateReload: Bool) {
         if !hasAppear { return }
         hasAppear = false
         scenePlayer.post(.cellDidEndDisplaying, sender: self)
-        if isTransferringPlayer { return }
-        stopAndDetachPlayer()
     }
 
     /// VC viewWillAppear
@@ -86,9 +83,11 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
             _playerContainer.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
         ])
 
-        // Post 事件通知 CellView 已就绪
         let cellViewConfig = ShowcaseFeedCellViewConfigModel(contentView: contentView, playerContainer: _playerContainer)
         scenePlayer.post(.showcaseFeedCellViewDidSet, object: cellViewConfig, sender: self)
+
+        let typedPlayer = scenePlayer.createTypedPlayer(prerenderKey: nil)
+        scenePlayer.addTypedPlayer(typedPlayer)
     }
 
     required init?(coder: NSCoder) { fatalError() }
@@ -105,6 +104,7 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         index: Int,
         playbackPlugin: ShowcaseFeedPlaybackPluginProtocol
     ) {
+        scenePlayer.feedPlayer?.bindPool(playbackPlugin.enginePool, identifier: "showcase")
         guard let processService = scenePlayer.resolveService(PlayerScenePlayerProcessService.self) else { return }
         processService.execPlay(
             isAutoPlay: isAutoPlay,
@@ -130,35 +130,25 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         index: Int,
         playbackPlugin: ShowcaseFeedPlaybackPluginProtocol
     ) {
-        if !scenePlayer.hasTypedPlayer() {
-            let typedPlayer = scenePlayer.createTypedPlayer(prerenderKey: video.feedId)
-            scenePlayer.addTypedPlayer(typedPlayer)
-        }
-
         guard let feedPlayer = scenePlayer.feedPlayer else { return }
         if feedPlayer.engineService?.avPlayer?.currentItem != nil { return }
 
         let identifier = "showcase_\(index)"
         if let preRenderedPlayer = playbackPlugin.preRenderManager.consumePreRendered(identifier: identifier),
            preRenderedPlayer.engineService?.currentURL == video.url {
-            let config = FeedPlayerConfiguration()
-            config.autoPlay = false
-            config.looping = false
-            config.prerenderKey = video.feedId
-            let adoptedPlayer = FeedPlayer(adoptingPlayer: preRenderedPlayer, configuration: config)
-            adoptedPlayer.bindPool(playbackPlugin.enginePool, identifier: "showcase")
-            scenePlayer.addTypedPlayer(adoptedPlayer)
+            feedPlayer.adoptEngine(from: preRenderedPlayer)
             return
         }
 
         playbackPlugin.preRenderManager.cancelPreRender(identifier: identifier)
-        feedPlayer.bindPool(playbackPlugin.enginePool, identifier: "showcase")
         _ = feedPlayer.acquireEngine()
     }
 
     func attachPlayerView() {
         guard let feedPlayer = scenePlayer.feedPlayer else { return }
         guard let pv = feedPlayer.playerView else { return }
+        if pv.superview === _playerContainer { return }
+        _playerContainer.subviews.forEach { $0.removeFromSuperview() }
         pv.translatesAutoresizingMaskIntoConstraints = false
         pv.isHidden = false
         _playerContainer.addSubview(pv)
@@ -183,13 +173,19 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
     func stopAndDetachPlayer() {
         guard let player = scenePlayer.feedPlayer else { return }
         player.pause()
+        _playerContainer.subviews.forEach { $0.removeFromSuperview() }
+    }
+
+    func stopAndRecycleEngine() {
+        guard let player = scenePlayer.feedPlayer else { return }
+        player.pause()
         player.playbackControlService?.stop()
         player.recycleEngine()
         _playerContainer.subviews.forEach { $0.removeFromSuperview() }
     }
 
     func stopAndRemovePlayer() {
-        stopAndDetachPlayer()
+        stopAndRecycleEngine()
         scenePlayer.removeTypedPlayer()
     }
 
@@ -207,17 +203,14 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
 
     // MARK: - 兼容方法（保持原有调用方式）
 
-    /// 检查数据是否有效
     func checkDataValid(video: ShowcaseVideo) -> Bool {
         guard let currentVideo = scenePlayer.dataService?.video else { return false }
-        return currentVideo.feedId == video.feedId
+        guard currentVideo.feedId == video.feedId else { return false }
+        guard scenePlayer.engineService?.currentURL == video.url else { return false }
+        return true
     }
 
-    /// 设置数据（如果需要）
     func setDataIfNeeded(video: ShowcaseVideo, index: Int) {
-        guard let vm = _cellViewModel else { return }
-        guard vm.video.feedId != video.feedId else { return }
-        vm.update(video: video, index: index)
         configSceneData(video: video, index: index)
     }
 
@@ -236,7 +229,11 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
             PLog.prepareForReuse(index)
         }
         scenePlayer.post(.cellPrepareForReuse, sender: self)
-        stopAndRemovePlayer()
+        stopAndRecycleEngine()
+        if !scenePlayer.hasTypedPlayer() {
+            let typedPlayer = scenePlayer.createTypedPlayer(prerenderKey: nil)
+            scenePlayer.addTypedPlayer(typedPlayer)
+        }
         _cellViewModel = nil
     }
 }

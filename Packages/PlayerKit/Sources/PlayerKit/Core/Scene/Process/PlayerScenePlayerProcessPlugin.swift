@@ -43,19 +43,20 @@ public final class PlayerScenePlayerProcessPlugin: BasePlugin, PlayerScenePlayer
         checkDataValid: (() -> Bool)?,
         setDataIfNeeded: (() -> Void)?
     ) {
-        guard let layeredService = context?.resolveService(PlayerTypedPlayerLayeredService.self) else {
-            return
-        }
+        guard let layeredService = context?.resolveService(PlayerTypedPlayerLayeredService.self) else { return }
 
         if layeredService.hasPlayer {
-            guard let playbackControl = context?.resolveService(PlayerPlaybackControlService.self) else {
-                return
-            }
-            if playbackControl.isPaused {
-                playbackControl.play()
-                return
+            let engine = context?.resolveService(PlayerEngineCoreService.self)
+            let hasActiveEngine = engine?.currentURL != nil
+            if hasActiveEngine {
+                if engine?.playbackState == .playing {
+                    return
+                }
             }
             prepare?()
+            if !hasActiveEngine {
+                createIfNeeded?()
+            }
         } else {
             prepare?()
             createIfNeeded?()
@@ -72,11 +73,11 @@ public final class PlayerScenePlayerProcessPlugin: BasePlugin, PlayerScenePlayer
 
         attach?()
 
-        guard let playbackControl = context?.resolveService(PlayerPlaybackControlService.self) else {
-            return
-        }
         if isAutoPlay {
-            playbackControl.play()
+            if let playbackControl = context?.resolveService(PlayerPlaybackControlService.self),
+               !playbackControl.isPlaying {
+                playbackControl.play()
+            }
         }
     }
 

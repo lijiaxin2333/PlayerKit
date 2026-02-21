@@ -17,7 +17,7 @@ import UIKit
 public class PlayerEngineRenderView: UIView {
 
     /**
-     * 指定底层使用 AVPlayerLayer
+     * 指定底层使用 AVPlayerLayer, 性能优化, 不用再把PlayerLayer贴在UIView上了, 直接让PlayerLayer作为UIView的Layer
      */
     override public class var layerClass: AnyClass {
         return AVPlayerLayer.self

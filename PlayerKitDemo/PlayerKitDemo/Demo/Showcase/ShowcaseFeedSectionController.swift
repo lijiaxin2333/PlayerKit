@@ -68,19 +68,23 @@ final class ShowcaseFeedSectionController: BaseListSectionController, FeedAutoPl
         collectionViewSize
     }
 
-    /// 使用 ListKit 标准模式：通过 CellViewModel 绑定数据
     override func configCell(_ cell: UICollectionViewCell, index: Int, model: AnyObject) {
         guard let feedCell = cell as? ShowcaseFeedCell,
               let cellViewModel = model as? ShowcaseFeedCellViewModel else { return }
 
-        // 绑定 CellViewModel（标准 ListKit 模式）
         feedCell.bindCellViewModel(cellViewModel)
 
-        // 配置 PreRender（播放器层）
         if let vm = feedViewModel,
-           let plugin: ShowcaseFeedPlaybackPluginProtocol = vm.listContext?.responderForProtocol(ShowcaseFeedPlaybackPluginProtocol.self) {
-            let preRenderConfig = ShowcaseFeedPreRenderConfigModel(playbackPlugin: plugin)
-            feedCell.scenePlayer.context.configPlugin(serviceProtocol: ShowcaseFeedPreRenderService.self, withModel: preRenderConfig)
+           let plugin = vm.listContext?.responderForProtocol(ShowcaseFeedPlaybackPluginProtocol.self) as? ShowcaseFeedPlaybackPlugin {
+            let config = ShowcaseFeedPreRenderConfigModel(
+                consumePreRendered: { [weak plugin] identifier in
+                    plugin?.consumePreRendered(identifier: identifier)
+                },
+                cancelPreRender: { [weak plugin] identifier in
+                    plugin?.cancelPreRender(identifier: identifier)
+                }
+            )
+            feedCell.scenePlayer.context.configPlugin(serviceProtocol: ShowcaseFeedPreRenderService.self, withModel: config)
         }
     }
 
@@ -100,10 +104,18 @@ final class ShowcaseFeedSectionController: BaseListSectionController, FeedAutoPl
         guard sectionController === self else { return }
         guard let feedCell = feedCell else { return }
         if let vm = feedViewModel,
-           let plugin: ShowcaseFeedPlaybackPluginProtocol = vm.listContext?.responderForProtocol(ShowcaseFeedPlaybackPluginProtocol.self) {
-            let preRenderConfig = ShowcaseFeedPreRenderConfigModel(playbackPlugin: plugin)
-            feedCell.scenePlayer.context.configPlugin(serviceProtocol: ShowcaseFeedPreRenderService.self, withModel: preRenderConfig)
+           let plugin = vm.listContext?.responderForProtocol(ShowcaseFeedPlaybackPluginProtocol.self) as? ShowcaseFeedPlaybackPlugin {
             plugin.preRenderAdjacent(currentIndex: vm.videoIndex, videos: videosFromContext())
+
+            let config = ShowcaseFeedPreRenderConfigModel(
+                consumePreRendered: { [weak plugin] identifier in
+                    plugin?.consumePreRendered(identifier: identifier)
+                },
+                cancelPreRender: { [weak plugin] identifier in
+                    plugin?.cancelPreRender(identifier: identifier)
+                }
+            )
+            feedCell.scenePlayer.context.configPlugin(serviceProtocol: ShowcaseFeedPreRenderService.self, withModel: config)
         }
         feedCell.scenePlayer.resolveService(ShowcaseFeedPreRenderService.self)?.attachPrerenderPlayerView()
     }

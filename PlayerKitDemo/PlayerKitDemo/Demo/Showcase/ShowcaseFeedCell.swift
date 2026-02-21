@@ -102,9 +102,9 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         isAutoPlay: Bool,
         video: ShowcaseVideo,
         index: Int,
-        playbackPlugin: ShowcaseFeedPlaybackPluginProtocol
+        playbackPlugin: ShowcaseFeedPlaybackPlugin
     ) {
-        scenePlayer.feedPlayer?.bindPool(playbackPlugin.enginePool, identifier: "showcase")
+        scenePlayer.feedPlayer?.bindPool(PlayerEnginePool.shared, identifier: "showcase")
         guard let processService = scenePlayer.resolveService(PlayerScenePlayerProcessService.self) else { return }
         processService.execPlay(
             isAutoPlay: isAutoPlay,
@@ -128,19 +128,19 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
     private func prepareTypedPlayerIfNeeded(
         video: ShowcaseVideo,
         index: Int,
-        playbackPlugin: ShowcaseFeedPlaybackPluginProtocol
+        playbackPlugin: ShowcaseFeedPlaybackPlugin
     ) {
         guard let feedPlayer = scenePlayer.feedPlayer else { return }
         if feedPlayer.engineService?.avPlayer?.currentItem != nil { return }
 
         let identifier = "showcase_\(index)"
-        if let preRenderedPlayer = playbackPlugin.preRenderManager.consumePreRendered(identifier: identifier),
+        if let preRenderedPlayer = playbackPlugin.consumePreRendered(identifier: identifier),
            preRenderedPlayer.engineService?.currentURL == video.url {
             feedPlayer.adoptEngine(from: preRenderedPlayer)
             return
         }
 
-        playbackPlugin.preRenderManager.cancelPreRender(identifier: identifier)
+        playbackPlugin.cancelPreRender(identifier: identifier)
         _ = feedPlayer.acquireEngine()
     }
 

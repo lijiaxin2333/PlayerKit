@@ -3,20 +3,9 @@ import PlayerKit
 import ListKit
 
 @MainActor
-final class ShowcasePlaybackRegProvider: RegisterProvider {
-    func registerPlugins(with registerSet: PluginRegisterSet) {
-        registerSet.addEntry(pluginClass: PlayerEnginePoolPlugin.self, serviceType: PlayerEnginePoolService.self)
-        registerSet.addEntry(pluginClass: PlayerPreRenderManagerPlugin.self, serviceType: PlayerPreRenderManagerService.self)
-        registerSet.addEntry(pluginClass: PlayerPrefetchPlugin.self, serviceType: PlayerPrefetchService.self)
-    }
-}
-
-@MainActor
 protocol ShowcaseFeedPlaybackPluginProtocol: AnyObject {
     var currentPlayingIndex: Int { get }
     var transferringPlayer: FeedPlayer? { get set }
-    var enginePool: PlayerEnginePoolService { get }
-    var preRenderManager: PlayerPreRenderManagerService { get }
     func playVideo(at index: Int, in collectionView: UICollectionView, videos: [ShowcaseVideo])
     func pauseCurrent()
     func preRenderAdjacent(currentIndex: Int, videos: [ShowcaseVideo])
@@ -60,9 +49,12 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
     private weak var currentPlayingCell: ShowcaseFeedCell?
     var transferringPlayer: FeedPlayer?
 
-    let enginePool: PlayerEnginePoolService
-    let preRenderManager: PlayerPreRenderManagerService
     let prefetchManager: PlayerPrefetchService
+
+    private var preRenderPlayers: [String: Player] = [:]
+    private var preRenderTimeouts: [String: Timer] = [:]
+    private let maxPreRenderCount: Int
+    private let preRenderTimeout: TimeInterval
 
     private var pendingScrollTasks: [() -> Void] = []
     private var cellEventObserverIndex: Int = -1
@@ -70,24 +62,19 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
     private let maxAutoPlayRetries = 2
 
     init(configuration: Configuration = Configuration()) {
-        let ctx = Context(name: "ShowcasePlaybackServices")
-
-        let provider = ShowcasePlaybackRegProvider()
-        ctx.addRegProvider(provider)
-
-        guard let pool = ctx.resolveService(PlayerEnginePoolService.self),
-              let preRender = ctx.resolveService(PlayerPreRenderManagerService.self),
-              let prefetch = ctx.resolveService(PlayerPrefetchService.self) else {
-            fatalError("Services not properly initialized")
-        }
-
+        let pool = PlayerEnginePool.shared
         pool.maxCapacity = configuration.enginePoolMaxCapacity
         pool.maxPerIdentifier = configuration.enginePoolMaxPerIdentifier
 
-        preRender.maxPreRenderCount = configuration.preRenderMaxCount
-        preRender.preRenderTimeout = configuration.preRenderTimeout
-        let preRenderConfig = PlayerPreRenderManagerConfigModel(enginePool: pool, poolIdentifier: "showcase")
-        ctx.configPlugin(serviceProtocol: PlayerPreRenderManagerService.self, withModel: preRenderConfig)
+        self.maxPreRenderCount = configuration.preRenderMaxCount
+        self.preRenderTimeout = configuration.preRenderTimeout
+
+        let prefetchCtx = Context(name: "ShowcasePrefetchServices")
+        prefetchCtx.addRegProvider(ShowcasePrefetchRegProvider())
+
+        guard let prefetch = prefetchCtx.resolveService(PlayerPrefetchService.self) else {
+            fatalError("Prefetch service not properly initialized")
+        }
 
         if let prefetchPlugin = prefetch as? PlayerPrefetchPlugin {
             prefetchPlugin.prefetchConfig = PreloadConfig(
@@ -98,8 +85,6 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
             )
         }
 
-        self.enginePool = pool
-        self.preRenderManager = preRender
         self.prefetchManager = prefetch
         super.init()
     }
@@ -123,9 +108,92 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         pendingScrollTasks.removeAll()
         autoPlayRetryCount = 0
 
-        preRenderManager.cancelAll()
+        cancelAllPreRenders()
         prefetchManager.cancelAll()
-        enginePool.clear()
+        PlayerEnginePool.shared.clear()
+    }
+
+    // MARK: - PreRender Pool
+
+    func preRender(url: URL, identifier: String) {
+        if preRenderPlayers[identifier] != nil {
+            cancelPreRender(identifier: identifier)
+        }
+
+        guard preRenderPlayers.count < maxPreRenderCount else {
+            evictOldestPreRender()
+            guard preRenderPlayers.count < maxPreRenderCount else { return }
+            return
+        }
+
+        let player = Player(name: "PreRender_\(identifier)")
+        player.bindPool(PlayerEnginePool.shared, identifier: "showcase")
+        player.acquireEngine()
+
+        let engineConfig = PlayerEngineCoreConfigModel()
+        engineConfig.isLooping = true
+        engineConfig.initialVolume = 0
+        player.context.configPlugin(serviceProtocol: PlayerEngineCoreService.self, withModel: engineConfig)
+
+        let dataConfig = PlayerDataConfigModel()
+        dataConfig.initialDataModel = PlayerDataModel(videoURL: url)
+        player.dataService?.config(dataConfig)
+
+        preRenderPlayers[identifier] = player
+
+        player.context.resolveService(PlayerPreRenderService.self)?.prerenderIfNeed()
+
+        scheduleTimeout(identifier: identifier)
+    }
+
+    func cancelPreRender(identifier: String) {
+        guard let player = preRenderPlayers.removeValue(forKey: identifier) else { return }
+        cancelTimeout(identifier: identifier)
+        player.engineService?.stop()
+        player.recycleEngine()
+    }
+
+    func cancelAllPreRenders() {
+        let ids = Array(preRenderPlayers.keys)
+        for id in ids {
+            cancelPreRender(identifier: id)
+        }
+    }
+
+    func consumePreRendered(identifier: String) -> Player? {
+        guard let player = preRenderPlayers[identifier] else { return nil }
+        let state = player.context.resolveService(PlayerPreRenderService.self)?.preRenderState ?? .idle
+        guard state == .readyToPlay || state == .readyToDisplay else { return nil }
+        preRenderPlayers.removeValue(forKey: identifier)
+        cancelTimeout(identifier: identifier)
+        player.engineService?.pause()
+        player.engineService?.avPlayer?.seek(to: .zero, toleranceBefore: .zero, toleranceAfter: .zero)
+        return player
+    }
+
+    func preRenderState(for identifier: String) -> PlayerPreRenderState {
+        guard let player = preRenderPlayers[identifier] else { return .idle }
+        return player.context.resolveService(PlayerPreRenderService.self)?.preRenderState ?? .idle
+    }
+
+    private func evictOldestPreRender() {
+        guard let oldestKey = preRenderPlayers.keys.first else { return }
+        cancelPreRender(identifier: oldestKey)
+    }
+
+    private func scheduleTimeout(identifier: String) {
+        preRenderTimeouts[identifier]?.invalidate()
+        let timer = Timer.scheduledTimer(withTimeInterval: preRenderTimeout, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.cancelPreRender(identifier: identifier)
+            }
+        }
+        preRenderTimeouts[identifier] = timer
+    }
+
+    private func cancelTimeout(identifier: String) {
+        preRenderTimeouts[identifier]?.invalidate()
+        preRenderTimeouts.removeValue(forKey: identifier)
     }
 
     // MARK: - ListProtocol Lifecycle
@@ -324,7 +392,6 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
 
         let targetCell = collectionView.cellForItem(at: IndexPath(item: 0, section: index)) as? ShowcaseFeedCell
         guard let targetCell = targetCell else {
-            // Cell not yet available (layout timing race). Retry once on next run loop.
             if autoPlayRetryCount < maxAutoPlayRetries {
                 autoPlayRetryCount += 1
                 currentPlayingIndex = -1
@@ -368,11 +435,10 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
 
     func preRenderAdjacent(currentIndex: Int, videos: [ShowcaseVideo]) {
         let keepRange = (currentIndex - 2)...(currentIndex + 2)
-        for entry in preRenderManager.activeEntries {
-            let id = entry.identifier
+        for (id, _) in preRenderPlayers {
             if let idxStr = id.split(separator: "_").last, let idx = Int(idxStr) {
                 if !keepRange.contains(idx) {
-                    preRenderManager.cancelPreRender(identifier: id)
+                    cancelPreRender(identifier: id)
                 }
             }
         }
@@ -382,9 +448,9 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
             guard idx >= 0, idx < videos.count else { continue }
             guard let url = videos[idx].url else { continue }
             let identifier = "showcase_\(idx)"
-            let state = preRenderManager.state(for: identifier)
-            if state != .idle && state != .cancelled && state != .expired && state != .failed { continue }
-            preRenderManager.preRender(url: url, identifier: identifier)
+            let state = preRenderState(for: identifier)
+            if state != .idle { continue }
+            preRender(url: url, identifier: identifier)
         }
     }
 
@@ -419,5 +485,12 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
             currentPlayingCell?.stopAndDetachPlayer()
             currentPlayingCell = nil
         }
+    }
+}
+
+@MainActor
+private final class ShowcasePrefetchRegProvider: RegisterProvider {
+    func registerPlugins(with registerSet: PluginRegisterSet) {
+        registerSet.addEntry(pluginClass: PlayerPrefetchPlugin.self, serviceType: PlayerPrefetchService.self)
     }
 }

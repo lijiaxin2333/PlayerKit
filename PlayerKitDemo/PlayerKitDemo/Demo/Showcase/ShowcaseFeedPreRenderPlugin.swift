@@ -3,25 +3,27 @@ import PlayerKit
 
 @MainActor
 protocol ShowcaseFeedPreRenderService: PluginService {
-    var playbackPlugin: ShowcaseFeedPlaybackPluginProtocol? { get }
-    func prerenderCurrentVideo()
-    @discardableResult
-    func attachPrerenderPlayerView() -> Bool
+    func attachPrerenderPlayerView()
     func removePrerenderPlayerView()
 }
 
 @MainActor
 final class ShowcaseFeedPreRenderConfigModel {
-    weak var playbackPlugin: (any ShowcaseFeedPlaybackPluginProtocol)?
-    init(playbackPlugin: ShowcaseFeedPlaybackPluginProtocol?) {
-        self.playbackPlugin = playbackPlugin
+    let consumePreRendered: (String) -> Player?
+    let cancelPreRender: (String) -> Void
+
+    init(consumePreRendered: @escaping (String) -> Player?,
+         cancelPreRender: @escaping (String) -> Void) {
+        self.consumePreRendered = consumePreRendered
+        self.cancelPreRender = cancelPreRender
     }
 }
 
 @MainActor
 final class ShowcaseFeedPreRenderPlugin: BasePlugin, ShowcaseFeedPreRenderService {
 
-    private(set) weak var playbackPlugin: (any ShowcaseFeedPlaybackPluginProtocol)?
+    private var consumePreRendered: ((String) -> Player?)?
+    private var cancelPreRenderFn: ((String) -> Void)?
 
     private var playerContainerView: UIView? {
         context?.resolveService(ShowcaseFeedCellViewService.self)?.playerContainerView
@@ -39,7 +41,6 @@ final class ShowcaseFeedPreRenderPlugin: BasePlugin, ShowcaseFeedPreRenderServic
         super.pluginDidLoad(context)
 
         context.add(self, event: .cellWillDisplay) { [weak self] _, _ in
-            self?.prerenderCurrentVideo()
             self?.attachPrerenderPlayerView()
         }
 
@@ -55,45 +56,37 @@ final class ShowcaseFeedPreRenderPlugin: BasePlugin, ShowcaseFeedPreRenderServic
     override func config(_ configModel: Any?) {
         super.config(configModel)
         guard let model = configModel as? ShowcaseFeedPreRenderConfigModel else { return }
-        self.playbackPlugin = model.playbackPlugin
+        consumePreRendered = model.consumePreRendered
+        cancelPreRenderFn = model.cancelPreRender
     }
 
-    func prerenderCurrentVideo() {
-        guard let plugin = playbackPlugin else { return }
-        guard let video = dataService?.video, let url = video.url else { return }
+    func attachPrerenderPlayerView() {
         guard let index = dataService?.videoIndex, index >= 0 else { return }
-
-        let identifier = "showcase_\(index)"
-        let state = plugin.preRenderManager.state(for: identifier)
-        guard state == .idle || state == .cancelled || state == .expired || state == .failed else { return }
-
-        plugin.preRenderManager.preRender(url: url, identifier: identifier)
-    }
-
-    @discardableResult
-    func attachPrerenderPlayerView() -> Bool {
-        guard let plugin = playbackPlugin else { return false }
-        guard let index = dataService?.videoIndex, index >= 0 else { return false }
-        guard let sceneCtx = sceneContext else { return false }
-        guard let container = playerContainerView else { return false }
+        guard let sceneCtx = sceneContext else { return }
+        guard let container = playerContainerView else { return }
         let hasPlayerView = container.subviews.contains(where: { $0 is PlayerEngineRenderView })
-        guard !hasPlayerView else { return true }
+        guard !hasPlayerView else { return }
+
+        guard let feedPlayer = sceneCtx.feedPlayer else { return }
+        if feedPlayer.engineService?.avPlayer?.currentItem != nil {
+            attachPlayerViewToContainer(feedPlayer)
+            return
+        }
 
         let identifier = "showcase_\(index)"
-        guard let preRenderedPlayer = plugin.preRenderManager.consumePreRendered(identifier: identifier) else { return false }
-        guard let feedPlayer = sceneCtx.feedPlayer else { return false }
+        guard let consume = consumePreRendered,
+              let preRenderedPlayer = consume(identifier) else { return }
+        guard let video = dataService?.video, preRenderedPlayer.engineService?.currentURL == video.url else {
+            cancelPreRenderFn?(identifier)
+            return
+        }
 
-        feedPlayer.bindPool(plugin.enginePool, identifier: "showcase")
+        feedPlayer.bindPool(PlayerEnginePool.shared, identifier: "showcase")
         feedPlayer.adoptEngine(from: preRenderedPlayer)
         attachPlayerViewToContainer(feedPlayer)
-        return true
     }
 
     func removePrerenderPlayerView() {
-        guard let plugin = playbackPlugin else { return }
-        guard let index = dataService?.videoIndex, index >= 0 else { return }
-        guard plugin.currentPlayingIndex != index else { return }
-
         playerContainerView?.subviews.forEach { $0.removeFromSuperview() }
     }
 

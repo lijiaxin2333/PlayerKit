@@ -1,47 +1,35 @@
-//
-//  PlayerPreRenderService.swift
-//  playerkit
-//
-//  预渲染服务协议
-//
-
 import Foundation
 import AVFoundation
 import UIKit
 
-/**
- * 预渲染服务协议
- */
+public enum PlayerPreRenderState: Int {
+    case idle = 0
+    case preparing
+    case readyToDisplay
+    case readyToPlay
+    case failed
+    case cancelled
+    case expired
+}
+
 @MainActor
 public protocol PlayerPreRenderService: PluginService {
 
-    /** 是否启用预渲染 */
-    var isPreRenderEnabled: Bool { get set }
+    var preRenderState: PlayerPreRenderState { get }
 
-    /**
-     * 对指定 URL 进行预渲染
-     */
-    func prerenderURL(_ url: URL)
+    var isPrerenderPlaying: Bool { get }
 
-    /**
-     * 取消当前预渲染
-     */
-    func cancelPrerender()
-}
+    func prerenderIfNeed()
 
-/**
- * 预渲染配置模型
- */
-public class PlayerPreRenderConfigModel {
+    func dragPlay()
 
-    /** 是否启用预渲染 */
-    public var enabled: Bool = false
+    func releasePlayer()
 
-    /** 预渲染超时时间 */
-    public var timeout: TimeInterval = 10.0
+    func resetPlayer()
 
-    /**
-     * 初始化配置
-     */
-    public init() {}
+    func attachOnSuperView(_ superView: UIView)
+
+    func removeFromSuperView(_ superView: UIView)
+
+    func detachEngine() -> BasePlugin?
 }

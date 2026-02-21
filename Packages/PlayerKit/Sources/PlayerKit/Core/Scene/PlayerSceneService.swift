@@ -13,9 +13,6 @@ public protocol PlayerSceneProtocol: AnyObject {
     /** 场景类型 */
     var sceneType: String { get }
 
-    /** 引擎池服务，可选 */
-    var enginePool: PlayerEnginePoolService? { get }
-
     /** 当前场景是否处于激活状态 */
     var isActive: Bool { get }
 }

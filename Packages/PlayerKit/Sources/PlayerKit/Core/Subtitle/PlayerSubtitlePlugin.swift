@@ -126,7 +126,9 @@ public final class PlayerSubtitlePlugin: BasePlugin, PlayerSubtitleService {
     private func startTimeObserver() {
         stopTimeObserver()
         timeObserver = engine?.addPeriodicTimeObserver(interval: 0.25, queue: .main) { [weak self] time in
-            self?.updateCue(at: time)
+            MainActor.assumeIsolated {
+                self?.updateCue(at: time)
+            }
         }
     }
 

@@ -69,8 +69,10 @@ public final class PlayerReplayPlugin: BasePlugin, PlayerReplayService {
         _replayCount += 1
 
         engineService?.seek(to: time) { [weak self] finished in
-            if finished {
-                self?.engineService?.play()
+            MainActor.assumeIsolated {
+                if finished {
+                    self?.engineService?.play()
+                }
             }
         }
     }

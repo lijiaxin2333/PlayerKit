@@ -119,8 +119,10 @@ public final class PlayerPlaybackControlPlugin: BasePlugin, PlayerPlaybackContro
      */
     public func replay() {
         engineService?.seek(to: 0) { [weak self] finished in
-            if finished {
-                self?.play()
+            MainActor.assumeIsolated {
+                if finished {
+                    self?.play()
+                }
             }
         }
     }

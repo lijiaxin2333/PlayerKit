@@ -14,7 +14,7 @@ import UIKit
 /**
  * 播放状态枚举
  */
-public enum PlayerPlaybackState: Int {
+public enum PlayerPlaybackState: Int, Sendable {
     /**
      * 已停止
      */
@@ -203,12 +203,12 @@ public protocol PlayerEngineCoreService: PluginService {
     /**
      * Seek 到指定时间，完成后回调
      */
-    func seek(to time: TimeInterval, completion: ((Bool) -> Void)?)
+    func seek(to time: TimeInterval, completion: (@Sendable (Bool) -> Void)?)
 
     /**
      * 添加时间观察者
      */
-    func addPeriodicTimeObserver(interval: TimeInterval, queue: DispatchQueue, block: @escaping (TimeInterval) -> Void) -> AnyObject?
+    func addPeriodicTimeObserver(interval: TimeInterval, queue: DispatchQueue, block: @Sendable @escaping (TimeInterval) -> Void) -> AnyObject?
 
     /**
      * 移除时间观察者

@@ -63,9 +63,11 @@ public class PlayerEngineRenderView: UIView {
         }
         displayObservation = playerLayer.observe(\.isReadyForDisplay, options: [.new]) { [weak self] _, change in
             guard change.newValue == true else { return }
-            self?.displayObservation?.invalidate()
-            self?.displayObservation = nil
-            self?.onReadyForDisplay?()
+            MainActor.assumeIsolated {
+                self?.displayObservation?.invalidate()
+                self?.displayObservation = nil
+                self?.onReadyForDisplay?()
+            }
         }
     }
 
@@ -84,9 +86,11 @@ public class PlayerEngineRenderView: UIView {
         } else {
             displayObservation = playerLayer.observe(\.isReadyForDisplay, options: [.new]) { [weak self] _, change in
                 guard change.newValue == true else { return }
-                self?.displayObservation?.invalidate()
-                self?.displayObservation = nil
-                self?.onReadyForDisplay?()
+                MainActor.assumeIsolated {
+                    self?.displayObservation?.invalidate()
+                    self?.displayObservation = nil
+                    self?.onReadyForDisplay?()
+                }
             }
         }
     }
@@ -273,7 +277,7 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
     }
 
     /**
-     * 缓冲进度（0-1）
+     * 缓冲进度（0-1）, 绝对缓冲位置占总时长的比例
      */
     public var bufferProgress: Double {
         guard let playerItem = playerItem else { return 0 }
@@ -281,7 +285,7 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         let bufferedTime = loadedTimeRanges(of: playerItem)
         let duration = self.duration
 
-        if duration > 0 && bufferedTime > currentTime {
+        if duration > 0 && bufferedTime >= currentTime {
             return min(1.0, bufferedTime / duration)
         }
         return 0
@@ -303,6 +307,8 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
             _rate = newValue
             if playbackState == .playing {
                 avPlayerInstance?.rate = newValue
+                (self.context as? Context)?.bindStickyEvent(.playerRateDidChangeSticky, value: newValue)
+                context?.post(.playerRateDidChangeSticky, object: newValue, sender: self)
             }
         }
     }
@@ -352,7 +358,7 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
 
     // MARK: - Initialization
 
-    public required override init() {
+    public required init() {
         super.init()
     }
 
@@ -394,7 +400,7 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         scalingMode = config.scalingMode
 
         if let player = avPlayerInstance {
-            player.volume = config.initialVolume
+            self.volume = config.initialVolume
         }
 
         if config.autoPlay {
@@ -419,7 +425,6 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         stalledRetryCount = 0
         cancelRetry()
         setURLTime = CFAbsoluteTimeGetCurrent()
-        PLog.engineSetURL(url.absoluteString, playerName: (self.context as? Context)?.name ?? "?")
         (self.context as? Context)?.bindStickyEvent(.playerReadyForDisplaySticky, value: nil)
         (self.context as? Context)?.bindStickyEvent(.playerReadyToPlaySticky, value: nil)
         createPlayerIfNeeded()
@@ -448,13 +453,13 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
      * 开始播放
      */
     public func play() {
-        guard let player = avPlayerInstance else { return }
+        guard let player = avPlayerInstance, player.currentItem != nil else { return }
         if let item = player.currentItem {
             item.preferredForwardBufferDuration = 0
         }
         hasResumedFromBuffer = false
         let targetRate = _rate > 0 ? _rate : 1.0
-        player.play()
+        player.play() // 坑: AVPlayer.play() 内部等价于 rate = 1.0，所以必须在之后覆盖
         player.rate = targetRate
         playbackState = .playing
         observeBufferState()
@@ -489,7 +494,7 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
     /**
      * Seek 到指定时间并回调
      */
-    public func seek(to time: TimeInterval, completion: ((Bool) -> Void)?) {
+    public func seek(to time: TimeInterval, completion: (@Sendable (Bool) -> Void)?) {
         guard let player = avPlayerInstance, duration > 0 else {
             completion?(false)
             return
@@ -505,8 +510,10 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
             guard let self = self else { return }
             if finished {
                 let restoredState: PlayerPlaybackState = (stateBeforeSeek == .playing) ? .playing : .paused
-                self.playbackState = restoredState
-                self.context?.post(.playerSeekEnd, object: time, sender: self)
+                MainActor.assumeIsolated {
+                    self.playbackState = restoredState
+                    self.context?.post(.playerSeekEnd, object: time, sender: self)
+                }
             }
             completion?(finished)
         }
@@ -515,7 +522,7 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
     /**
      * 添加周期时间观察者
      */
-    public func addPeriodicTimeObserver(interval: TimeInterval, queue: DispatchQueue, block: @escaping (TimeInterval) -> Void) -> AnyObject? {
+    public func addPeriodicTimeObserver(interval: TimeInterval, queue: DispatchQueue, block: @Sendable @escaping (TimeInterval) -> Void) -> AnyObject? {
         guard let player = avPlayerInstance else { return nil }
 
         let time = CMTime(seconds: interval, preferredTimescale: 600)
@@ -542,6 +549,7 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
      * 替换当前播放项
      */
     public func replaceCurrentItem(with item: AVPlayerItem?) {
+        removePlaybackObservers()
         self.playerItem = item
 
         if let player = avPlayerInstance {
@@ -622,9 +630,7 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         self.avPlayerInstance = newPlayer
 
         let readyForDisplayHandler: () -> Void = { [weak self] in
-            guard let self = self else { return }
-            let elapsed = Int((CFAbsoluteTimeGetCurrent() - self.setURLTime) * 1000)
-            PLog.engineReadyForDisplay(elapsedMs: elapsed, playerName: (self.context as? Context)?.name ?? "?")
+            guard let self else { return }
             (self.context as? Context)?.bindStickyEvent(.playerReadyForDisplaySticky, value: self)
             self.context?.post(.playerReadyForDisplaySticky, object: self, sender: self)
         }
@@ -645,10 +651,16 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         configureAudioSession()
 
         let interval = CMTime(seconds: 0.5, preferredTimescale: 600)
+        if let observer = timeObserver {
+            avPlayerInstance?.removeTimeObserver(observer)
+            timeObserver = nil
+        }
         timeObserver = newPlayer.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
             guard let self = self else { return }
             let currentTime = CMTimeGetSeconds(time)
-            self.context?.post(.playerTimeDidChange, object: currentTime, sender: self)
+            MainActor.assumeIsolated {
+                self.context?.post(.playerTimeDidChange, object: currentTime, sender: self)
+            }
         }
     }
 
@@ -707,9 +719,6 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
                 switch status {
                 case .readyToPlay:
                     self.loadState = .ready
-                    let elapsed = Int((CFAbsoluteTimeGetCurrent() - self.setURLTime) * 1000)
-                    PLog.engineReadyToPlay(elapsedMs: elapsed, playerName: (self.context as? Context)?.name ?? "?")
-
                     if duration.isFinite {
                         self.context?.post(.playerDurationDidSet, object: duration, sender: self)
                     }
@@ -718,12 +727,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
                     self.context?.post(.playerReadyToPlaySticky, object: self, sender: self)
 
                 case .failed:
-                    let pName = (self.context as? Context)?.name ?? "?"
-                    PLog.itemFailed(pName, error: error?.localizedDescription ?? "unknown")
                     self.stalledRetryCount += 1
                     if self.stalledRetryCount <= Self.maxRetryCount, let url = self.currentURL {
                         let delay = min(pow(2.0, Double(self.stalledRetryCount - 1)), 8.0)
-                        PLog.itemRetry(pName)
                         self.scheduleRetry(url: url, delay: delay)
                     } else {
                         self.loadState = .failed
@@ -808,7 +814,7 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         let keepUp = avPlayerInstance?.currentItem?.isPlaybackLikelyToKeepUp ?? false
         let buffered = bufferedDuration()
 
-        if keepUp || buffered > 0.3 {
+        if keepUp || buffered > 0.3 { // TODO: jason 优化项, 可以根据网络带宽动态修改这个值
             hasResumedFromBuffer = true
             let targetRate = _rate > 0 ? _rate : 1.0
             PLog.bufferResume(playerName, source: source, buffered: buffered, keepUp: keepUp)
@@ -823,12 +829,19 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
      */
     private func bufferedDuration() -> TimeInterval {
         guard let item = avPlayerInstance?.currentItem else { return 0 }
-        guard let range = item.loadedTimeRanges.first?.timeRangeValue else { return 0 }
-        let currentTime = CMTimeGetSeconds(item.currentTime())
-        let bufferedEnd = CMTimeGetSeconds(range.start) + CMTimeGetSeconds(range.duration)
-        return max(0, bufferedEnd - currentTime)
+        let current = CMTimeGetSeconds(item.currentTime())
+        
+        for range in item.loadedTimeRanges {
+            let timeRange = range.timeRangeValue
+            let start = CMTimeGetSeconds(timeRange.start)
+            let end = start + CMTimeGetSeconds(timeRange.duration)
+            
+            if current >= start && current <= end {
+                return max(0, end - current)
+            }
+        }
+        return 0
     }
-
     /**
      * 移除缓冲观察者
      */

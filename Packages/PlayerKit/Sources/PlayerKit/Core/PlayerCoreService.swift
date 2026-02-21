@@ -304,23 +304,7 @@ public extension Event {
     static let playerSpeedPanelDidDismiss: Event = "PlayerSpeedPanelDidDismiss"
 
     /**
-     * Showcase Feed 页面即将切换
+     * 倍速
      */
-    static let showcaseFeedPageWillChange: Event = "ShowcaseFeedPageWillChange"
-    /**
-     * Showcase Feed 页面已切换
-     */
-    static let showcaseFeedPageDidChange: Event = "ShowcaseFeedPageDidChange"
-    /**
-     * Showcase Feed 数据加载完成
-     */
-    static let showcaseFeedDataDidLoad: Event = "ShowcaseFeedDataDidLoad"
-    /**
-     * Showcase Feed 加载更多完成
-     */
-    static let showcaseFeedDataDidLoadMore: Event = "ShowcaseFeedDataDidLoadMore"
-    /**
-     * Showcase Feed Cell 即将显示
-     */
-    static let showcaseFeedCellWillDisplay: Event = "ShowcaseFeedCellWillDisplay"
+    static let playerRateDidChangeSticky: Event = "PlayerRateDidChangeSticky"
 }

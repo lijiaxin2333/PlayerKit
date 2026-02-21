@@ -89,7 +89,7 @@ public protocol PlayerProcessService: PluginService {
     /**
      * Seek 到指定进度
      */
-    func seek(to progress: Double, completion: ((Bool) -> Void)?)
+    func seek(to progress: Double, completion: (@Sendable (Bool) -> Void)?)
 }
 
 // MARK: - 配置模型

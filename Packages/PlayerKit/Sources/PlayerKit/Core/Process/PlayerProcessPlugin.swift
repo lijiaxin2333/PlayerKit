@@ -63,9 +63,11 @@ public final class PlayerProcessPlugin: BasePlugin, PlayerProcessService {
         let interval = (configModel as? PlayerProcessConfigModel)?.updateInterval ?? 0.1
         timeObserver = engineService?.addPeriodicTimeObserver(interval: interval, queue: .main) { [weak self] time in
             guard let self = self else { return }
-            let progress = self.progress
-            for handler in self.progressHandlers.values {
-                handler(progress, time)
+            MainActor.assumeIsolated {
+                let progress = self.progress
+                for handler in self.progressHandlers.values {
+                    handler(progress, time)
+                }
             }
         }
     }
@@ -106,12 +108,14 @@ public final class PlayerProcessPlugin: BasePlugin, PlayerProcessService {
         let targetProgress = scrubbingTargetProgress
         seek(to: targetProgress) { [weak self] finished in
             guard let self = self else { return }
-            self.progressState = .idle
-            self.context?.post(.playerProgressEndScrubbing, sender: self)
+            MainActor.assumeIsolated {
+                self.progressState = .idle
+                self.context?.post(.playerProgressEndScrubbing, sender: self)
+            }
         }
     }
 
-    public func seek(to progress: Double, completion: ((Bool) -> Void)?) {
+    public func seek(to progress: Double, completion: (@Sendable (Bool) -> Void)?) {
         let clampedProgress = max(0, min(1, progress))
         let time = duration * clampedProgress
         engineService?.seek(to: time, completion: completion)

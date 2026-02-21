@@ -90,8 +90,10 @@ public final class PlayerResolutionPlugin: BasePlugin, PlayerResolutionService {
 
             if currentTime > 0 {
                 engineService?.seek(to: currentTime) { [weak self] finished in
-                    if finished, wasPlaying {
-                        self?.engineService?.play()
+                    MainActor.assumeIsolated {
+                        if finished, wasPlaying {
+                            self?.engineService?.play()
+                        }
                     }
                 }
             }

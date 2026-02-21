@@ -78,7 +78,9 @@ public final class FeedPlayer: ContextHolder, TypedPlayerProtocol {
 
     @discardableResult
     public func acquireEngine() -> Bool {
-        player?.acquireEngine() ?? false
+        guard player?.acquireEngine() == true else { return false }
+        applyEngineConfig()
+        return true
     }
 
     public func recycleEngine() {
@@ -87,12 +89,16 @@ public final class FeedPlayer: ContextHolder, TypedPlayerProtocol {
 
     @discardableResult
     public func adoptEngine(from source: Player) -> Bool {
-        guard let result = player?.adoptEngine(from: source), result else { return false }
+        guard player?.adoptEngine(from: source) == true else { return false }
+        applyEngineConfig()
+        return true
+    }
+
+    private func applyEngineConfig() {
         let configModel = PlayerEngineCoreConfigModel()
         configModel.autoPlay = configuration.autoPlay
         configModel.isLooping = configuration.looping
         player?.context.configPlugin(serviceProtocol: PlayerEngineCoreService.self, withModel: configModel)
-        return true
     }
 
     // MARK: - Service Access

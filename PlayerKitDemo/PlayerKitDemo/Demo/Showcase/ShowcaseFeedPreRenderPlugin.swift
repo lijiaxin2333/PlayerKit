@@ -26,8 +26,8 @@ final class ShowcaseFeedPreRenderPlugin: BasePlugin, ShowcaseFeedPreRenderServic
         context?.resolveService(ShowcaseFeedCellViewService.self)?.playerContainerView
     }
 
-    private var sceneContext: ShowcaseFeedSceneContext? {
-        (context as? Context)?.holder as? ShowcaseFeedSceneContext
+    private var sceneContext: ShowcaseFeedScenePlayer? {
+        (context as? Context)?.holder as? ShowcaseFeedScenePlayer
     }
 
     private var dataService: ShowcaseFeedDataService? {

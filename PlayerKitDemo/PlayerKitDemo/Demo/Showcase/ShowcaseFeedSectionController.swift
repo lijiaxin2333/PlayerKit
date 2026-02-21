@@ -43,7 +43,7 @@ final class ShowcaseFeedSectionController: BaseListSectionController, FeedAutoPl
 
     var isFeedAutoPlaying: Bool {
         guard let cell = feedCell else { return false }
-        guard let engineService = cell.sceneContext.context.resolveService(PlayerEngineCoreService.self) else { return false }
+        guard let engineService = cell.scenePlayer.context.resolveService(PlayerEngineCoreService.self) else { return false }
         return engineService.playbackState == .playing
     }
 
@@ -75,7 +75,7 @@ final class ShowcaseFeedSectionController: BaseListSectionController, FeedAutoPl
         if let vm = feedViewModel,
            let plugin: ShowcaseFeedPlaybackPluginProtocol = vm.listContext?.responderForProtocol(ShowcaseFeedPlaybackPluginProtocol.self) {
             let preRenderConfig = ShowcaseFeedPreRenderConfigModel(playbackPlugin: plugin)
-            feedCell.sceneContext.configPlugin(serviceProtocol: ShowcaseFeedPreRenderService.self, withModel: preRenderConfig)
+            feedCell.scenePlayer.context.configPlugin(serviceProtocol: ShowcaseFeedPreRenderService.self, withModel: preRenderConfig)
         }
     }
 

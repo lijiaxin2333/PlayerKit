@@ -292,13 +292,13 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         guard let cell = collectionView.cellForItem(at: IndexPath(item: 0, section: index)) as? ShowcaseFeedCell else { return }
         cellEventObserverIndex = index
 
-        cell.sceneContext.context.add(self, event: .showcaseOverlayDidTapDetail) { [weak self] object, _ in
+        cell.scenePlayer.context.add(self, event: .showcaseOverlayDidTapDetail) { [weak self] object, _ in
             guard let self = self, let ctx = self.listContext else { return }
             if let idx = object as? Int, let vc = ctx.baseListViewController() {
                 self.enterDetail(at: idx, from: vc)
             }
         }
-        cell.sceneContext.context.add(self, event: .showcaseAutoPlayNextRequest) { [weak self] object, _ in
+        cell.scenePlayer.context.add(self, event: .showcaseAutoPlayNextRequest) { [weak self] object, _ in
             guard let self = self else { return }
             if let currentIdx = object as? Int {
                 self.scrollToNextPage(from: currentIdx)
@@ -309,7 +309,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
     private func removeCellEventListeners(at index: Int, in collectionView: UICollectionView) {
         guard index >= 0 else { return }
         guard let cell = collectionView.cellForItem(at: IndexPath(item: 0, section: index)) as? ShowcaseFeedCell else { return }
-        cell.sceneContext.context.removeHandlers(forObserver: self)
+        cell.scenePlayer.context.removeHandlers(forObserver: self)
     }
 
     // MARK: - Playback
@@ -328,7 +328,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         currentPlayingIndex = index
 
         let targetCell = collectionView.cellForItem(at: IndexPath(item: 0, section: index)) as? ShowcaseFeedCell
-        guard let processService = targetCell?.sceneContext.context.resolveService(PlayerScenePlayerProcessService.self) else {
+        guard let processService = targetCell?.scenePlayer.context.resolveService(PlayerScenePlayerProcessService.self) else {
             // Cell not yet available (layout timing race). Retry once on next run loop.
             if autoPlayRetryCount < maxAutoPlayRetries {
                 autoPlayRetryCount += 1
@@ -361,7 +361,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
             }
         )
 
-        if let autoPlayPlugin = targetCell?.sceneContext.context.resolveService(ShowcaseAutoPlayNextService.self) {
+        if let autoPlayPlugin = targetCell?.scenePlayer.context.resolveService(ShowcaseAutoPlayNextService.self) {
             let autoPlayConfig = ShowcaseAutoPlayNextConfigModel(totalCount: videos.count, isEnabled: true)
             (autoPlayPlugin as? BasePlugin)?.configModel = autoPlayConfig
         }

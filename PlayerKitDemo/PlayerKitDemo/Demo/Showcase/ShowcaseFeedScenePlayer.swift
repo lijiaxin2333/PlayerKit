@@ -31,7 +31,7 @@ final class ShowcaseFeedSceneRegProvider: RegisterProvider {
 }
 
 @MainActor
-final class ShowcaseFeedSceneContext: ScenePlayerProtocol {
+final class ShowcaseFeedScenePlayer: ScenePlayerProtocol {
 
     let context: PublicContext
     private var _typedPlayer: FeedPlayer?
@@ -92,23 +92,5 @@ final class ShowcaseFeedSceneContext: ScenePlayerProtocol {
 
     var playerView: UIView? {
         engineService?.playerView
-    }
-}
-
-// MARK: - Context Forwarding
-
-@MainActor
-extension ShowcaseFeedSceneContext {
-
-    func post(_ event: Event, object: Any? = nil, sender: AnyObject) {
-        context.post(event, object: object, sender: sender)
-    }
-
-    func add(_ observer: AnyObject, event: Event, handler: @escaping EventHandlerBlock) -> AnyObject? {
-        context.add(observer, event: event, handler: handler)
-    }
-
-    func configPlugin<T>(serviceProtocol: T.Type, withModel configModel: Any?) {
-        context.configPlugin(serviceProtocol: serviceProtocol, withModel: configModel)
     }
 }

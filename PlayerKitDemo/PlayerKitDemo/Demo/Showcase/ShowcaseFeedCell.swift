@@ -23,7 +23,7 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
 
         // 通知播放器层更新数据
         let model = ShowcaseFeedDataConfigModel(video: vm.video, index: vm.videoIndex)
-        sceneContext.post(.showcaseFeedDataWillUpdate, object: model, sender: self)
+        scenePlayer.post(.showcaseFeedDataWillUpdate, object: model, sender: self)
     }
 
     /// 获取当前绑定的 CellViewModel
@@ -33,12 +33,12 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
 
     /// Cell 即将显示
     func cellWillDisplay(duplicateReload: Bool) {
-        sceneContext.post(.cellWillDisplay, sender: self)
+        scenePlayer.post(.cellWillDisplay, sender: self)
     }
 
     /// Cell 已移出屏幕
     func cellDidEndDisplaying(duplicateReload: Bool) {
-        sceneContext.post(.cellDidEndDisplaying, sender: self)
+        scenePlayer.post(.cellDidEndDisplaying, sender: self)
     }
 
     /// VC viewWillAppear
@@ -55,10 +55,10 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
 
     // MARK: - Properties
 
-    let sceneContext = ShowcaseFeedSceneContext()
+    let scenePlayer = ShowcaseFeedScenePlayer()
     private let _playerContainer = UIView()
 
-    var feedPlayer: FeedPlayer? { sceneContext.feedPlayer }
+    var feedPlayer: FeedPlayer? { scenePlayer.feedPlayer }
     var playerContainerView: UIView? { _playerContainer }
 
     /// 当前视频索引（兼容旧代码）
@@ -85,7 +85,7 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
 
         // Post 事件通知 CellView 已就绪
         let cellViewConfig = ShowcaseFeedCellViewConfigModel(contentView: contentView, playerContainer: _playerContainer)
-        sceneContext.post(.showcaseFeedCellViewDidSet, object: cellViewConfig, sender: self)
+        scenePlayer.post(.showcaseFeedCellViewDidSet, object: cellViewConfig, sender: self)
     }
 
     required init?(coder: NSCoder) { fatalError() }
@@ -93,11 +93,11 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
     // MARK: - Player Methods
 
     func addTypedPlayerIfNeeded(_ typedPlayer: FeedPlayer) {
-        sceneContext.addTypedPlayer(typedPlayer)
+        scenePlayer.addTypedPlayer(typedPlayer)
     }
 
     func attachPlayerView() {
-        guard let feedPlayer = sceneContext.feedPlayer else { return }
+        guard let feedPlayer = scenePlayer.feedPlayer else { return }
         guard let pv = feedPlayer.playerView else { return }
         pv.translatesAutoresizingMaskIntoConstraints = false
         pv.isHidden = false
@@ -117,14 +117,14 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         guard let index = _cellViewModel?.videoIndex else { return }
         PLog.detachPlayerLog(index)
         _playerContainer.subviews.forEach { $0.removeFromSuperview() }
-        sceneContext.removeTypedPlayer()
+        scenePlayer.removeTypedPlayer()
     }
 
     // MARK: - 兼容方法（保持原有调用方式）
 
     /// 检查数据是否有效
     func checkDataValid(video: ShowcaseVideo) -> Bool {
-        guard let currentVideo = sceneContext.dataService?.video else { return false }
+        guard let currentVideo = scenePlayer.dataService?.video else { return false }
         return currentVideo.feedId == video.feedId
     }
 
@@ -137,7 +137,7 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         vm.update(video: video, index: index)
         // 通知播放器层
         let model = ShowcaseFeedDataConfigModel(video: video, index: index)
-        sceneContext.post(.showcaseFeedDataWillUpdate, object: model, sender: self)
+        scenePlayer.post(.showcaseFeedDataWillUpdate, object: model, sender: self)
     }
 
     // MARK: - Reuse
@@ -147,7 +147,7 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         if let index = _cellViewModel?.videoIndex {
             PLog.prepareForReuse(index)
         }
-        sceneContext.post(.cellPrepareForReuse, sender: self)
+        scenePlayer.post(.cellPrepareForReuse, sender: self)
         detachPlayer()
         _cellViewModel = nil
     }

@@ -94,7 +94,7 @@ public final class PlayerFinishViewPlugin: BasePlugin, PlayerFinishViewService {
 
     // MARK: - Initialization
 
-    public required override init() {
+    public required init() {
         super.init()
     }
 

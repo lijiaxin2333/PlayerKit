@@ -307,4 +307,72 @@ public extension Event {
      * 倍速
      */
     static let playerRateDidChangeSticky: Event = "PlayerRateDidChangeSticky"
+
+    // MARK: - Engine Events
+
+    /**
+     * 播放器引擎视图变化（渲染视图变化）
+     */
+    static let playerEngineViewDidChanged: Event = "PlayerEngineViewDidChanged"
+
+    /**
+     * 播放器引擎创建渲染视图
+     */
+    static let playerEngineDidCreateRenderView: Event = "PlayerEngineDidCreateRenderView"
+
+    /**
+     * 起播前开始加载缓存
+     */
+    static let playerStartPlayLoadBufferBegin: Event = "PlayerStartPlayLoadBufferBegin"
+
+    /**
+     * 起播前结束加载缓存
+     * - Parameter: NSTimeInterval 加载时长
+     */
+    static let playerStartPlayLoadBufferEnd: Event = "PlayerStartPlayLoadBufferEnd"
+
+    /**
+     * 缩放模式改变
+     * - Parameter: PlayerScalingMode
+     */
+    static let playerScaleModeChanged: Event = "PlayerScaleModeChanged"
+
+    /**
+     * 获取到引擎模型（如 VID 拉取到 VideoEngineModel）
+     * - Parameter: 引擎模型对象
+     */
+    static let playerDidFetchEngineModel: Event = "PlayerDidFetchEngineModel"
+
+    // MARK: - Zoom Events
+
+    /**
+     * 自由缩放状态变化
+     */
+    static let playerZoomStateDidChanged: Event = "PlayerZoomStateDidChanged"
+
+    /**
+     * 智能满屏开关变化
+     * - Parameter: Bool 是否开启
+     */
+    static let playerAspectFillDidChanged: Event = "PlayerAspectFillDidChanged"
+
+    // MARK: - Data Events
+
+    /**
+     * 数据模型即将更新
+     */
+    static let playerDataModelWillUpdate: Event = "PlayerDataModelWillUpdateEvent"
+
+    /**
+     * 数据模型已更新（粘性事件）
+     */
+    static let playerDataModelDidUpdateSticky: Event = "PlayerDataModelDidUpdateSticky"
+
+    // MARK: - View Events
+
+    /**
+     * ActionView 已创建（粘性事件）
+     * - Parameter: PlayerActionView 实例
+     */
+    static let playerActionViewDidCreateSticky: Event = "PlayerActionViewDidCreateSticky"
 }

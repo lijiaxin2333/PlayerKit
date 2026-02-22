@@ -43,6 +43,8 @@ public enum PlayerViewType: String, CaseIterable {
     case bottomBarBackground = "PlayerViewTypeBottomBarBackground"
     /** Toast 提示视图 */
     case toastView = "PlayerViewTypeToastView"
+    /** 面板视图（倍速面板、设置面板等） */
+    case panelView = "PlayerViewTypePanelView"
     /** 调试信息视图 */
     case debugView = "PlayerViewTypeDebugView"
 }

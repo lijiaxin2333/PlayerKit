@@ -36,6 +36,8 @@ private final class RunningHandle {
 public actor KTVHTTPCachePreloadManager: PreloadManaging {
     /** 预加载配置 */
     private let config: PreloadConfig
+    /** HTTP 代理服务 */
+    private var httpProxyService: PlayerHTTPProxyService?
     /** URL 会话 */
     private let session: URLSession
 
@@ -56,13 +58,21 @@ public actor KTVHTTPCachePreloadManager: PreloadManaging {
     /**
      * 使用配置初始化预加载管理器
      */
-    public init(config: PreloadConfig) {
+    public init(config: PreloadConfig, httpProxyService: PlayerHTTPProxyService?) {
         self.config = config
+        self.httpProxyService = httpProxyService
         let cfg = URLSessionConfiguration.default
         cfg.requestCachePolicy = .reloadIgnoringLocalCacheData
         cfg.timeoutIntervalForRequest = 15
         cfg.timeoutIntervalForResource = 30
         self.session = URLSession(configuration: cfg)
+    }
+
+    /**
+     * 设置代理服务
+     */
+    public func setHTTPProxyService(_ service: PlayerHTTPProxyService?) {
+        self.httpProxyService = service
     }
 
     /**
@@ -230,7 +240,8 @@ public actor KTVHTTPCachePreloadManager: PreloadManaging {
      * 启动指定 URL 的预加载任务
      */
     private func startPreload(url: URL) {
-        let proxy = KTVHTTPCacheProbe.proxyURL(for: url)
+        // 通过代理服务获取代理 URL（协议扩展提供的方法是线程安全的）
+        let proxy = httpProxyService?.proxyURL(for: url) ?? url
 
         var req = URLRequest(url: proxy)
         if config.bytesPerURL > 0 {

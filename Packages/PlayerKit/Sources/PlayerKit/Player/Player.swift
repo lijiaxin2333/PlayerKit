@@ -33,7 +33,6 @@ final class PlayerRegProvider: RegisterProvider {
         registerSet.addEntry(pluginClass: PlayerQosPlugin.self, serviceType: PlayerQosService.self)
         registerSet.addEntry(pluginClass: PlayerResolutionPlugin.self, serviceType: PlayerResolutionService.self)
         registerSet.addEntry(pluginClass: PlayerPreRenderPlugin.self, serviceType: PlayerPreRenderService.self)
-        registerSet.addEntry(pluginClass: PlayerContextPlugin.self, serviceType: PlayerContextService.self)
         registerSet.addEntry(pluginClass: PlayerDebugPlugin.self, serviceType: PlayerDebugService.self)
         registerSet.addEntry(pluginClass: PlayerPreNextPlugin.self, serviceType: PlayerPreNextService.self)
         registerSet.addEntry(pluginClass: PlayerTipManagerPlugin.self, serviceType: PlayerTipManagerService.self)
@@ -43,6 +42,11 @@ final class PlayerRegProvider: RegisterProvider {
         registerSet.addEntry(pluginClass: PlayerGesturePlugin.self, serviceType: PlayerGestureService.self)
         registerSet.addEntry(pluginClass: PlayerSubtitlePlugin.self, serviceType: PlayerSubtitleService.self)
         registerSet.addEntry(pluginClass: PlayerSnapshotPlugin.self, serviceType: PlayerSnapshotService.self)
+        registerSet.addEntry(pluginClass: PlayerZoomPlugin.self, serviceType: PlayerZoomService.self)
+        // 引擎池服务（全局单例访问入口）
+        registerSet.addEntry(pluginClass: PlayerEnginePoolPlugin.self, serviceType: PlayerEnginePoolService.self)
+        // HTTP 代理服务（视频缓存）
+        registerSet.addEntry(pluginClass: PlayerHTTPProxyPlugin.self, serviceType: PlayerHTTPProxyService.self)
     }
 }
 
@@ -65,21 +69,29 @@ public final class Player: ContextHolder {
 
     // MARK: - Engine Pool
 
-    /** 共享的播放引擎池 */
-    private var _sharedPool: PlayerEnginePoolService?
-    /** 引擎池中的标识符 */
+    /** 引擎池标识符（用于从池中获取/回收引擎） */
     private var _poolIdentifier: String?
 
-    /** 绑定引擎池，用于引擎复用 */
-    public func bindPool(_ pool: PlayerEnginePoolService, identifier: String) {
-        _sharedPool = pool
+    /** 引擎池服务，通过 Context 获取全局池 */
+    public var poolService: PlayerEnginePoolService? {
+        context.resolveService(PlayerEnginePoolService.self)
+    }
+
+    /** 绑定引擎池标识符，用于引擎复用 */
+    public func bindPool(identifier: String) {
         _poolIdentifier = identifier
+    }
+
+    /** 绑定外部引擎池（兼容旧 API） */
+    public func bindPool(_ pool: PlayerEnginePoolService, identifier: String) {
+        _poolIdentifier = identifier
+        // 外部池通过 Context 注册，这里只记录标识符
     }
 
     /** 从引擎池中获取引擎实例 */
     @discardableResult
     public func acquireEngine() -> Bool {
-        guard let pool = _sharedPool, let id = _poolIdentifier else { return false }
+        guard let pool = poolService, let id = _poolIdentifier else { return false }
         guard let engine = pool.dequeue(identifier: id) else { return false }
         guard let comp = engine as? BasePlugin else { return false }
         context.detachInstance(for: PlayerEngineCoreService.self)
@@ -89,7 +101,7 @@ public final class Player: ContextHolder {
 
     /** 回收引擎实例到引擎池 */
     public func recycleEngine() {
-        guard let pool = _sharedPool, let id = _poolIdentifier else { return }
+        guard let pool = poolService, let id = _poolIdentifier else { return }
         engineService?.pause()
         guard let comp = context.detachInstance(for: PlayerEngineCoreService.self) else { return }
         guard let engine = comp as? PlayerEngineCoreService else { return }
@@ -171,5 +183,10 @@ public final class Player: ContextHolder {
     /** 倍速面板服务，管理倍速选择面板 */
     public var speedPanelService: PlayerSpeedPanelService? {
         context.resolveService(PlayerSpeedPanelService.self)
+    }
+
+    /** 缩放服务，管理自由缩放和智能满屏 */
+    public var zoomService: PlayerZoomService? {
+        context.resolveService(PlayerZoomService.self)
     }
 }

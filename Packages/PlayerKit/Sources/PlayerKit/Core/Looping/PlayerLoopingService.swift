@@ -13,6 +13,7 @@ import UIKit
 
 /**
  * 循环模式枚举
+ * - 播放器只感知当前视频的循环，列表循环由列表层负责
  */
 public enum PlayerLoopingMode {
     /**
@@ -20,13 +21,9 @@ public enum PlayerLoopingMode {
      */
     case none
     /**
-     * 单曲循环
+     * 单视频循环
      */
-    case one
-    /**
-     * 列表循环
-     */
-    case all
+    case loop
 }
 
 // MARK: - 循环播放服务

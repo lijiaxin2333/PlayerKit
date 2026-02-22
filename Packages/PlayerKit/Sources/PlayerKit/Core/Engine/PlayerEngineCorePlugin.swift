@@ -97,13 +97,15 @@ public class PlayerEngineRenderView: UIView {
 
     /**
      * 确保 player 已正确绑定到 layer
+     * 注意：layerClass 方案下，AVPlayerLayer 是 backing layer，
+     * UIKit 自动管理 layer.frame 与 view.frame 同步，无需手动设置。
      */
     public func ensurePlayerBound() {
         guard let player = playerRef else { return }
         if playerLayer.player !== player {
             playerLayer.player = player
         }
-        playerLayer.frame = bounds
+        // layerClass 方案下不需要手动设置 frame，否则会破坏 view 的位置
     }
 
     /**
@@ -118,10 +120,11 @@ public class PlayerEngineRenderView: UIView {
 
     /**
      * 布局变化时同步 layer 尺寸
+     * 注意：layerClass 方案下，UIKit 自动管理，无需手动设置。
      */
     override public func layoutSubviews() {
         super.layoutSubviews()
-        playerLayer.frame = bounds
+        // layerClass 方案下不需要手动设置 frame
     }
 }
 
@@ -136,6 +139,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
     public typealias ConfigModelType = PlayerEngineCoreConfigModel
 
     // MARK: - Properties
+
+    /** HTTP 代理服务 */
+    @PlayerPlugin private var httpProxyService: PlayerHTTPProxyService?
 
     /**
      * AVPlayer 实例
@@ -193,6 +199,11 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
      * 最大重试次数
      */
     private static let maxRetryCount = 3
+
+    /**
+     * 起播加载开始时间（用于计算加载时长）
+     */
+    private var loadStartPlayBufferStartTime: TimeInterval = 0
 
     /**
      * 播放状态
@@ -254,8 +265,32 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         get { _loadState }
         set {
             guard _loadState != newValue else { return }
+            let oldValue = _loadState
             _loadState = newValue
+
+            // 起播前加载缓存事件
+            handleLoadBufferEvents(oldState: oldValue, newState: newValue)
+
             context?.post(.playerLoadStateDidChange, object: _loadState, sender: self)
+        }
+    }
+
+    /**
+     * 处理起播加载缓存事件
+     */
+    private func handleLoadBufferEvents(oldState: PlayerLoadState, newState: PlayerLoadState) {
+        // 起播前开始加载（stalled 或 unknown 状态，且未播放完成）
+        if (newState == .stalled || newState == .preparing) && _playbackState != .stopped {
+            if loadStartPlayBufferStartTime == 0 {
+                loadStartPlayBufferStartTime = CFAbsoluteTimeGetCurrent()
+                context?.post(.playerStartPlayLoadBufferBegin, sender: self)
+            }
+        }
+        // 起播前结束加载（变为 ready 或 playable）
+        else if newState == .ready && loadStartPlayBufferStartTime > 0 {
+            let duration = CFAbsoluteTimeGetCurrent() - loadStartPlayBufferStartTime
+            loadStartPlayBufferStartTime = 0
+            context?.post(.playerStartPlayLoadBufferEnd, object: duration, sender: self)
         }
     }
 
@@ -329,13 +364,11 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
 
     /**
      * 音量（0-1）
+     * - 注意：音量事件由 PlayerMediaControlPlugin 统一广播，引擎层不广播
      */
     public var volume: Float {
         get { avPlayerInstance?.volume ?? 1.0 }
-        set {
-            avPlayerInstance?.volume = newValue
-            context?.post(.playerVolumeDidChange, object: newValue, sender: self)
-        }
+        set { avPlayerInstance?.volume = newValue }
     }
 
     /**
@@ -344,6 +377,7 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
     public var scalingMode: PlayerScalingMode {
         get { _scalingMode }
         set {
+            guard _scalingMode != newValue else { return }
             _scalingMode = newValue
             switch newValue {
             case .fit:
@@ -353,6 +387,7 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
             case .fillEdge:
                 renderView?.playerLayer.videoGravity = .resize
             }
+            context?.post(.playerScaleModeChanged, object: newValue, sender: self)
         }
     }
 
@@ -399,7 +434,7 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         isLooping = config.isLooping
         scalingMode = config.scalingMode
 
-        if let player = avPlayerInstance {
+        if avPlayerInstance != nil {
             self.volume = config.initialVolume
         }
 
@@ -430,7 +465,7 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         createPlayerIfNeeded()
         removePlaybackObservers()
 
-        let finalURL = KTVHTTPCacheProbe.proxyURL(for: url)
+        let finalURL = httpProxyService?.proxyURL(for: url) ?? url
         let asset = AVURLAsset(url: finalURL, options: [
             AVURLAssetPreferPreciseDurationAndTimingKey: false
         ])
@@ -563,6 +598,7 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
             }
 
             context?.post(.playerEngineDidChange, sender: self)
+            context?.post(.playerEngineViewDidChanged, sender: self)
         }
     }
 
@@ -641,6 +677,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
             rv.onReadyForDisplay = readyForDisplayHandler
             rv.setPlayer(newPlayer)
             self.renderView = rv
+
+            // 发送渲染视图创建事件
+            context?.post(.playerEngineDidCreateRenderView, object: rv, sender: self)
         }
 
         newPlayer.automaticallyWaitsToMinimizeStalling = false
@@ -884,7 +923,7 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
      * 执行重试
      */
     private func executeRetry(url: URL) {
-        let finalURL = KTVHTTPCacheProbe.proxyURL(for: url)
+        let finalURL = httpProxyService?.proxyURL(for: url) ?? url
         let asset = AVURLAsset(url: finalURL, options: [AVURLAssetPreferPreciseDurationAndTimingKey: false])
         let retryItem = AVPlayerItem(asset: asset)
         retryItem.canUseNetworkResourcesForLiveStreamingWhilePaused = false

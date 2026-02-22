@@ -12,13 +12,15 @@ public final class ListPrefetchPlugin: ListPrefetchService {
     private var _config = PreloadConfig()
     /** 预加载管理器实例 */
     private var manager: KTVHTTPCachePreloadManager?
+    /** HTTP 代理服务（通过 PlayerKit 获取） */
+    private var httpProxyService: PlayerHTTPProxyService?
 
     /** 预加载配置 */
     public var prefetchConfig: PreloadConfig {
         get { _config }
         set {
             _config = newValue
-            manager = KTVHTTPCachePreloadManager(config: newValue)
+            manager = KTVHTTPCachePreloadManager(config: newValue, httpProxyService: httpProxyService)
         }
     }
 
@@ -27,8 +29,17 @@ public final class ListPrefetchPlugin: ListPrefetchService {
      */
     public init(config: PreloadConfig = PreloadConfig()) {
         self._config = config
-        KTVHTTPCacheProbe.probeStartProxyIfNeeded()
-        manager = KTVHTTPCachePreloadManager(config: _config)
+        manager = KTVHTTPCachePreloadManager(config: _config, httpProxyService: nil)
+    }
+
+    /**
+     * 设置 HTTP 代理服务
+     */
+    public func setHTTPProxyService(_ service: PlayerHTTPProxyService?) {
+        self.httpProxyService = service
+        Task {
+            await manager?.setHTTPProxyService(service)
+        }
     }
 
     deinit {
@@ -77,6 +88,6 @@ public final class ListPrefetchPlugin: ListPrefetchService {
               scheme == "http" || scheme == "https" else {
             return originalURL
         }
-        return KTVHTTPCacheProbe.proxyURL(for: originalURL)
+        return httpProxyService?.proxyURL(for: originalURL) ?? originalURL
     }
 }

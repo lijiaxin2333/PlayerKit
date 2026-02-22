@@ -15,8 +15,6 @@ import UIKit
 @MainActor
 public final class PlayerPlaybackControlPlugin: BasePlugin, PlayerPlaybackControlService {
 
-    public typealias ConfigModelType = PlayerPlaybackControlConfigModel
-
     // MARK: - Properties
 
     /**
@@ -59,7 +57,7 @@ public final class PlayerPlaybackControlPlugin: BasePlugin, PlayerPlaybackContro
 
     // MARK: - Initialization
 
-    public required override init() {
+    public required init() {
         super.init()
     }
 
@@ -70,13 +68,6 @@ public final class PlayerPlaybackControlPlugin: BasePlugin, PlayerPlaybackContro
      */
     public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
-    }
-
-    /**
-     * 应用配置
-     */
-    public override func config(_ configModel: Any?) {
-        super.config(configModel)
     }
 
     // MARK: - Methods

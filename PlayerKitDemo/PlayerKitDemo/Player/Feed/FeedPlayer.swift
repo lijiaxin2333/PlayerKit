@@ -72,6 +72,17 @@ public final class FeedPlayer: ContextHolder, TypedPlayerProtocol {
 
     // MARK: - Engine Pool
 
+    /** 引擎池服务 */
+    public var poolService: PlayerEnginePoolService? {
+        player?.poolService
+    }
+
+    /** 绑定引擎池标识符 */
+    public func bindPool(identifier: String) {
+        player?.bindPool(identifier: identifier)
+    }
+
+    /** 绑定外部引擎池（兼容旧 API） */
     public func bindPool(_ pool: PlayerEnginePoolService, identifier: String) {
         player?.bindPool(pool, identifier: identifier)
     }

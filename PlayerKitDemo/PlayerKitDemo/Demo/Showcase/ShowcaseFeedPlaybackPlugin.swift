@@ -62,9 +62,9 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
     private let maxAutoPlayRetries = 2
 
     init(configuration: Configuration = Configuration()) {
-        let pool = PlayerEnginePool.shared
-        pool.maxCapacity = configuration.enginePoolMaxCapacity
-        pool.maxPerIdentifier = configuration.enginePoolMaxPerIdentifier
+        // 配置全局引擎池
+        PlayerEnginePool.shared.maxCapacity = configuration.enginePoolMaxCapacity
+        PlayerEnginePool.shared.maxPerIdentifier = configuration.enginePoolMaxPerIdentifier
 
         self.maxPreRenderCount = configuration.preRenderMaxCount
         self.preRenderTimeout = configuration.preRenderTimeout
@@ -101,7 +101,11 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
 
         cancelAllPreRenders()
         prefetchManager.cancelAll()
-        PlayerEnginePool.shared.clear()
+        // 清空 preRenderPlayers 并回收引擎
+        for (_, player) in preRenderPlayers {
+            player.recycleEngine()
+        }
+        preRenderPlayers.removeAll()
     }
 
     // MARK: - PreRender Pool
@@ -118,7 +122,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         }
 
         let player = Player(name: "PreRender_\(identifier)")
-        player.bindPool(PlayerEnginePool.shared, identifier: "showcase")
+        player.bindPool(identifier: "showcase")
         player.acquireEngine()
 
         let engineConfig = PlayerEngineCoreConfigModel()

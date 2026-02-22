@@ -81,7 +81,7 @@ final class ShowcaseFeedPreRenderPlugin: BasePlugin, ShowcaseFeedPreRenderServic
             return
         }
 
-        feedPlayer.bindPool(PlayerEnginePool.shared, identifier: "showcase")
+        feedPlayer.bindPool(identifier: "showcase")
         feedPlayer.adoptEngine(from: preRenderedPlayer)
         attachPlayerViewToContainer(feedPlayer)
     }

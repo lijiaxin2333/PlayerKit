@@ -67,6 +67,9 @@ public class PlayerMediaControlConfigModel {
     /** 是否允许手势调节亮度 */
     public var allowBrightnessGesture: Bool = true
 
+    /** 退出时是否恢复亮度 */
+    public var restoreBrightnessOnUnload: Bool = true
+
     /**
      * 初始化
      */

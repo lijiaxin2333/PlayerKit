@@ -104,7 +104,7 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         index: Int,
         playbackPlugin: ShowcaseFeedPlaybackPlugin
     ) {
-        scenePlayer.feedPlayer?.bindPool(PlayerEnginePool.shared, identifier: "showcase")
+        scenePlayer.feedPlayer?.bindPool(identifier: "showcase")
         guard let processService = scenePlayer.resolveService(PlayerScenePlayerProcessService.self) else { return }
         processService.execPlay(
             isAutoPlay: isAutoPlay,

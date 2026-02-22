@@ -94,6 +94,10 @@ public final class PlayerViewPlugin: BasePlugin, PlayerViewService {
                 layerView.bottomAnchor.constraint(equalTo: av.bottomAnchor)
             ])
         }
+
+        // 发送 ActionView 创建事件（粘性）
+        (context as? Context)?.bindStickyEvent(.playerActionViewDidCreateSticky, value: av)
+        context?.post(.playerActionViewDidCreateSticky, object: av, sender: self)
     }
 
     /** 设置容器视图 */

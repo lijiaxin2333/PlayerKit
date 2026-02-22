@@ -249,7 +249,7 @@ public final class PlayerControlViewPlugin: BasePlugin, PlayerControlViewService
     /**
      * 初始化插件
      */
-    public required override init() {
+    public required init() {
         super.init()
     }
 
@@ -413,7 +413,6 @@ public final class PlayerControlViewPlugin: BasePlugin, PlayerControlViewService
         view.translatesAutoresizingMaskIntoConstraints = false
         controlViewInstance = view
 
-        print("[PlayerControlViewPlugin] 创建默认播控视图")
     }
 
     /**

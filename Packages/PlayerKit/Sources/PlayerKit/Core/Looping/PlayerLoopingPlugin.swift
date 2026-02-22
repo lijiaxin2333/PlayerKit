@@ -11,6 +11,7 @@ import UIKit
 
 /**
  * 循环播放插件
+ * - 只负责当前视频的循环，列表循环由列表层负责
  */
 @MainActor
 public final class PlayerLoopingPlugin: BasePlugin, PlayerLoopingService {
@@ -38,7 +39,7 @@ public final class PlayerLoopingPlugin: BasePlugin, PlayerLoopingService {
         get { _loopingMode }
         set {
             _loopingMode = newValue
-            engineService?.isLooping = (newValue != .none)
+            engineService?.isLooping = (newValue == .loop)
             context?.post(.playerLoopingDidChange, object: newValue, sender: self)
         }
     }
@@ -47,12 +48,12 @@ public final class PlayerLoopingPlugin: BasePlugin, PlayerLoopingService {
      * 是否循环播放
      */
     public var isLooping: Bool {
-        return loopingMode != .none
+        return loopingMode == .loop
     }
 
     // MARK: - Initialization
 
-    public required override init() {
+    public required init() {
         super.init()
     }
 
@@ -73,22 +74,19 @@ public final class PlayerLoopingPlugin: BasePlugin, PlayerLoopingService {
 
         guard let config = configModel as? PlayerLoopingConfigModel else { return }
 
-        _loopingMode = config.defaultMode
-        engineService?.isLooping = (config.defaultMode != .none)
+        self.loopingMode = config.defaultMode
     }
 
     // MARK: - PlayerLoopingService
 
     /**
-     * 切换循环模式（none -> one -> all -> none）
+     * 切换循环模式（none <-> loop）
      */
     public func toggleLooping() {
         switch loopingMode {
         case .none:
-            loopingMode = .one
-        case .one:
-            loopingMode = .all
-        case .all:
+            loopingMode = .loop
+        case .loop:
             loopingMode = .none
         }
     }

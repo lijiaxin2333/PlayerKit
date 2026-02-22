@@ -23,6 +23,7 @@ public final class PlayerActionView: UIView, PlayerActionViewProtocol {
         .controlOverlayView,
         .progressView,
         .toastView,
+        .panelView,
         .debugView,
     ]
 

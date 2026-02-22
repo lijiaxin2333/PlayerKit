@@ -3,6 +3,7 @@ import UIKit
 
 /**
  * 播放器手势插件，负责管理各种手势识别及分发
+ * - 通过 PlayerViewService 获取 actionView，解耦对引擎层的直接依赖
  */
 @MainActor
 public final class PlayerGesturePlugin: BasePlugin, PlayerGestureService {
@@ -31,8 +32,14 @@ public final class PlayerGesturePlugin: BasePlugin, PlayerGestureService {
     /** 是否为外部传入的手势视图 */
     private var _isExternalGestureView: Bool = false
 
+    /**手势滑动仅使用一个方向**/
+    private var lockedDirection: PlayerPanDirection = .unknown
+
+    /** 视图服务依赖 */
+    @PlayerPlugin private var viewService: PlayerViewService?
+
     /**
-     * 手势承载视图，设置后在该视图上添加手势；为 nil 时自动绑定播放器视图
+     * 手势承载视图，设置后在该视图上添加手势；为 nil 时自动绑定 actionView
      */
     public var gestureView: UIView? {
         get { _gestureView }
@@ -45,19 +52,18 @@ public final class PlayerGesturePlugin: BasePlugin, PlayerGestureService {
             } else {
                 _isExternalGestureView = false
                 _gestureView = nil
-                rebindPlayerView()
+                rebindActionView()
             }
         }
     }
 
     /**
-     * 重新绑定到播放器视图
+     * 重新绑定到 actionView
      */
-    private func rebindPlayerView() {
-        guard let engine = context?.resolveService(PlayerEngineCoreService.self),
-              let pv = engine.playerView else { return }
-        pv.isUserInteractionEnabled = true
-        _gestureView = pv
+    private func rebindActionView() {
+        guard let actionView = viewService?.actionView else { return }
+        actionView.isUserInteractionEnabled = true
+        _gestureView = actionView
         setupGestureRecognizers()
     }
 
@@ -91,27 +97,27 @@ public final class PlayerGesturePlugin: BasePlugin, PlayerGestureService {
     }
 
     /**
-     * 插件加载完成，绑定播放器视图并监听引擎创建事件
+     * 插件加载完成，绑定 actionView 并监听视图创建事件
      */
     public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
 
-        tryBindPlayerView()
+        tryBindActionView()
 
-        context.add(self, event: .playerEngineDidCreateSticky, option: .none) { [weak self] _, _ in
-            self?.tryBindPlayerView()
+        // 监听 ActionView 创建事件
+        context.add(self, event: .playerActionViewDidCreateSticky, option: .none) { [weak self] _, _ in
+            self?.tryBindActionView()
         }
     }
 
     /**
-     * 尝试绑定播放器视图
+     * 尝试绑定 actionView
      */
-    private func tryBindPlayerView() {
+    private func tryBindActionView() {
         guard _gestureView == nil else { return }
-        guard let engine = context?.resolveService(PlayerEngineCoreService.self),
-              let pv = engine.playerView else { return }
-        pv.isUserInteractionEnabled = true
-        _gestureView = pv
+        guard let actionView = viewService?.actionView else { return }
+        actionView.isUserInteractionEnabled = true
+        _gestureView = actionView
         setupGestureRecognizers()
     }
 
@@ -279,14 +285,18 @@ public final class PlayerGesturePlugin: BasePlugin, PlayerGestureService {
      * 检测滑动手势方向
      */
     private func detectPanDirection(_ gr: UIPanGestureRecognizer) -> PlayerPanDirection {
-        guard gr.state == .began || gr.state == .changed else { return .unknown }
-        let velocity = gr.velocity(in: _gestureView)
-        if abs(velocity.x) > abs(velocity.y) {
-            return .horizontal
-        } else {
-            guard let view = _gestureView else { return .unknown }
-            let location = gr.location(in: view)
-            return location.x < view.bounds.midX ? .verticalLeft : .verticalRight
+        if gr.state == .began {
+            let velocity = gr.velocity(in: _gestureView)
+            if abs(velocity.x) > abs(velocity.y) {
+                lockedDirection = .horizontal
+            } else {
+                let location = gr.location(in: _gestureView)
+                lockedDirection = location.x < (_gestureView?.bounds.midX ?? 0)
+                    ? .verticalLeft : .verticalRight
+            }
+        } else if gr.state == .ended || gr.state == .cancelled {
+            lockedDirection = .unknown
         }
+        return lockedDirection
     }
 }

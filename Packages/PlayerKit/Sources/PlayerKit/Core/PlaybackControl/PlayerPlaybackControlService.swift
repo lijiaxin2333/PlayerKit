@@ -62,26 +62,3 @@ public protocol PlayerPlaybackControlService: PluginService {
      */
     func replay()
 }
-
-// MARK: - 配置模型
-
-/**
- * 播放控制配置模型
- */
-public class PlayerPlaybackControlConfigModel {
-
-    /**
-     * 是否自动播放
-     */
-    public var autoPlay: Bool = false
-
-    /**
-     * 播放结束时是否自动重播
-     */
-    public var autoReplay: Bool = false
-
-    /**
-     * 初始化
-     */
-    public init() {}
-}

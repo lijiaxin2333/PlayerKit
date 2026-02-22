@@ -62,7 +62,7 @@ public final class PlayerAppActivePlugin: BasePlugin, PlayerAppActiveService {
     /**
      * 初始化插件
      */
-    public required override init() {
+    public required init() {
         super.init()
     }
 

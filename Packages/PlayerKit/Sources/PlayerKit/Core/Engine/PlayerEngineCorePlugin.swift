@@ -222,6 +222,17 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
      */
     private var _rate: Float = 1.0
 
+    // MARK: - Sticky Event States
+
+    /**
+     * 是否准备好显示（用于 sticky event）
+     */
+    private var _isReadyForDisplay: Bool = false
+    /**
+     * 是否准备好播放（用于 sticky event）
+     */
+    private var _isReadyToPlay: Bool = false
+
     /**
      * 是否处于回收复用流程
      */
@@ -342,7 +353,6 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
             _rate = newValue
             if playbackState == .playing {
                 avPlayerInstance?.rate = newValue
-                (self.context as? Context)?.bindStickyEvent(.playerRateDidChangeSticky, value: newValue)
                 context?.post(.playerRateDidChangeSticky, object: newValue, sender: self)
             }
         }
@@ -409,8 +419,44 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         super.pluginDidLoad(context)
         createPlayerIfNeeded()
 
-        (self.context as? Context)?.bindStickyEvent(.playerEngineDidCreateSticky, value: self)
+        // 绑定所有 sticky events（对齐 Gaga 模式：在 pluginDidLoad 中绑定，bindBlock 动态返回当前状态）
+        bindStickyEvents()
+
+        // 发送引擎创建事件
         self.context?.post(.playerEngineDidCreateSticky, object: self, sender: self)
+    }
+
+    /**
+     * 绑定所有 sticky events
+     */
+    private func bindStickyEvents() {
+        // 引擎创建 sticky event - 始终返回 self
+        (self.context as? Context)?.bindStickyEvent(.playerEngineDidCreateSticky) { [weak self] shouldSend in
+            guard let self = self else { return nil }
+            shouldSend.pointee = true
+            return self
+        }
+
+        // 准备好显示 sticky event - 根据 _isReadyForDisplay 状态决定
+        (self.context as? Context)?.bindStickyEvent(.playerReadyForDisplaySticky) { [weak self] shouldSend in
+            guard let self = self, self._isReadyForDisplay else { return nil }
+            shouldSend.pointee = true
+            return self
+        }
+
+        // 准备好播放 sticky event - 根据 _isReadyToPlay 状态决定
+        (self.context as? Context)?.bindStickyEvent(.playerReadyToPlaySticky) { [weak self] shouldSend in
+            guard let self = self, self._isReadyToPlay else { return nil }
+            shouldSend.pointee = true
+            return self
+        }
+
+        // 播放倍数变化 sticky event - 只在播放中触发
+        (self.context as? Context)?.bindStickyEvent(.playerRateDidChangeSticky) { [weak self] shouldSend in
+            guard let self = self, self.playbackState == .playing else { return nil }
+            shouldSend.pointee = true
+            return self._rate
+        }
     }
 
     /**
@@ -460,8 +506,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         stalledRetryCount = 0
         cancelRetry()
         setURLTime = CFAbsoluteTimeGetCurrent()
-        (self.context as? Context)?.bindStickyEvent(.playerReadyForDisplaySticky, value: nil)
-        (self.context as? Context)?.bindStickyEvent(.playerReadyToPlaySticky, value: nil)
+        // 重置 sticky 状态
+        _isReadyForDisplay = false
+        _isReadyToPlay = false
         createPlayerIfNeeded()
         removePlaybackObservers()
 
@@ -629,8 +676,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         volume = 0
         renderView?.isHidden = true
         renderView?.cancelDisplayObservation()
-        (self.context as? Context)?.bindStickyEvent(.playerReadyForDisplaySticky, value: nil)
-        (self.context as? Context)?.bindStickyEvent(.playerReadyToPlaySticky, value: nil)
+        // 重置 sticky 状态
+        _isReadyForDisplay = false
+        _isReadyToPlay = false
     }
 
     /**
@@ -665,7 +713,8 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
 
         let readyForDisplayHandler: () -> Void = { [weak self] in
             guard let self else { return }
-            (self.context as? Context)?.bindStickyEvent(.playerReadyForDisplaySticky, value: self)
+            // 更新 sticky 状态并发送事件
+            self._isReadyForDisplay = true
             self.context?.post(.playerReadyForDisplaySticky, object: self, sender: self)
         }
 
@@ -760,7 +809,8 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
                         self.context?.post(.playerDurationDidSet, object: duration, sender: self)
                     }
 
-                    (self.context as? Context)?.bindStickyEvent(.playerReadyToPlaySticky, value: self)
+                    // 更新 sticky 状态并发送事件
+                    self._isReadyToPlay = true
                     self.context?.post(.playerReadyToPlaySticky, object: self, sender: self)
 
                 case .failed:

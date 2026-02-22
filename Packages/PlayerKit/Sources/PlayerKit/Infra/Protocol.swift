@@ -43,6 +43,30 @@ public protocol EventHandlerProtocol: AnyObject {
 /** 事件处理回调闭包类型 */
 public typealias EventHandlerBlock = (_ object: Any?, _ event: Event) -> Void
 
+/** Sticky 事件绑定回调闭包类型
+    - Parameter shouldSend: 输出参数，指示是否应该触发事件
+    - Returns: 事件携带的对象
+ */
+public typealias StickyEventBindBlock = (_ shouldSend: UnsafeMutablePointer<Bool>) -> Any?
+
+/** 共享事件处理回调闭包类型，带 senderContext 参数用于识别事件来源 */
+public typealias SharedEventHandlerBlock = (_ senderContext: PublicContext, _ object: Any?, _ event: Event) -> Void
+
+/** 共享事件处理协议，提供监听所有绑定 Context 事件的能力 */
+@MainActor
+public protocol SharedEventHandlerProtocol: AnyObject {
+
+    /** 添加共享事件监听器，可监听所有绑定了此 SharedContext 的 Context 的事件
+     - Parameters:
+       - observer: 观察者对象
+       - event: 事件名称
+       - handler: 事件处理回调，senderContext 表示事件来源的 Context
+     - Returns: 监听器 token，可用于移除监听
+     */
+    @discardableResult
+    func sharedAdd(_ observer: AnyObject, event: Event, handler: @escaping SharedEventHandlerBlock) -> AnyObject?
+}
+
 /** 事件监听选项，控制事件处理器的行为 */
 public struct EventOption: OptionSet, Sendable {
     /** 选项原始值 */
@@ -212,9 +236,11 @@ public protocol ExtendContext: AnyObject {
     func isBaseContext(of context: PublicContext) -> Bool
 }
 
-/** 共享 Context 协议，提供跨多个持有者共享服务的能力 */
-public protocol SharedContextProtocol: ServiceDiscovery, PluginRegisterProtocol {
+/** 共享 Context 协议，提供跨多个持有者共享服务和事件监听的能力 */
+public protocol SharedContextProtocol: ServiceDiscovery, PluginRegisterProtocol, SharedEventHandlerProtocol {
 
+    /** SharedContext 的名称 */
+    var name: String? { get }
 }
 
 /** Context 持有者协议，持有并暴露 Context 实例 */

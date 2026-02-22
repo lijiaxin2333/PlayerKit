@@ -45,7 +45,7 @@ public final class Context: PublicContext, ExtendContext {
 
     // 事件
     private let eventHandler = EventHandler()
-    private var stickyEvents: [Event: Any] = [:]
+    private var stickyEventBlocks: [Event: StickyEventBindBlock] = [:]
 
     // 注册
     private var regProviders: [RegProviderEntry] = []
@@ -142,6 +142,8 @@ public final class Context: PublicContext, ExtendContext {
 
     public func bindSharedContext(_ ctx: SharedContextProtocol) {
         sharedContext = ctx
+        // 将自己注册到 SharedContext
+        (ctx as? SharedContext)?.registerContext(self)
     }
 
     // MARK: - Extension
@@ -180,16 +182,18 @@ public final class Context: PublicContext, ExtendContext {
     // MARK: - Events
 
     public func add(_ observer: AnyObject, event: Event, handler: @escaping EventHandlerBlock) -> AnyObject? {
-        eventHandler.add(observer, event: event, handler: handler)
+        add(observer, event: event, option: [], handler: handler)
     }
 
     public func add(_ observer: AnyObject, events: [Event], handler: @escaping EventHandlerBlock) -> AnyObject? {
-        eventHandler.add(observer, events: events, handler: handler)
+        let tokens = events.compactMap { add(observer, event: $0, handler: handler) }
+        return tokens.isEmpty ? nil : MultiEventHandlerToken(tokens: tokens)
     }
 
     public func add(_ observer: AnyObject, event: Event, option: EventOption, handler: @escaping EventHandlerBlock) -> AnyObject? {
         let token = eventHandler.add(observer, event: event, option: option, handler: handler)
-        if let value = stickyEvents[event] { handler(value, event) }
+        // 触发 sticky event（在 Context 层级中查找并触发）
+        triggerBindedStickyEvent(event, handler: handler)
         return token
     }
 
@@ -221,8 +225,12 @@ public final class Context: PublicContext, ExtendContext {
 
         eventHandler.post(event, object: object, sender: sender)
 
+        // 传播到 SharedContext，触发 sharedAdd 的监听者
+        if let shared = sharedContext as? SharedContext {
+            shared.receiveSharedEvent(event, object: object, senderContext: self)
+        }
+
         extensionContexts.allObjects.forEach { $0.propagateEvent(event, object: object, sender: sender, visited: &visited) }
-        (sharedContext as? Context)?.propagateEvent(event, object: object, sender: sender, visited: &visited)
         (superContext as? Context)?.propagateEvent(event, object: object, sender: sender, visited: &visited)
     }
 
@@ -383,8 +391,67 @@ public final class Context: PublicContext, ExtendContext {
 
     // MARK: - Sticky Events
 
-    public func bindStickyEvent(_ event: Event, value: Any?) {
-        stickyEvents[event] = value
+    /// 绑定 Sticky 事件
+    /// - Parameters:
+    ///   - event: 事件名称
+    ///   - bindBlock: 绑定回调，在添加监听时调用。通过设置 shouldSend 指示是否触发事件，返回事件携带的对象
+    public func bindStickyEvent(_ event: Event, bindBlock: @escaping StickyEventBindBlock) {
+        stickyEventBlocks[event] = bindBlock
+    }
+
+    /// 触发绑定的 Sticky 事件
+    /// 在 Context 层级中查找绑定该事件的 context，执行其 bindBlock 决定是否触发
+    /// - Parameters:
+    ///   - event: 事件名称
+    ///   - handler: 事件处理器
+    /// - Returns: 是否成功触发
+    @discardableResult
+    private func triggerBindedStickyEvent(_ event: Event, handler: @escaping EventHandlerBlock) -> Bool {
+        return _triggerBindedStickyEvent(event, handler: handler, firstContext: self)
+    }
+
+    private func _triggerBindedStickyEvent(_ event: Event, handler: @escaping EventHandlerBlock, firstContext: Context) -> Bool {
+        // 先在当前 context 查找
+        var didTrigger = _triggerCurrentContextBindedStickyEvent(event, handler: handler, firstContext: firstContext)
+
+        // 如果当前 context 没有找到，继续在 subContexts 中查找
+        if !didTrigger {
+            for child in subContexts.allObjects {
+                didTrigger = child._triggerBindedStickyEvent(event, handler: handler, firstContext: firstContext)
+                if didTrigger { break }
+            }
+        }
+
+        // 如果还是没有找到，继续在 baseContext 中查找
+        if !didTrigger, let baseCtx = baseContext {
+            didTrigger = baseCtx._triggerBindedStickyEvent(event, handler: handler, firstContext: firstContext)
+        }
+
+        return didTrigger
+    }
+
+    private func _triggerCurrentContextBindedStickyEvent(_ event: Event, handler: @escaping EventHandlerBlock, firstContext: Context) -> Bool {
+        // 处理 ServiceDidLoadEvent 类型的 sticky event
+        let serviceLoadPrefix = "ServiceDidLoadEvent_"
+        if event.hasPrefix(serviceLoadPrefix) {
+            let serviceKey = String(event.dropFirst(serviceLoadPrefix.count))
+            if let entry = services[serviceKey], plugins[entry.key] != nil {
+                handler(nil, event)
+                return true
+            }
+        }
+
+        // 处理通过 bindStickyEvent 绑定的事件
+        if let bindBlock = stickyEventBlocks[event] {
+            var shouldSend = false
+            let eventObject = bindBlock(&shouldSend)
+            if shouldSend {
+                handler(eventObject, event)
+                return true
+            }
+        }
+
+        return false
     }
 
     // MARK: - Private: Plugin Resolution
@@ -490,10 +557,16 @@ public final class Context: PublicContext, ExtendContext {
     // MARK: - Private: Sticky Events Reissue
 
     private func reissueStickyEvents(to target: Context) {
-        for (event, value) in stickyEvents {
-            target.eventHandler.post(event, object: value, sender: self)
+        // 遍历所有绑定的 sticky event blocks，执行并决定是否重发
+        for (event, bindBlock) in stickyEventBlocks {
+            var shouldSend = false
+            let eventObject = bindBlock(&shouldSend)
+            if shouldSend {
+                target.eventHandler.post(event, object: eventObject, sender: self)
+            }
         }
 
+        // 已创建的服务也是 sticky event
         for (key, entry) in services where plugins[entry.key] != nil {
             target.eventHandler.post("ServiceDidLoadEvent_\(key)", object: nil, sender: self)
         }
@@ -504,14 +577,25 @@ public final class Context: PublicContext, ExtendContext {
 
 // MARK: - SharedContext
 
-/// 共享 Context，提供跨持有者的服务共享
+/// 共享 Context，提供跨持有者的服务共享和事件监听能力
 public final class SharedContext: SharedContextProtocol {
+
+    // MARK: - Properties
 
     private let context: Context
     public var name: String? { context.name }
 
+    /// 绑定到这个 SharedContext 的所有 Context（弱引用）
+    private var boundContexts: NSHashTable<Context> = .weakObjects()
+
+    /// 共享事件处理器
+    private let sharedEventHandler = SharedEventHandler()
+
+    /// 缓存
     private static let cache: NSMapTable<NSString, SharedContext> = .strongToWeakObjects()
     private static let lock = NSLock()
+
+    // MARK: - Init
 
     private init(name: String) {
         context = Context(name: "\(name)(Shared)")
@@ -527,23 +611,90 @@ public final class SharedContext: SharedContextProtocol {
         return new
     }
 
+    // MARK: - SharedEventHandlerProtocol
+
+    public func sharedAdd(_ observer: AnyObject, event: Event, handler: @escaping SharedEventHandlerBlock) -> AnyObject? {
+        sharedEventHandler.add(observer, event: event, handler: handler)
+    }
+
+    // MARK: - Internal: Context Binding
+
+    /// 注册一个 Context 到 SharedContext
+    func registerContext(_ ctx: Context) {
+        boundContexts.add(ctx)
+    }
+
+    /// 从 SharedContext 注销一个 Context
+    func unregisterContext(_ ctx: Context) {
+        boundContexts.remove(ctx)
+    }
+
+    /// 接收来自绑定 Context 的事件，分发给所有 sharedAdd 的监听者
+    func receiveSharedEvent(_ event: Event, object: Any?, senderContext: PublicContext) {
+        sharedEventHandler.post(event, object: object, senderContext: senderContext)
+    }
+
+    // MARK: - ServiceDiscovery
+
     public func resolveService<T>(_ type: T.Type) -> T? { context.resolveService(type) }
     public func tryResolveService<T>(_ type: T.Type) -> T? { context.tryResolveService(type) }
     public func resolveServiceByType(_ type: Any.Type) -> Any? { context.resolveServiceByType(type) }
     public func checkService<T>(_ type: T.Type) -> Bool { context.checkService(type) }
     public func configPlugin<T>(serviceProtocol: T.Type, withModel config: Any?) { context.configPlugin(serviceProtocol: serviceProtocol, withModel: config) }
+
+    // MARK: - PluginRegisterProtocol
+
     public func unregisterService<T>(_ type: T.Type) { context.unregisterService(type) }
     public func unregisterPluginClass(_ cls: AnyClass) { context.unregisterPluginClass(cls) }
     public func batchRegister(createType: PluginCreateType, events: [Event]?, registerBlock: (PluginRegisterProtocol) -> Void) { context.batchRegister(createType: createType, events: events, registerBlock: registerBlock) }
     public func addRegProvider(_ provider: RegisterProvider) { context.addRegProvider(provider) }
     public func removeRegProvider(_ provider: RegisterProvider) { context.removeRegProvider(provider) }
     public func updateRegistryBlacklist(_ list: Set<String>?) { context.updateRegistryBlacklist(list) }
-    public func add(_ observer: AnyObject, event: Event, handler: @escaping EventHandlerBlock) -> AnyObject? { context.add(observer, event: event, handler: handler) }
-    public func add(_ observer: AnyObject, events: [Event], handler: @escaping EventHandlerBlock) -> AnyObject? { context.add(observer, events: events, handler: handler) }
-    public func add(_ observer: AnyObject, event: Event, option: EventOption, handler: @escaping EventHandlerBlock) -> AnyObject? { context.add(observer, event: event, option: option, handler: handler) }
-    public func removeHandler(_ token: AnyObject) { context.removeHandler(token) }
-    public func removeHandlers(forObserver observer: AnyObject) { context.removeHandlers(forObserver: observer) }
-    public func removeAllHandler() { context.removeAllHandler() }
-    public func post(_ event: Event, object: Any?, sender: AnyObject) { context.post(event, object: object, sender: sender) }
-    public func post(_ event: Event, sender: AnyObject) { context.post(event, sender: sender) }
+}
+
+// MARK: - SharedEventHandler
+
+/// 共享事件处理器，支持监听所有绑定 Context 的事件
+private final class SharedEventHandler {
+
+    private struct HandlerInfo {
+        weak var observer: AnyObject?
+        let event: Event
+        let handler: SharedEventHandlerBlock
+    }
+
+    private var handlers: [ObjectIdentifier: HandlerInfo] = [:]
+    private var nextToken: ObjectIdentifier?
+
+    @discardableResult
+    func add(_ observer: AnyObject, event: Event, handler: @escaping SharedEventHandlerBlock) -> AnyObject? {
+        let token = SharedEventToken()
+        handlers[ObjectIdentifier(token)] = HandlerInfo(observer: observer, event: event, handler: handler)
+        return token
+    }
+
+    func post(_ event: Event, object: Any?, senderContext: PublicContext) {
+        for (key, info) in handlers {
+            guard info.observer != nil else {
+                handlers.removeValue(forKey: key)
+                continue
+            }
+            if info.event == event {
+                info.handler(senderContext, object, event)
+            }
+        }
+    }
+}
+
+/// 共享事件监听器 Token
+private final class SharedEventToken: NSObject {}
+
+/// 多事件处理器 Token，用于包装多个事件监听的 token
+private final class MultiEventHandlerToken: NSObject {
+    let tokens: [AnyObject]
+
+    init(tokens: [AnyObject]) {
+        self.tokens = tokens
+        super.init()
+    }
 }

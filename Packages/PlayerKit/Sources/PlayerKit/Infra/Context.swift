@@ -156,6 +156,9 @@ public final class Context: PublicContext, ExtendContext {
         extensionContexts.add(extCtx)
         extCtx.baseContext = self
         extCtx.plugins.values.forEach { $0.contextDidExtend(on: self) }
+
+        // 对齐 Gaga: 父 Context 向扩展 Context 重发 sticky events（不递归遍历 subContexts）
+        reissueStickyEvents(to: extCtx, shouldIterate: false)
     }
 
     public func removeExtendContext(_ ext: PublicContext) {
@@ -576,7 +579,11 @@ public final class Context: PublicContext, ExtendContext {
 
     // MARK: - Private: Sticky Events Reissue
 
-    private func reissueStickyEvents(to target: Context) {
+    /// 重发 sticky events 到目标 Context
+    /// - Parameters:
+    ///   - target: 目标 Context
+    ///   - shouldIterate: 是否递归遍历 subContexts（addSubContext 时为 true，addExtendContext 时为 false）
+    private func reissueStickyEvents(to target: Context, shouldIterate: Bool = true) {
         // 遍历所有绑定的 sticky event blocks，执行并决定是否重发
         for (event, bindBlock) in stickyEventBlocks {
             var shouldSend = false
@@ -591,7 +598,10 @@ public final class Context: PublicContext, ExtendContext {
             target.eventHandler.post("ServiceDidLoadEvent_\(key)", object: nil, sender: self)
         }
 
-        subContexts.allObjects.forEach { $0.reissueStickyEvents(to: target) }
+        // 根据 shouldIterate 决定是否递归遍历 subContexts
+        if shouldIterate {
+            subContexts.allObjects.forEach { $0.reissueStickyEvents(to: target, shouldIterate: true) }
+        }
     }
 }
 

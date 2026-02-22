@@ -1,10 +1,11 @@
 import Foundation
 
 /**
- * 预加载服务协议
+ * 列表预加载服务协议
+ * - 不依赖 PlayerKit 的插件体系，是独立的服务协议
  */
 @MainActor
-public protocol PlayerPrefetchService: PluginService {
+public protocol ListPrefetchService: AnyObject {
     /** 预加载配置 */
     var prefetchConfig: PreloadConfig { get set }
     /**

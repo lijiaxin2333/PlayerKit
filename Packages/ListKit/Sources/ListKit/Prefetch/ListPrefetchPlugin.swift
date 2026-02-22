@@ -1,11 +1,12 @@
 import Foundation
-import UIKit
+import PlayerKit
 
 /**
- * 预加载插件，封装 KTVHTTPCache 预加载能力
+ * 列表预加载插件，封装 KTVHTTPCache 预加载能力
+ * - 独立于 PlayerKit 的插件体系，是 ListKit 层的服务组件
  */
 @MainActor
-public final class PlayerPrefetchPlugin: BasePlugin, PlayerPrefetchService {
+public final class ListPrefetchPlugin: ListPrefetchService {
 
     /** 预加载配置 */
     private var _config = PreloadConfig()
@@ -24,18 +25,13 @@ public final class PlayerPrefetchPlugin: BasePlugin, PlayerPrefetchService {
     /**
      * 初始化插件
      */
-    public required override init() {
-        super.init()
-    }
-
-    public override func pluginDidLoad(_ context: ContextProtocol) {
-        super.pluginDidLoad(context)
+    public init(config: PreloadConfig = PreloadConfig()) {
+        self._config = config
         KTVHTTPCacheProbe.probeStartProxyIfNeeded()
         manager = KTVHTTPCachePreloadManager(config: _config)
     }
 
-    public override func pluginWillUnload(_ context: ContextProtocol) {
-        super.pluginWillUnload(context)
+    deinit {
         Task { [manager] in
             await manager?.cancelAll()
         }

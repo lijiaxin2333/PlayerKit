@@ -430,9 +430,7 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         createPlayerIfNeeded()
         removePlaybackObservers()
 
-        let prefetchService = context?.tryResolveService(PlayerPrefetchService.self)
-        prefetchService?.prioritize(url: url)
-        let finalURL = prefetchService?.proxyURL(for: url) ?? url
+        let finalURL = KTVHTTPCacheProbe.proxyURL(for: url)
         let asset = AVURLAsset(url: finalURL, options: [
             AVURLAssetPreferPreciseDurationAndTimingKey: false
         ])
@@ -886,8 +884,7 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
      * 执行重试
      */
     private func executeRetry(url: URL) {
-        let prefetchService = context?.tryResolveService(PlayerPrefetchService.self)
-        let finalURL = prefetchService?.proxyURL(for: url) ?? url
+        let finalURL = KTVHTTPCacheProbe.proxyURL(for: url)
         let asset = AVURLAsset(url: finalURL, options: [AVURLAssetPreferPreciseDurationAndTimingKey: false])
         let retryItem = AVPlayerItem(asset: asset)
         retryItem.canUseNetworkResourcesForLiveStreamingWhilePaused = false

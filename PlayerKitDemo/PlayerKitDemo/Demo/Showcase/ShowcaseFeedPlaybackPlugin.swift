@@ -49,7 +49,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
     private weak var currentPlayingCell: ShowcaseFeedCell?
     var transferringPlayer: FeedPlayer?
 
-    let prefetchManager: PlayerPrefetchService
+    let prefetchManager: ListPrefetchService
 
     private var preRenderPlayers: [String: Player] = [:]
     private var preRenderTimeouts: [String: Timer] = [:]
@@ -69,23 +69,14 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         self.maxPreRenderCount = configuration.preRenderMaxCount
         self.preRenderTimeout = configuration.preRenderTimeout
 
-        let prefetchCtx = Context(name: "ShowcasePrefetchServices")
-        prefetchCtx.addRegProvider(ShowcasePrefetchRegProvider())
+        let prefetchConfig = PreloadConfig(
+            maxConcurrent: configuration.prefetchMaxConcurrent,
+            bytesPerURL: configuration.prefetchBytesPerURL,
+            windowAhead: configuration.prefetchWindowAhead,
+            windowBehind: configuration.prefetchWindowBehind
+        )
+        self.prefetchManager = ListPrefetchPlugin(config: prefetchConfig)
 
-        guard let prefetch = prefetchCtx.resolveService(PlayerPrefetchService.self) else {
-            fatalError("Prefetch service not properly initialized")
-        }
-
-        if let prefetchPlugin = prefetch as? PlayerPrefetchPlugin {
-            prefetchPlugin.prefetchConfig = PreloadConfig(
-                maxConcurrent: configuration.prefetchMaxConcurrent,
-                bytesPerURL: configuration.prefetchBytesPerURL,
-                windowAhead: configuration.prefetchWindowAhead,
-                windowBehind: configuration.prefetchWindowBehind
-            )
-        }
-
-        self.prefetchManager = prefetch
         super.init()
     }
 
@@ -485,12 +476,5 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
             currentPlayingCell?.stopAndDetachPlayer()
             currentPlayingCell = nil
         }
-    }
-}
-
-@MainActor
-private final class ShowcasePrefetchRegProvider: RegisterProvider {
-    func registerPlugins(with registerSet: PluginRegisterSet) {
-        registerSet.addEntry(pluginClass: PlayerPrefetchPlugin.self, serviceType: PlayerPrefetchService.self)
     }
 }

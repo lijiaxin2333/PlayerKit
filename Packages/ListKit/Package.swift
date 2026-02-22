@@ -14,13 +14,15 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/Instagram/IGListKit", from: "5.0.0")
+        .package(url: "https://github.com/Instagram/IGListKit", from: "5.0.0"),
+        .package(path: "../PlayerKit")
     ],
     targets: [
         .target(
             name: "ListKit",
             dependencies: [
-                .product(name: "IGListKit", package: "IGListKit")
+                .product(name: "IGListKit", package: "IGListKit"),
+                .product(name: "PlayerKit", package: "PlayerKit")
             ],
             path: "Sources/ListKit"
         )

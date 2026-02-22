@@ -1,5 +1,5 @@
 import Foundation
-import KTVHTTPCache
+import PlayerKit
 
 /**
  * 队列条目，表示待预加载的 URL 及其优先级

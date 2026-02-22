@@ -24,6 +24,14 @@ public protocol EventHandlerProtocol: AnyObject {
     @discardableResult
     func add(_ observer: AnyObject, event: Event, option: EventOption, handler: @escaping EventHandlerBlock) -> AnyObject?
 
+    /** 添加事件发送之前的监听器（AOP） */
+    @discardableResult
+    func add(_ observer: AnyObject, beforeEvent event: Event, handler: @escaping EventHandlerBlock) -> AnyObject?
+
+    /** 添加事件发送之后的监听器（AOP） */
+    @discardableResult
+    func add(_ observer: AnyObject, afterEvent event: Event, handler: @escaping EventHandlerBlock) -> AnyObject?
+
     /** 通过 handler token 移除指定事件处理器 */
     func removeHandler(_ handler: AnyObject)
 

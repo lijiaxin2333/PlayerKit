@@ -197,6 +197,26 @@ public final class Context: PublicContext, ExtendContext {
         return token
     }
 
+    /// 添加事件发送之前的监听器（AOP）
+    /// - Parameters:
+    ///   - observer: 观察者对象
+    ///   - event: 事件名称
+    ///   - handler: 事件处理器，在事件发送之前调用
+    /// - Returns: 处理器 token，可用于移除监听
+    public func add(_ observer: AnyObject, beforeEvent event: Event, handler: @escaping EventHandlerBlock) -> AnyObject? {
+        eventHandler.add(observer, beforeEvent: event, handler: handler)
+    }
+
+    /// 添加事件发送之后的监听器（AOP）
+    /// - Parameters:
+    ///   - observer: 观察者对象
+    ///   - event: 事件名称
+    ///   - handler: 事件处理器，在事件发送之后调用
+    /// - Returns: 处理器 token，可用于移除监听
+    public func add(_ observer: AnyObject, afterEvent event: Event, handler: @escaping EventHandlerBlock) -> AnyObject? {
+        eventHandler.add(observer, afterEvent: event, handler: handler)
+    }
+
     public func removeHandler(_ token: AnyObject) {
         eventHandler.removeHandler(token)
     }

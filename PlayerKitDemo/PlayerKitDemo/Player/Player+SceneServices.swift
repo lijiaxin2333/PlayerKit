@@ -16,10 +16,6 @@ extension Player {
         context.resolveService(PlayerGestureService.self)
     }
 
-    /// 字幕服务，管理字幕加载和显示
-    public var subtitleService: PlayerSubtitleService? {
-        context.resolveService(PlayerSubtitleService.self)
-    }
 
     /// 缩放服务，管理视频缩放
     public var zoomService: PlayerZoomService? {

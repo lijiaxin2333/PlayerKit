@@ -50,9 +50,6 @@ public final class ScenePlayerRegProvider: RegisterProvider {
         registerSet.addEntry(pluginClass: PlayerZoomPlugin.self,
                             serviceType: PlayerZoomService.self)
 
-        // 字幕
-        registerSet.addEntry(pluginClass: PlayerSubtitlePlugin.self,
-                            serviceType: PlayerSubtitleService.self)
 
         // 提示管理
         registerSet.addEntry(pluginClass: PlayerTipManagerPlugin.self,

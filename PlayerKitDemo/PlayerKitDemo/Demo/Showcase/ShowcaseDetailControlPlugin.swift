@@ -27,7 +27,6 @@ protocol ShowcaseDetailControlService: PluginService {
     func cycleSpeed() -> Float
     func toggleMute() -> Bool
     func toggleLoop() -> Bool
-    func toggleSubtitle() -> Bool
     func captureSnapshot(completion: @escaping (UIImage?) -> Void)
     func toggleFullScreen()
     func showDebugPanel()
@@ -160,6 +159,7 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
 
             self.context?.resolveService(PlayerStartTimeService.self)?.cacheCurrentProgress()
         }
+
     }
 
     func togglePlayPause() {
@@ -193,14 +193,6 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
         let toast = context?.resolveService(PlayerToastService.self)
         toast?.showToast(engine.isLooping ? "Loop: ON" : "Loop: OFF", style: .info, duration: 1.5)
         return engine.isLooping
-    }
-
-    func toggleSubtitle() -> Bool {
-        guard let subtitleService = context?.resolveService(PlayerSubtitleService.self) else { return false }
-        subtitleService.isEnabled.toggle()
-        let toast = context?.resolveService(PlayerToastService.self)
-        toast?.showToast(subtitleService.isEnabled ? "Subtitles: ON" : "Subtitles: OFF", style: .info, duration: 1.5)
-        return subtitleService.isEnabled
     }
 
     func captureSnapshot(completion: @escaping (UIImage?) -> Void) {

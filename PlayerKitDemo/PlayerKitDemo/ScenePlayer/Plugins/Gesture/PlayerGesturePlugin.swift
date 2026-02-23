@@ -73,12 +73,30 @@ public final class PlayerGesturePlugin: BasePlugin, PlayerGestureService {
             self?.trySetupGestureView()
         }
 
+        // 监听全屏退出事件，重新设置手势视图
+        context.add(self, event: .playerDidExitFullScreen) { [weak self] _, _ in
+            self?.resetupGestureViewAfterFullScreenExit()
+        }
+
         // 尝试立即设置
         trySetupGestureView()
     }
 
     private func trySetupGestureView() {
         guard _gestureView == nil else { return }
+        guard let playerView = engineService?.playerView else { return }
+        playerView.isUserInteractionEnabled = true
+        _gestureView = playerView
+        setupGestureRecognizers(on: playerView)
+    }
+
+    /// 全屏退出后重新设置手势视图
+    private func resetupGestureViewAfterFullScreenExit() {
+        // 移除旧的识别器
+        removeAllGestureRecognizers()
+        _gestureView = nil
+
+        // 重新设置到当前的 playerView
         guard let playerView = engineService?.playerView else { return }
         playerView.isUserInteractionEnabled = true
         _gestureView = playerView

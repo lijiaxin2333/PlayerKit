@@ -23,7 +23,6 @@ public class PlayerDemoMenuViewController: UIViewController {
         case looping
         case gesture
         case snapshot
-        case subtitle
         case zoom
         case startTime
     }
@@ -48,7 +47,6 @@ public class PlayerDemoMenuViewController: UIViewController {
             DemoItem(title: "循环播放", subtitle: "PlayerLoopingPlugin · PlayerFinishViewPlugin", action: .looping),
             DemoItem(title: "手势交互", subtitle: "PlayerGesturePlugin · 单击/双击/滑动/长按/捏合", action: .gesture),
             DemoItem(title: "视频截图", subtitle: "PlayerSnapshotPlugin · 同步/异步截帧/缩略图", action: .snapshot),
-            DemoItem(title: "字幕", subtitle: "PlayerSubtitlePlugin · 加载/切换/样式调整", action: .subtitle),
             DemoItem(title: "缩放与满屏", subtitle: "PlayerZoomPlugin · PlayerFullScreenPlugin", action: .zoom),
             DemoItem(title: "起播与进度", subtitle: "PlayerStartTimePlugin · PlayerProcessPlugin · PlayerTimeControlPlugin", action: .startTime),
         ]),
@@ -99,8 +97,6 @@ public class PlayerDemoMenuViewController: UIViewController {
             viewController = GestureDemoViewController()
         case .snapshot:
             viewController = SnapshotDemoViewController()
-        case .subtitle:
-            viewController = SubtitleDemoViewController()
         case .zoom:
             viewController = ZoomDemoViewController()
         case .startTime:

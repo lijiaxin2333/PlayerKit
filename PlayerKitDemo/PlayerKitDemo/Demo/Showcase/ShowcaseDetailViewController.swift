@@ -247,7 +247,6 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
             (speedButton, "gauge.with.dots.needle.33percent", #selector(speedTapped)),
             (muteButton, "speaker.wave.2.fill", #selector(muteTapped)),
             (loopButton, "repeat", #selector(loopTapped)),
-            (subtitleButton, "captions.bubble", #selector(subtitleTapped)),
             (snapshotButton, "camera.fill", #selector(snapshotTapped)),
             (fullScreenButton, "arrow.up.left.and.arrow.down.right", #selector(fullScreenTapped)),
             (settingsButton, "gearshape", #selector(settingsTapped)),
@@ -372,10 +371,6 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
         let iconConfig = UIImage.SymbolConfiguration(pointSize: 16, weight: .medium)
         let icon = isLooping ? "repeat.1" : "repeat"
         loopButton.setImage(UIImage(systemName: icon, withConfiguration: iconConfig), for: .normal)
-    }
-
-    @objc private func subtitleTapped() {
-        _ = detailControl?.toggleSubtitle()
     }
 
     @objc private func snapshotTapped() {

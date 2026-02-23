@@ -79,7 +79,7 @@ private class PanelContainerView: UIView {
 
 /**
  * 面板管理插件，负责显示、隐藏播放器上的浮层面板
- * - 通过 PlayerViewService 获取视图容器，解耦对引擎层的直接依赖
+ * - 通过 PlayerEngineCoreService 获取视图容器，解耦对引擎层的直接依赖
  */
 @MainActor
 public final class PlayerPanelPlugin: BasePlugin, PlayerPanelService {
@@ -87,8 +87,8 @@ public final class PlayerPanelPlugin: BasePlugin, PlayerPanelService {
     /** 配置模型类型 */
     public typealias ConfigModelType = PlayerPanelConfigModel
 
-    /** 视图服务依赖 */
-    @PlayerPlugin private var viewService: PlayerViewService?
+    /** 引擎服务依赖 */
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
 
     /** 当前可见的面板容器映射 */
     private var visiblePanels: [String: PanelContainerView] = [:]
@@ -118,16 +118,15 @@ public final class PlayerPanelPlugin: BasePlugin, PlayerPanelService {
      * 在指定位置显示面板
      */
     public func showPanel(_ panel: AnyObject, at position: PlayerPanelPosition, animated: Bool) {
-        guard let actionView = viewService?.actionView,
+        guard let playerView = engineService?.playerView,
               let panelView = panel as? UIView else {
-            print("[PlayerPanelPlugin] 无法显示面板: actionView 不可用或面板不是 UIView")
+            print("[PlayerPanelPlugin] 无法显示面板: playerView 不可用或面板不是 UIView")
             return
         }
 
-        let container = PanelContainerView(frame: actionView.bounds)
+        let container = PanelContainerView(frame: playerView.bounds)
         container.translatesAutoresizingMaskIntoConstraints = false
         container.alpha = 0
-        container.playerViewType = .panelView
 
         container.setContent(panelView)
 
@@ -137,14 +136,13 @@ public final class PlayerPanelPlugin: BasePlugin, PlayerPanelService {
             }
         }
 
-        // 使用 PlayerActionView 的层级管理
-        actionView.addSubview(container, viewType: .panelView)
+        playerView.addSubview(container)
 
         NSLayoutConstraint.activate([
-            container.topAnchor.constraint(equalTo: actionView.topAnchor),
-            container.leadingAnchor.constraint(equalTo: actionView.leadingAnchor),
-            container.trailingAnchor.constraint(equalTo: actionView.trailingAnchor),
-            container.bottomAnchor.constraint(equalTo: actionView.bottomAnchor),
+            container.topAnchor.constraint(equalTo: playerView.topAnchor),
+            container.leadingAnchor.constraint(equalTo: playerView.leadingAnchor),
+            container.trailingAnchor.constraint(equalTo: playerView.trailingAnchor),
+            container.bottomAnchor.constraint(equalTo: playerView.bottomAnchor),
         ])
 
         let key = UUID().uuidString

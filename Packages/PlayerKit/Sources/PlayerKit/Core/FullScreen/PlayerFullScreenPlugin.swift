@@ -302,13 +302,10 @@ public class PlayerFullScreenControlView: UIView {
 
 // MARK: - 全屏容器视图
 
-/// 全屏容器视图，使用 PlayerActionView 管理视图层级
+/// 全屏容器视图，简化版视图层级管理
 public class PlayerFullScreenContainerView: UIView {
 
     // MARK: - Properties
-
-    /// 交互视图（管理视图层级）
-    public private(set) var actionView: PlayerActionView!
 
     /// 播控视图
     public private(set) var controlView: PlayerFullScreenControlView!
@@ -344,28 +341,16 @@ public class PlayerFullScreenContainerView: UIView {
         backgroundColor = .black
         clipsToBounds = true
 
-        // 创建 PlayerActionView 管理视图层级
-        actionView = PlayerActionView(frame: bounds)
-        actionView.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(actionView)
-
-        NSLayoutConstraint.activate([
-            actionView.topAnchor.constraint(equalTo: topAnchor),
-            actionView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            actionView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            actionView.bottomAnchor.constraint(equalTo: bottomAnchor)
-        ])
-
         // 创建播控视图
         controlView = PlayerFullScreenControlView(frame: bounds)
         controlView.translatesAutoresizingMaskIntoConstraints = false
-        actionView.addSubview(controlView, viewType: .controlOverlayView)
+        addSubview(controlView)
 
         NSLayoutConstraint.activate([
-            controlView.topAnchor.constraint(equalTo: actionView.topAnchor),
-            controlView.leadingAnchor.constraint(equalTo: actionView.leadingAnchor),
-            controlView.trailingAnchor.constraint(equalTo: actionView.trailingAnchor),
-            controlView.bottomAnchor.constraint(equalTo: actionView.bottomAnchor)
+            controlView.topAnchor.constraint(equalTo: topAnchor),
+            controlView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            controlView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            controlView.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
     }
 
@@ -376,14 +361,15 @@ public class PlayerFullScreenContainerView: UIView {
             // 保持 frame 布局模式
             content.translatesAutoresizingMaskIntoConstraints = true
             content.autoresizingMask = []
-            actionView.addSubview(content, viewType: .containerView)
+            // 插入到播控视图下面
+            insertSubview(content, belowSubview: controlView)
             updateContentViewFrame()
         }
     }
 
     public func updateContentViewFrame() {
         guard let content = contentView else { return }
-        let containerSize = actionView.bounds.size
+        let containerSize = bounds.size
         guard containerSize.width > 0 && containerSize.height > 0 else { return }
 
         let targetRect: CGRect
@@ -659,11 +645,11 @@ public final class PlayerFullScreenPlugin: BasePlugin, PlayerFullScreenService {
         window.makeKeyAndVisible()
         self.fullScreenWindow = window
 
-        // 先让 containerView + actionView 完成一轮布局
+        // 先让 containerView 完成一轮布局
         containerView.setNeedsLayout()
         containerView.layoutIfNeeded()
 
-        // 现在 actionView 的 bounds 已经正确了，再设置 contentView
+        // 现在设置 contentView
         containerView.setContentView(playerView)
 
         // 更新播控状态

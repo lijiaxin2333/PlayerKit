@@ -51,7 +51,7 @@ public final class PlayerProcessPlugin: BasePlugin, PlayerProcessService {
 
     // MARK: - Initialization
 
-    public required override init() {
+    public required init() {
         super.init()
     }
 

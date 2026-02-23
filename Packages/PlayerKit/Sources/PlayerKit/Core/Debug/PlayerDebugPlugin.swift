@@ -108,7 +108,6 @@ public final class PlayerDebugPlugin: BasePlugin, PlayerDebugService {
     // MARK: - Properties
 
     @PlayerPlugin private var engineService: PlayerEngineCoreService?
-    @PlayerPlugin private var qosService: PlayerQosService?
 
     private var _isDebugEnabled: Bool = false
     private var debugPanel: PlayerDebugPanelView?

@@ -672,8 +672,149 @@ PlayerKit/
 1. **单一职责**：每个 Plugin 只负责一个明确的功能
 2. **依赖倒置**：模块间通过 Service 协议通信，而非具体实现
 3. **开闭原则**：通过注册新的 Plugin 来扩展功能，无需修改现有代码
-4. **层级分明**：三层架构确保职责清晰，上层依赖下层，下层不依赖上层
+4. **层级分明**：两层架构确保职责清晰，上层依赖下层，下层不依赖上层
 5. **事件驱动**：模块间通过事件进行松耦合通信
+
+---
+
+## 核心插件详解
+
+### PlayerProcessPlugin — 播放进度管理插件
+
+`PlayerProcessPlugin` 是**播放进度管理插件**，在引擎的时间数据之上封装了进度监听和 scrubbing（拖拽进度条）能力。
+
+#### 核心职责
+
+```
+引擎层（原始时间数据）
+    ↓ addPeriodicTimeObserver
+PlayerProcessPlugin（进度百分比 + scrubbing 状态机）
+    ↓ progressHandlers
+上层 UI（进度条、时间标签、全屏播控等）
+```
+
+#### 两大功能
+
+**1. 进度广播**
+
+通过 `addPeriodicTimeObserver` 定时（默认 0.1s）从引擎拿当前时间，算出 `progress`（0~1），分发给所有订阅者：
+
+```swift
+observeProgress { progress, currentTime in
+    // 更新进度条、时间标签等
+}
+```
+
+**2. Scrubbing 状态机**
+
+用户拖拽进度条时的三阶段协议：
+
+```
+beginScrubbing()      → 状态 = .scrubbing，广播事件
+scrubbing(to: 0.75)   → 记录目标进度，广播当前拖拽位置
+endScrubbing()        → seek 到目标位置，完成后状态 = .idle
+```
+
+这样其他插件（比如播控 UI）可以在 scrubbing 期间暂停进度更新、显示预览等。
+
+#### 使用示例
+
+```swift
+// 监听进度更新
+let token = processService.observeProgress { progress, currentTime in
+    self.progressBar.setProgress(Float(progress), animated: false)
+    self.timeLabel.text = formatTime(currentTime)
+}
+
+// 拖拽进度条
+func sliderDidBeginDragging() {
+    processService.beginScrubbing()
+}
+
+func sliderValueChanged(to value: Float) {
+    processService.scrubbing(to: Double(value))
+}
+
+func sliderDidEndDragging() {
+    processService.endScrubbing()
+}
+
+// 移除监听
+processService.removeProgressObserver(token)
+```
+
+#### 常见问题与解决方案
+
+**Q1: `removeProgressObserver` 删除全部而不是指定的**
+
+```swift
+// 问题代码
+public func removeProgressObserver(_ observer: AnyObject?) {
+    progressHandlers.removeAll()  // 全清了！
+}
+```
+
+参数 `observer` 完全没用，一调就把所有订阅者都干掉了。正确做法是 `observeProgress` 返回一个 key/token，`removeProgressObserver` 按 key 移除：
+
+```swift
+public func observeProgress(_ handler: ...) -> String {
+    let key = UUID().uuidString
+    progressHandlers[key] = handler
+    return key
+}
+
+public func removeProgressObserver(forKey key: String) {
+    progressHandlers.removeValue(forKey: key)
+}
+```
+
+**Q2: `pluginDidLoad` 时 `engineService` 可能还是 nil**
+
+```swift
+// 问题代码
+public override func pluginDidLoad(_ context: ContextProtocol) {
+    super.pluginDidLoad(context)
+    timeObserver = engineService?.addPeriodicTimeObserver(...)  // engineService 可能是 nil
+}
+```
+
+如果引擎插件还没加载完，`engineService` 是 nil，`timeObserver` 就是 nil，进度广播永远不会启动。应该用 sticky 事件：
+
+```swift
+public override func pluginDidLoad(_ context: ContextProtocol) {
+    super.pluginDidLoad(context)
+
+    context.add(self, event: .playerEngineDidCreateSticky, option: .execOnlyOnce) { [weak self] _, _ in
+        self?.setupTimeObserver()
+    }
+}
+
+private func setupTimeObserver() {
+    timeObserver = engineService?.addPeriodicTimeObserver(...)
+}
+```
+
+**Q3: scrubbing 期间没有暂停进度广播**
+
+用户在拖进度条时，`progressHandlers` 还在按 0.1s 频率广播真实播放进度，会导致进度条在"用户拖拽位置"和"真实播放位置"之间跳动。应该在 scrubbing 时跳过广播：
+
+```swift
+// 在 timeObserver 回调里加判断
+timeObserver = engineService?.addPeriodicTimeObserver(forInterval: CMTime(...)) { [weak self] time in
+    guard let self = self else { return }
+    guard !self.isScrubbing else { return }  // scrubbing 时跳过
+
+    self.notifyProgress(time)
+}
+```
+
+**Q4: `seek(to:)` 接受的是 progress（0~1）而不是时间**
+
+方法签名是 `seek(to progress: Double)`，内部转换成时间再调引擎。这没问题，但容易和引擎的 `seek(to time:)` 混淆。建议改名为 `seekToProgress(_:)` 更清晰。
+
+#### 总结
+
+这是一个标准的进度管理中间层，核心价值是把引擎的"绝对时间"转换成"百分比进度"+ 提供 scrubbing 状态机。主要问题是 `removeProgressObserver` 的全清 bug 和 `pluginDidLoad` 时引擎可能未就绪。
 
 ---
 

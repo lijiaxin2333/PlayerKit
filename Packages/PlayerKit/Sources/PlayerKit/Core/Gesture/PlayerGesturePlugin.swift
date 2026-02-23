@@ -3,7 +3,6 @@ import UIKit
 
 /**
  * 播放器手势插件，负责管理各种手势识别及分发
- * - 通过 PlayerViewService 获取 actionView，解耦对引擎层的直接依赖
  */
 @MainActor
 public final class PlayerGesturePlugin: BasePlugin, PlayerGestureService {
@@ -24,106 +23,68 @@ public final class PlayerGesturePlugin: BasePlugin, PlayerGestureService {
     /** 长按手势识别器 */
     private var longPressGR: UILongPressGestureRecognizer?
 
-    /** 手势承载视图弱引用 */
+    /** 手势承载视图 */
     private weak var _gestureView: UIView?
-    /** 手势是否启用 */
-    private var _isEnabled: Bool = true
 
-    /** 是否为外部传入的手势视图 */
-    private var _isExternalGestureView: Bool = false
-
-    /**手势滑动仅使用一个方向**/
+    /** 手势滑动仅使用一个方向 */
     private var lockedDirection: PlayerPanDirection = .unknown
 
-    /** 视图服务依赖 */
-    @PlayerPlugin private var viewService: PlayerViewService?
+    /** 引擎服务依赖 */
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
 
-    /**
-     * 手势承载视图，设置后在该视图上添加手势；为 nil 时自动绑定 actionView
-     */
+    /** 手势承载视图，设置后在该视图上添加手势；为 nil 时自动绑定 playerView */
     public var gestureView: UIView? {
         get { _gestureView }
         set {
             removeAllGestureRecognizers()
-            if let nv = newValue {
-                _gestureView = nv
-                _isExternalGestureView = true
-                setupGestureRecognizers()
-            } else {
-                _isExternalGestureView = false
-                _gestureView = nil
-                rebindActionView()
+            _gestureView = newValue
+            if let view = newValue {
+                setupGestureRecognizers(on: view)
             }
         }
     }
 
-    /**
-     * 重新绑定到 actionView
-     */
-    private func rebindActionView() {
-        guard let actionView = viewService?.actionView else { return }
-        actionView.isUserInteractionEnabled = true
-        _gestureView = actionView
-        setupGestureRecognizers()
-    }
-
-    /**
-     * 是否启用所有手势
-     */
-    public var isEnabled: Bool {
-        get { _isEnabled }
-        set {
-            _isEnabled = newValue
-            updateGestureStates()
-        }
+    /** 手势是否启用 */
+    public var isEnabled: Bool = true {
+        didSet { updateGestureStates() }
     }
 
     /** 是否启用单击 */
-    public var isSingleTapEnabled: Bool = true { didSet { singleTapGR?.isEnabled = isSingleTapEnabled && _isEnabled } }
+    public var isSingleTapEnabled: Bool = true { didSet { singleTapGR?.isEnabled = isSingleTapEnabled && isEnabled } }
     /** 是否启用双击 */
-    public var isDoubleTapEnabled: Bool = true { didSet { doubleTapGR?.isEnabled = isDoubleTapEnabled && _isEnabled } }
+    public var isDoubleTapEnabled: Bool = true { didSet { doubleTapGR?.isEnabled = isDoubleTapEnabled && isEnabled } }
     /** 是否启用滑动 */
-    public var isPanEnabled: Bool = false { didSet { panGR?.isEnabled = isPanEnabled && _isEnabled } }
+    public var isPanEnabled: Bool = false { didSet { panGR?.isEnabled = isPanEnabled && isEnabled } }
     /** 是否启用长按 */
-    public var isLongPressEnabled: Bool = true { didSet { longPressGR?.isEnabled = isLongPressEnabled && _isEnabled } }
+    public var isLongPressEnabled: Bool = true { didSet { longPressGR?.isEnabled = isLongPressEnabled && isEnabled } }
     /** 是否启用捏合 */
-    public var isPinchEnabled: Bool = false { didSet { pinchGR?.isEnabled = isPinchEnabled && _isEnabled } }
+    public var isPinchEnabled: Bool = false { didSet { pinchGR?.isEnabled = isPinchEnabled && isEnabled } }
 
-    /**
-     * 初始化
-     */
     public required override init() {
         super.init()
     }
 
-    /**
-     * 插件加载完成，绑定 actionView 并监听视图创建事件
-     */
     public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
 
-        tryBindActionView()
-
-        // 监听 ActionView 创建事件
-        context.add(self, event: .playerActionViewDidCreateSticky, option: .none) { [weak self] _, _ in
-            self?.tryBindActionView()
+        // 监听引擎创建事件，自动将手势加到 playerView 上
+        context.add(self, event: .playerEngineDidCreateSticky, option: .none) { [weak self] _, _ in
+            self?.trySetupGestureView()
         }
+
+        // 尝试立即设置
+        trySetupGestureView()
     }
 
-    /**
-     * 尝试绑定 actionView
-     */
-    private func tryBindActionView() {
+    private func trySetupGestureView() {
         guard _gestureView == nil else { return }
-        guard let actionView = viewService?.actionView else { return }
-        actionView.isUserInteractionEnabled = true
-        _gestureView = actionView
-        setupGestureRecognizers()
+        guard let playerView = engineService?.playerView else { return }
+        playerView.isUserInteractionEnabled = true
+        _gestureView = playerView
+        setupGestureRecognizers(on: playerView)
     }
 
-    /**
-     * 添加手势处理器
-     */
+    /** 添加手势处理器 */
     public func addHandler(_ handler: PlayerGestureHandler) {
         var list = handlers[handler.gestureType] ?? []
         guard !list.contains(where: { $0 === handler }) else { return }
@@ -131,32 +92,24 @@ public final class PlayerGesturePlugin: BasePlugin, PlayerGestureService {
         handlers[handler.gestureType] = list
     }
 
-    /**
-     * 移除手势处理器
-     */
+    /** 移除手势处理器 */
     public func removeHandler(_ handler: PlayerGestureHandler) {
         handlers[handler.gestureType]?.removeAll { $0 === handler }
     }
 
-    /**
-     * 在指定场景下禁用某类手势
-     */
+    /** 在指定场景下禁用某类手势 */
     public func disableGesture(_ type: PlayerGestureType, forScene scene: String) {
         var set = disabledGestures[scene] ?? []
         set.insert(type)
         disabledGestures[scene] = set
     }
 
-    /**
-     * 在指定场景下启用某类手势
-     */
+    /** 在指定场景下启用某类手势 */
     public func enableGesture(_ type: PlayerGestureType, forScene scene: String) {
         disabledGestures[scene]?.remove(type)
     }
 
-    /**
-     * 判断某类手势是否被禁用
-     */
+    /** 判断某类手势是否被禁用 */
     private func isGestureDisabled(_ type: PlayerGestureType) -> Bool {
         for (_, set) in disabledGestures {
             if set.contains(type) { return true }
@@ -164,12 +117,8 @@ public final class PlayerGesturePlugin: BasePlugin, PlayerGestureService {
         return false
     }
 
-    /**
-     * 配置所有手势识别器
-     */
-    private func setupGestureRecognizers() {
-        guard let view = _gestureView else { return }
-
+    /** 配置所有手势识别器 */
+    private func setupGestureRecognizers(on view: UIView) {
         let single = UITapGestureRecognizer(target: self, action: #selector(handleSingleTap(_:)))
         single.numberOfTapsRequired = 1
         view.addGestureRecognizer(single)
@@ -198,15 +147,14 @@ public final class PlayerGesturePlugin: BasePlugin, PlayerGestureService {
         updateGestureStates()
     }
 
-    /**
-     * 移除所有手势识别器
-     */
+    /** 移除所有手势识别器 */
     private func removeAllGestureRecognizers() {
-        if let gr = singleTapGR { _gestureView?.removeGestureRecognizer(gr) }
-        if let gr = doubleTapGR { _gestureView?.removeGestureRecognizer(gr) }
-        if let gr = panGR { _gestureView?.removeGestureRecognizer(gr) }
-        if let gr = pinchGR { _gestureView?.removeGestureRecognizer(gr) }
-        if let gr = longPressGR { _gestureView?.removeGestureRecognizer(gr) }
+        guard let view = _gestureView else { return }
+        if let gr = singleTapGR { view.removeGestureRecognizer(gr) }
+        if let gr = doubleTapGR { view.removeGestureRecognizer(gr) }
+        if let gr = panGR { view.removeGestureRecognizer(gr) }
+        if let gr = pinchGR { view.removeGestureRecognizer(gr) }
+        if let gr = longPressGR { view.removeGestureRecognizer(gr) }
         singleTapGR = nil
         doubleTapGR = nil
         panGR = nil
@@ -214,38 +162,30 @@ public final class PlayerGesturePlugin: BasePlugin, PlayerGestureService {
         longPressGR = nil
     }
 
-    /**
-     * 更新各手势启用状态
-     */
+    /** 更新各手势启用状态 */
     private func updateGestureStates() {
-        singleTapGR?.isEnabled = _isEnabled && isSingleTapEnabled
-        doubleTapGR?.isEnabled = _isEnabled && isDoubleTapEnabled
-        panGR?.isEnabled = _isEnabled && isPanEnabled
-        pinchGR?.isEnabled = _isEnabled && isPinchEnabled
-        longPressGR?.isEnabled = _isEnabled && isLongPressEnabled
+        singleTapGR?.isEnabled = isEnabled && isSingleTapEnabled
+        doubleTapGR?.isEnabled = isEnabled && isDoubleTapEnabled
+        panGR?.isEnabled = isEnabled && isPanEnabled
+        pinchGR?.isEnabled = isEnabled && isPinchEnabled
+        longPressGR?.isEnabled = isEnabled && isLongPressEnabled
     }
 
-    /**
-     * 处理单击手势
-     */
+    /** 处理单击手势 */
     @objc private func handleSingleTap(_ gr: UITapGestureRecognizer) {
         guard !isGestureDisabled(.singleTap) else { return }
         dispatchHandlers(type: .singleTap, recognizer: gr, direction: .unknown)
         context?.post(.playerGestureSingleTap, object: nil, sender: self)
     }
 
-    /**
-     * 处理双击手势
-     */
+    /** 处理双击手势 */
     @objc private func handleDoubleTap(_ gr: UITapGestureRecognizer) {
         guard !isGestureDisabled(.doubleTap) else { return }
         dispatchHandlers(type: .doubleTap, recognizer: gr, direction: .unknown)
         context?.post(.playerGestureDoubleTap, object: nil, sender: self)
     }
 
-    /**
-     * 处理滑动手势
-     */
+    /** 处理滑动手势 */
     @objc private func handlePan(_ gr: UIPanGestureRecognizer) {
         guard !isGestureDisabled(.pan) else { return }
         let direction = detectPanDirection(gr)
@@ -253,27 +193,21 @@ public final class PlayerGesturePlugin: BasePlugin, PlayerGestureService {
         context?.post(.playerGesturePan, object: direction as AnyObject, sender: self)
     }
 
-    /**
-     * 处理捏合手势
-     */
+    /** 处理捏合手势 */
     @objc private func handlePinch(_ gr: UIPinchGestureRecognizer) {
         guard !isGestureDisabled(.pinch) else { return }
         dispatchHandlers(type: .pinch, recognizer: gr, direction: .unknown)
         context?.post(.playerGesturePinch, object: nil, sender: self)
     }
 
-    /**
-     * 处理长按手势
-     */
+    /** 处理长按手势 */
     @objc private func handleLongPress(_ gr: UILongPressGestureRecognizer) {
         guard !isGestureDisabled(.longPress) else { return }
         dispatchHandlers(type: .longPress, recognizer: gr, direction: .unknown)
         context?.post(.playerGestureLongPress, object: gr.state.rawValue, sender: self)
     }
 
-    /**
-     * 向该类型的手势处理器分发手势事件
-     */
+    /** 向该类型的手势处理器分发手势事件 */
     private func dispatchHandlers(type: PlayerGestureType, recognizer: UIGestureRecognizer, direction: PlayerPanDirection) {
         guard let list = handlers[type] else { return }
         for handler in list {
@@ -281,9 +215,7 @@ public final class PlayerGesturePlugin: BasePlugin, PlayerGestureService {
         }
     }
 
-    /**
-     * 检测滑动手势方向
-     */
+    /** 检测滑动手势方向 */
     private func detectPanDirection(_ gr: UIPanGestureRecognizer) -> PlayerPanDirection {
         if gr.state == .began {
             let velocity = gr.velocity(in: _gestureView)

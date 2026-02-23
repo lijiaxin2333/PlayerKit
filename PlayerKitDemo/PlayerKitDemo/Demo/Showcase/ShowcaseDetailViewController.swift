@@ -447,12 +447,6 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
         headerLabel.textColor = .white
         stack.addArrangedSubview(headerLabel)
 
-        let metrics = detailControl?.qosMetrics() ?? PlayerQosMetrics()
-        addInfoRow(to: stack, title: "Startup Time", value: String(format: "%.0f ms", metrics.startupTime * 1000))
-        addInfoRow(to: stack, title: "Stall Count", value: "\(metrics.stalledCount)")
-        addInfoRow(to: stack, title: "Total Stall Time", value: String(format: "%.1f s", metrics.totalStalledTime))
-        addInfoRow(to: stack, title: "Buffer Progress", value: String(format: "%.0f%%", metrics.bufferProgress * 100))
-
         let sep1 = makeSeparator()
         stack.addArrangedSubview(sep1)
 
@@ -471,13 +465,6 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
 
         let sep2 = makeSeparator()
         stack.addArrangedSubview(sep2)
-
-        let preNextInfo = detailControl?.preNextInfo() ?? (title: nil, isLoading: false)
-        addInfoRow(to: stack, title: "Next Video", value: preNextInfo.0 ?? "None")
-        addInfoRow(to: stack, title: "PreNext Loading", value: preNextInfo.1 ? "Yes" : "No")
-
-        let sep3 = makeSeparator()
-        stack.addArrangedSubview(sep3)
 
         addInfoRow(to: stack, title: "Context Name", value: detailControl?.contextName() ?? "N/A")
         addInfoRow(to: stack, title: "Video ID", value: video?.feedId ?? "")

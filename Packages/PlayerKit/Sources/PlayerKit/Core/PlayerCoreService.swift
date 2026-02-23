@@ -184,15 +184,6 @@ public extension Event {
     static let playerDurationDidSet: Event = "PlayerDurationDidSet"
 
     /**
-     * 预加载下一个开始
-     */
-    static let playerPreNextDidStart: Event = "PlayerPreNextDidStart"
-    /**
-     * 预加载下一个完成
-     */
-    static let playerPreNextDidFinish: Event = "PlayerPreNextDidFinish"
-
-    /**
      * 应用变为活跃
      */
     static let playerAppDidBecomeActive: Event = "PlayerAppDidBecomeActive"
@@ -369,10 +360,4 @@ public extension Event {
     static let playerDataModelDidUpdateSticky: Event = "PlayerDataModelDidUpdateSticky"
 
     // MARK: - View Events
-
-    /**
-     * ActionView 已创建（粘性事件）
-     * - Parameter: PlayerActionView 实例
-     */
-    static let playerActionViewDidCreateSticky: Event = "PlayerActionViewDidCreateSticky"
 }

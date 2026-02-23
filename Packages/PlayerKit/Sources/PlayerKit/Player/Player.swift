@@ -30,14 +30,11 @@ final class PlayerRegProvider: RegisterProvider {
         registerSet.addEntry(pluginClass: PlayerCoverMaskPlugin.self, serviceType: PlayerCoverMaskService.self)
         registerSet.addEntry(pluginClass: PlayerPanelPlugin.self, serviceType: PlayerPanelService.self)
         registerSet.addEntry(pluginClass: PlayerTrackerPlugin.self, serviceType: PlayerTrackerService.self)
-        registerSet.addEntry(pluginClass: PlayerQosPlugin.self, serviceType: PlayerQosService.self)
         registerSet.addEntry(pluginClass: PlayerResolutionPlugin.self, serviceType: PlayerResolutionService.self)
         registerSet.addEntry(pluginClass: PlayerPreRenderPlugin.self, serviceType: PlayerPreRenderService.self)
         registerSet.addEntry(pluginClass: PlayerDebugPlugin.self, serviceType: PlayerDebugService.self)
-        registerSet.addEntry(pluginClass: PlayerPreNextPlugin.self, serviceType: PlayerPreNextService.self)
         registerSet.addEntry(pluginClass: PlayerTipManagerPlugin.self, serviceType: PlayerTipManagerService.self)
         registerSet.addEntry(pluginClass: PlayerToastPlugin.self, serviceType: PlayerToastService.self)
-        registerSet.addEntry(pluginClass: PlayerPreloadPlugin.self, serviceType: PlayerPreloadService.self)
         registerSet.addEntry(pluginClass: PlayerStartTimePlugin.self, serviceType: PlayerStartTimeService.self)
         registerSet.addEntry(pluginClass: PlayerGesturePlugin.self, serviceType: PlayerGestureService.self)
         registerSet.addEntry(pluginClass: PlayerSubtitlePlugin.self, serviceType: PlayerSubtitleService.self)
@@ -153,11 +150,6 @@ public final class Player: ContextHolder {
     /** 引擎服务的便捷别名 */
     public var engineService: PlayerEngineCoreService? {
         return engineCoreService
-    }
-
-    /** 预加载服务，管理视频预加载 */
-    public var preloadService: PlayerPreloadService? {
-        context.resolveService(PlayerPreloadService.self)
     }
 
     /** 起播时间服务，管理视频起播时间点 */

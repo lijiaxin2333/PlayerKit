@@ -35,8 +35,6 @@ protocol ShowcaseDetailControlService: PluginService {
     func sliderChanged(to value: Float) -> String?
     func endSliderScrub()
     func scheduleControlHide()
-    func qosMetrics() -> PlayerQosMetrics?
-    func preNextInfo() -> (title: String?, isLoading: Bool)
     func contextName() -> String
     func handlePanBegin(direction: PlayerPanDirection)
     func handlePanChange(direction: PlayerPanDirection, delta: Float) -> String?
@@ -81,9 +79,7 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
 
         setupGestures(gestureView: gestureView)
         setupStartTime(video: model.video)
-        setupQos()
         setupTracker(video: model.video)
-        setupPreNext(allVideos: model.allVideos, videoIndex: model.videoIndex)
         observeEvents()
     }
 
@@ -93,9 +89,6 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
 
         context?.resolveService(PlayerStartTimeService.self)?.cacheCurrentProgress()
         context?.resolveService(PlayerTrackerService.self)?.sendEvent("detail_exit", params: ["video_id": video?.feedId ?? ""])
-
-        let qos = context?.resolveService(PlayerQosService.self)
-        qos?.stopQosMonitoring()
 
         let gestureService = context?.resolveService(PlayerGestureService.self)
         gestureService?.isPanEnabled = false
@@ -128,24 +121,11 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
         }
     }
 
-    private func setupQos() {
-        let qos = context?.resolveService(PlayerQosService.self)
-        qos?.startQosMonitoring()
-    }
-
     private func setupTracker(video: ShowcaseVideo) {
         context?.resolveService(PlayerTrackerService.self)?.sendEvent("detail_enter", params: [
             "video_id": video.feedId,
             "video_index": videoIndex
         ])
-    }
-
-    private func setupPreNext(allVideos: [ShowcaseVideo], videoIndex: Int) {
-        let nextIndex = videoIndex + 1
-        guard nextIndex < allVideos.count, let url = allVideos[nextIndex].url else { return }
-        let preNext = context?.resolveService(PlayerPreNextService.self)
-        preNext?.setNextItem(PlayerPreNextItem(url: url, title: allVideos[nextIndex].title))
-        preNext?.startPreload()
     }
 
     private func observeEvents() {
@@ -280,16 +260,6 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
                 self.onControlShouldShow?(false)
             }
         }
-    }
-
-    func qosMetrics() -> PlayerQosMetrics? {
-        let qos = context?.resolveService(PlayerQosService.self)
-        return qos?.qosMetrics
-    }
-
-    func preNextInfo() -> (title: String?, isLoading: Bool) {
-        let preNext = context?.resolveService(PlayerPreNextService.self)
-        return (preNext?.nextItem?.title, preNext?.isPreloading == true)
     }
 
     func contextName() -> String {

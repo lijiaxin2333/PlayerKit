@@ -5,7 +5,7 @@ import ListKit
 @MainActor
 protocol ShowcaseFeedPlaybackPluginProtocol: AnyObject {
     var currentPlayingIndex: Int { get }
-    var transferringPlayer: FeedPlayer? { get set }
+    var transferringPlayer: Player? { get set }
     func playVideo(at index: Int, in collectionView: UICollectionView, videos: [ShowcaseVideo])
     func pauseCurrent()
     func preRenderAdjacent(currentIndex: Int, videos: [ShowcaseVideo])
@@ -47,7 +47,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
 
     private(set) var currentPlayingIndex: Int = -1
     private weak var currentPlayingCell: ShowcaseFeedCell?
-    var transferringPlayer: FeedPlayer?
+    var transferringPlayer: Player?
 
     let prefetchManager: ListPrefetchService
 
@@ -313,18 +313,18 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         guard index < sectionVMs.count else { return }
         guard let sc = ctx.sectionController(forSectionViewModel: sectionVMs[index]) else { return }
         guard let cell = sc.cell(atIndex: 0) as? ShowcaseFeedCell else { return }
-        guard let feedPlayer = cell.feedPlayer else { return }
+        guard let player = cell.scenePlayer.player else { return }
         guard cell.canDetachPlayer() else { return }
 
         cell.isTransferringPlayer = true
         cell.detachPlayer()
-        transferringPlayer = feedPlayer
+        transferringPlayer = player
         let transferIndex = index
 
         let detailVC = ShowcaseDetailViewController()
         detailVC.video = videos[index]
         detailVC.videoIndex = index
-        detailVC.feedPlayer = feedPlayer
+        detailVC.player = player
         detailVC.allVideos = videos
         detailVC.onWillDismiss = { [weak self] in
             guard let self = self, let ctx = self.listContext else { return }
@@ -335,7 +335,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
             if transferIndex < sectionVMs.count {
                 if let sc = ctx.sectionController(forSectionViewModel: sectionVMs[transferIndex]),
                    let feedCell = sc.cell(atIndex: 0) as? ShowcaseFeedCell {
-                    feedCell.attachTransferredPlayer(feedPlayer)
+                    feedCell.attachTransferredPlayer(player)
                 }
             }
         }
@@ -419,11 +419,11 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
     }
 
     private func pauseCurrentPlayback() {
-        currentPlayingCell?.feedPlayer?.pause()
+        currentPlayingCell?.scenePlayer.player?.pause()
     }
 
     private func resumeCurrentPlayback() {
-        currentPlayingCell?.feedPlayer?.engineService?.play()
+        currentPlayingCell?.scenePlayer.player?.engineService?.play()
     }
 
     // MARK: - PreRender Adjacent

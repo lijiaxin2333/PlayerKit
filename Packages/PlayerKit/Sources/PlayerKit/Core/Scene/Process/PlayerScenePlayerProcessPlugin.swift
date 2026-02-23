@@ -43,7 +43,7 @@ public final class PlayerScenePlayerProcessPlugin: BasePlugin, PlayerScenePlayer
         checkDataValid: (() -> Bool)?,
         setDataIfNeeded: (() -> Void)?
     ) {
-        guard let layeredService = context?.resolveService(PlayerTypedPlayerLayeredService.self) else { return }
+        guard let layeredService = context?.resolveService(PlayerPlayerLayeredService.self) else { return }
 
         if layeredService.hasPlayer {
             let engine = context?.resolveService(PlayerEngineCoreService.self)
@@ -96,7 +96,7 @@ public final class PlayerScenePlayerProcessPlugin: BasePlugin, PlayerScenePlayer
      * - Returns: true 表示需要执行播放
      */
     public func checkIfNeedExecPlay(replayWhenFinished: Bool) -> Bool {
-        guard let layeredService = context?.resolveService(PlayerTypedPlayerLayeredService.self) else {
+        guard let layeredService = context?.resolveService(PlayerPlayerLayeredService.self) else {
             return true
         }
 

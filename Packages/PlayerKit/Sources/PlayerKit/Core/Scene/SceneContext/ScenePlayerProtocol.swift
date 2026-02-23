@@ -1,16 +1,8 @@
 import Foundation
 
 /**
- * 体裁播放器协议
- * 基于 ContextHolder 的体裁层播放器基协议
- */
-@MainActor
-public protocol TypedPlayerProtocol: ContextHolder {
-}
-
-/**
  * 场景播放器协议
- * 定义场景层的播放器能力，包括创建和管理体裁播放器
+ * 定义场景层的播放器能力，包括创建和管理播放器
  */
 @MainActor
 public protocol ScenePlayerProtocol: ContextHolder {
@@ -18,30 +10,30 @@ public protocol ScenePlayerProtocol: ContextHolder {
     /** 场景的公共 Context */
     var context: PublicContext { get }
 
-    /** 当前关联的体裁播放器 */
-    var typedPlayer: (any TypedPlayerProtocol)? { get }
+    /** 当前关联的播放器 */
+    var player: Player? { get }
 
     /**
-     * 创建体裁播放器
+     * 创建播放器
      * - Parameter prerenderKey: 预渲染 key，可为 nil
-     * - Returns: 新创建的体裁播放器实例
+     * - Returns: 新创建的播放器实例
      */
-    func createTypedPlayer(prerenderKey: String?) -> any TypedPlayerProtocol
+    func createPlayer(prerenderKey: String?) -> Player
 
     /**
-     * 添加体裁播放器到场景
-     * - Parameter typedPlayer: 要添加的体裁播放器
+     * 添加播放器到场景
+     * - Parameter player: 要添加的播放器
      */
-    func addTypedPlayer(_ typedPlayer: any TypedPlayerProtocol)
+    func addPlayer(_ player: Player)
 
-    /** 移除当前体裁播放器 */
-    func removeTypedPlayer()
+    /** 移除当前播放器 */
+    func removePlayer()
 
     /**
-     * 是否已有体裁播放器
-     * - Returns: true 表示已有体裁播放器
+     * 是否已有播放器
+     * - Returns: true 表示已有播放器
      */
-    func hasTypedPlayer() -> Bool
+    func hasPlayer() -> Bool
 }
 
 // MARK: - Convenience Extensions

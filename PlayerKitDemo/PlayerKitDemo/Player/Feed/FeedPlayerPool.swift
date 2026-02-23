@@ -1,21 +1,18 @@
 import Foundation
 import UIKit
+import PlayerKit
 
 @MainActor
 public final class FeedPlayerPool {
 
     public var maxPlayerCount: UInt = 2
 
-    private var idlePlayers: [FeedPlayer] = []
-    private var activePlayers: [String: FeedPlayer] = [:]
+    private var idlePlayers: [Player] = []
+    private var activePlayers: [String: Player] = [:]
 
-    public let configuration: FeedPlayerConfiguration
+    public init() {}
 
-    public init(configuration: FeedPlayerConfiguration? = nil) {
-        self.configuration = configuration ?? FeedPlayerConfiguration()
-    }
-
-    public func dequeuePlayer(for videoId: String) -> FeedPlayer {
+    public func dequeuePlayer(for videoId: String) -> Player {
         if let player = activePlayers[videoId] {
             return player
         }
@@ -27,44 +24,44 @@ public final class FeedPlayerPool {
                 playerView.removeFromSuperview()
             }
 
-            player.willReusePlayer()
+            player.willReuse()
             player.releasePlayer()
-            player.didReusePlayer()
+            player.didReuse()
 
             activePlayers[videoId] = player
             return player
         }
 
-        let player = FeedPlayer(configuration: configuration)
+        let player = Player(name: "FeedPlayerPool.\(UUID().uuidString)")
         activePlayers[videoId] = player
         return player
     }
 
     @discardableResult
-    public func enqueuePlayer(_ player: FeedPlayer, for videoId: String) -> Bool {
+    public func enqueuePlayer(_ player: Player, for videoId: String) -> Bool {
         guard activePlayers[videoId] === player else {
             return false
         }
 
         guard idlePlayers.count < Int(maxPlayerCount) else {
             activePlayers.removeValue(forKey: videoId)
-            player.willRecyclePlayer()
+            player.willRecycle()
             player.destroyPlayer()
-            player.didRecyclePlayer()
+            player.didRecycle()
             return false
         }
 
         activePlayers.removeValue(forKey: videoId)
 
-        player.willRecyclePlayer()
+        player.willRecycle()
         player.releasePlayer()
-        player.didRecyclePlayer()
+        player.didRecycle()
 
         idlePlayers.append(player)
         return true
     }
 
-    public func getActivePlayer(for videoId: String) -> FeedPlayer? {
+    public func getActivePlayer(for videoId: String) -> Player? {
         activePlayers[videoId]
     }
 
@@ -78,14 +75,14 @@ public final class FeedPlayerPool {
 
     public func releaseAll() {
         activePlayers.values.forEach { player in
-            player.willRecyclePlayer()
+            player.willRecycle()
             player.destroyPlayer()
-            player.didRecyclePlayer()
+            player.didRecycle()
         }
         idlePlayers.forEach { player in
-            player.willRecyclePlayer()
+            player.willRecycle()
             player.destroyPlayer()
-            player.didRecyclePlayer()
+            player.didRecycle()
         }
         activePlayers.removeAll()
         idlePlayers.removeAll()
@@ -96,7 +93,7 @@ public final class FeedPlayerPool {
         guard count > 0 else { return }
 
         for _ in 0..<count {
-            let player = FeedPlayer(configuration: configuration)
+            let player = Player(name: "FeedPlayerPool.\(UUID().uuidString)")
             idlePlayers.append(player)
         }
     }
@@ -107,5 +104,45 @@ public final class FeedPlayerPool {
 
     public var idleCount: Int {
         idlePlayers.count
+    }
+}
+
+// MARK: - Player Lifecycle Extensions
+
+extension Player {
+
+    func willReuse() {
+        engineService?.pause()
+    }
+
+    func didReuse() {
+    }
+
+    func willRecycle() {
+        pause()
+    }
+
+    func didRecycle() {
+    }
+
+    func releasePlayer() {
+        engineService?.pause()
+    }
+
+    func destroyPlayer() {
+        engineService?.pause()
+        engineService?.replaceCurrentItem(with: nil)
+    }
+
+    func stop() {
+        engineService?.stop()
+    }
+
+    func pause() {
+        engineService?.pause()
+    }
+
+    var playerView: UIView? {
+        engineService?.playerView
     }
 }

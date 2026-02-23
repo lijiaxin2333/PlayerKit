@@ -19,7 +19,7 @@ final class ShowcaseDetailRegProvider: RegisterProvider {
 @MainActor
 final class ShowcaseDetailSceneBaseRegProvider: RegisterProvider {
     func registerPlugins(with registerSet: PluginRegisterSet) {
-        registerSet.addEntry(pluginClass: PlayerTypedPlayerLayeredPlugin.self, serviceType: PlayerTypedPlayerLayeredService.self)
+        registerSet.addEntry(pluginClass: PlayerPlayerLayeredPlugin.self, serviceType: PlayerPlayerLayeredService.self)
     }
 }
 
@@ -29,7 +29,7 @@ final class ShowcaseDetailSceneContext: ContextHolder {
     let context: PublicContext
     private let baseRegProvider = ShowcaseDetailSceneBaseRegProvider()
     private let regProvider = ShowcaseDetailRegProvider()
-    private weak var _feedPlayer: FeedPlayer?
+    private weak var _player: Player?
 
     private static let detailBlacklist: Set<String> = [String(reflecting: PlayerSpeedPanelService.self)]
 
@@ -40,23 +40,23 @@ final class ShowcaseDetailSceneContext: ContextHolder {
         ctx.addRegProvider(baseRegProvider)
     }
 
-    func addFeedPlayer(_ feedPlayer: FeedPlayer) {
-        if _feedPlayer === feedPlayer { return }
-        removeFeedPlayer()
-        _feedPlayer = feedPlayer
+    func addPlayer(_ player: Player) {
+        if _player === player { return }
+        removePlayer()
+        _player = player
 
-        feedPlayer.context.updateRegistryBlacklist(Self.detailBlacklist)
-        context.addSubContext(feedPlayer.context)
+        player.context.updateRegistryBlacklist(Self.detailBlacklist)
+        context.addSubContext(player.context)
         context.addRegProvider(regProvider)
     }
 
-    func removeFeedPlayer() {
-        guard let feedPlayer = _feedPlayer else { return }
+    func removePlayer() {
+        guard let player = _player else { return }
         context.removeRegProvider(regProvider)
-        feedPlayer.context.updateRegistryBlacklist(nil)
-        context.removeSubContext(feedPlayer.context)
-        _feedPlayer = nil
+        player.context.updateRegistryBlacklist(nil)
+        context.removeSubContext(player.context)
+        _player = nil
     }
 
-    var feedPlayer: FeedPlayer? { _feedPlayer }
+    var player: Player? { _player }
 }

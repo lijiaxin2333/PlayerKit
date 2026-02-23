@@ -4,7 +4,7 @@ import ListKit
 
 /// Showcase Feed Cell
 /// 实现 ListCellProtocol，遵循 ListKit 标准模式
-/// 播放器相关逻辑通过 sceneContext + Plugin 架构处理
+/// 播放器相关逻辑通过 scenePlayer + Plugin 架构处理
 @MainActor
 final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
 
@@ -59,8 +59,6 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
     let scenePlayer = ShowcaseFeedScenePlayer()
     private let _playerContainer = UIView()
 
-    var feedPlayer: FeedPlayer? { scenePlayer.feedPlayer }
-
     /// 当前视频索引（兼容旧代码）
     var videoIndex: Int {
         _cellViewModel?.videoIndex ?? 0
@@ -86,16 +84,16 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         let cellViewConfig = ShowcaseFeedCellViewConfigModel(contentView: contentView, playerContainer: _playerContainer)
         scenePlayer.post(.showcaseFeedCellViewDidSet, object: cellViewConfig, sender: self)
 
-        let typedPlayer = scenePlayer.createTypedPlayer(prerenderKey: nil)
-        scenePlayer.addTypedPlayer(typedPlayer)
+        let player = scenePlayer.createPlayer(prerenderKey: nil)
+        scenePlayer.addPlayer(player)
     }
 
     required init?(coder: NSCoder) { fatalError() }
 
     // MARK: - Player Methods
 
-    func addTypedPlayerIfNeeded(_ typedPlayer: FeedPlayer) {
-        scenePlayer.addTypedPlayer(typedPlayer)
+    func addPlayerIfNeeded(_ player: Player) {
+        scenePlayer.addPlayer(player)
     }
 
     func startPlay(
@@ -104,14 +102,14 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         index: Int,
         playbackPlugin: ShowcaseFeedPlaybackPlugin
     ) {
-        scenePlayer.feedPlayer?.bindPool(identifier: "showcase")
+        scenePlayer.player?.bindPool(identifier: "showcase")
         guard let processService = scenePlayer.resolveService(PlayerScenePlayerProcessService.self) else { return }
         processService.execPlay(
             isAutoPlay: isAutoPlay,
             prepare: nil,
             createIfNeeded: { [weak self] in
                 guard let self = self else { return }
-                self.prepareTypedPlayerIfNeeded(video: video, index: index, playbackPlugin: playbackPlugin)
+                self.preparePlayerIfNeeded(video: video, index: index, playbackPlugin: playbackPlugin)
             },
             attach: { [weak self] in
                 self?.attachPlayerView()
@@ -125,28 +123,28 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         )
     }
 
-    private func prepareTypedPlayerIfNeeded(
+    private func preparePlayerIfNeeded(
         video: ShowcaseVideo,
         index: Int,
         playbackPlugin: ShowcaseFeedPlaybackPlugin
     ) {
-        guard let feedPlayer = scenePlayer.feedPlayer else { return }
-        if feedPlayer.engineService?.avPlayer?.currentItem != nil { return }
+        guard let player = scenePlayer.player else { return }
+        if player.engineService?.avPlayer?.currentItem != nil { return }
 
         let identifier = "showcase_\(index)"
         if let preRenderedPlayer = playbackPlugin.consumePreRendered(identifier: identifier),
            preRenderedPlayer.engineService?.currentURL == video.url {
-            feedPlayer.adoptEngine(from: preRenderedPlayer)
+            player.adoptEngine(from: preRenderedPlayer)
             return
         }
 
         playbackPlugin.cancelPreRender(identifier: identifier)
-        _ = feedPlayer.acquireEngine()
+        _ = player.acquireEngine()
     }
 
     func attachPlayerView() {
-        guard let feedPlayer = scenePlayer.feedPlayer else { return }
-        guard let pv = feedPlayer.playerView else { return }
+        guard let player = scenePlayer.player else { return }
+        guard let pv = player.playerView else { return }
         if pv.superview === _playerContainer { return }
         _playerContainer.subviews.forEach { $0.removeFromSuperview() }
         pv.translatesAutoresizingMaskIntoConstraints = false
@@ -167,37 +165,37 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         guard let index = _cellViewModel?.videoIndex else { return }
         PLog.detachPlayerLog(index)
         _playerContainer.subviews.forEach { $0.removeFromSuperview() }
-        scenePlayer.removeTypedPlayer()
+        scenePlayer.removePlayer()
     }
 
     func stopAndDetachPlayer() {
-        guard let player = scenePlayer.feedPlayer else { return }
+        guard let player = scenePlayer.player else { return }
         player.pause()
         _playerContainer.subviews.forEach { $0.removeFromSuperview() }
     }
 
     func stopAndRecycleEngine() {
-        guard let player = scenePlayer.feedPlayer else { return }
+        guard let player = scenePlayer.player else { return }
         player.pause()
-        player.playbackControlService?.stop()
+        player.engineService?.stop()
         player.recycleEngine()
         _playerContainer.subviews.forEach { $0.removeFromSuperview() }
     }
 
     func stopAndRemovePlayer() {
         stopAndRecycleEngine()
-        scenePlayer.removeTypedPlayer()
+        scenePlayer.removePlayer()
     }
 
     func canDetachPlayer() -> Bool {
-        guard let feedPlayer = feedPlayer else { return false }
-        guard feedPlayer.engineService != nil else { return false }
+        guard let player = scenePlayer.player else { return false }
+        guard player.engineService != nil else { return false }
         return scenePlayer.resolveService(PlayerPlaybackControlService.self)?.isPlaying == true
     }
 
-    func attachTransferredPlayer(_ player: FeedPlayer) {
+    func attachTransferredPlayer(_ player: Player) {
         isTransferringPlayer = false
-        addTypedPlayerIfNeeded(player)
+        addPlayerIfNeeded(player)
         attachPlayerView()
     }
 
@@ -230,9 +228,9 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         }
         scenePlayer.post(.cellPrepareForReuse, sender: self)
         stopAndRecycleEngine()
-        if !scenePlayer.hasTypedPlayer() {
-            let typedPlayer = scenePlayer.createTypedPlayer(prerenderKey: nil)
-            scenePlayer.addTypedPlayer(typedPlayer)
+        if !scenePlayer.hasPlayer() {
+            let player = scenePlayer.createPlayer(prerenderKey: nil)
+            scenePlayer.addPlayer(player)
         }
         _cellViewModel = nil
     }

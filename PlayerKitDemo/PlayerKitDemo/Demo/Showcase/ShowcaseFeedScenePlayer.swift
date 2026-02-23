@@ -19,7 +19,7 @@ public extension Event {
 @MainActor
 final class ShowcaseFeedSceneRegProvider: RegisterProvider {
     func registerPlugins(with registerSet: PluginRegisterSet) {
-        registerSet.addEntry(pluginClass: PlayerTypedPlayerLayeredPlugin.self, serviceType: PlayerTypedPlayerLayeredService.self)
+        registerSet.addEntry(pluginClass: PlayerPlayerLayeredPlugin.self, serviceType: PlayerPlayerLayeredService.self)
         registerSet.addEntry(pluginClass: PlayerScenePlayerProcessPlugin.self, serviceType: PlayerScenePlayerProcessService.self)
         registerSet.addEntry(pluginClass: ShowcaseFeedDataPlugin.self, serviceType: ShowcaseFeedDataService.self)
         registerSet.addEntry(pluginClass: ShowcaseFeedCellViewPlugin.self, serviceType: ShowcaseFeedCellViewService.self)
@@ -33,7 +33,7 @@ final class ShowcaseFeedSceneRegProvider: RegisterProvider {
 final class ShowcaseFeedScenePlayer: ScenePlayerProtocol {
 
     let context: PublicContext
-    private var _typedPlayer: FeedPlayer?
+    private var _player: Player?
     private let regProvider = ShowcaseFeedSceneRegProvider()
 
     var dataService: ShowcaseFeedDataService? {
@@ -51,39 +51,47 @@ final class ShowcaseFeedScenePlayer: ScenePlayerProtocol {
         ctx.addRegProvider(regProvider)
     }
 
-    // MARK: - PlayerScenePlayerProtocol
+    // MARK: - ScenePlayerProtocol
 
-    var typedPlayer: (any TypedPlayerProtocol)? {
-        _typedPlayer
+    var player: Player? {
+        _player
     }
 
-    func createTypedPlayer(prerenderKey: String?) -> any TypedPlayerProtocol {
-        let config = FeedPlayerConfiguration()
-        config.prerenderKey = prerenderKey
-        return FeedPlayer(configuration: config)
+    func createPlayer(prerenderKey: String?) -> Player {
+        let player = Player(name: "ShowcaseFeedPlayer.\(UUID().uuidString)")
+
+        // 配置引擎
+        let configModel = PlayerEngineCoreConfigModel()
+        configModel.autoPlay = true
+        configModel.isLooping = false
+        player.context.configPlugin(serviceProtocol: PlayerEngineCoreService.self, withModel: configModel)
+
+        // 配置预渲染 key
+        if let key = prerenderKey {
+            player.context.configPlugin(serviceProtocol: PlayerPreRenderService.self, withModel: key)
+        }
+
+        return player
     }
 
-    func addTypedPlayer(_ typedPlayer: any TypedPlayerProtocol) {
-        guard let feedPlayer = typedPlayer as? FeedPlayer else { return }
-        if _typedPlayer === feedPlayer { return }
-        removeTypedPlayer()
-        _typedPlayer = feedPlayer
-        context.addSubContext(feedPlayer.context)
+    func addPlayer(_ player: Player) {
+        if _player === player { return }
+        removePlayer()
+        _player = player
+        context.addSubContext(player.context)
     }
 
-    func removeTypedPlayer() {
-        guard let feedPlayer = _typedPlayer else { return }
-        context.removeSubContext(feedPlayer.context)
-        _typedPlayer = nil
+    func removePlayer() {
+        guard let player = _player else { return }
+        context.removeSubContext(player.context)
+        _player = nil
     }
 
-    func hasTypedPlayer() -> Bool {
-        _typedPlayer != nil
+    func hasPlayer() -> Bool {
+        _player != nil
     }
 
     // MARK: - Convenience
-
-    var feedPlayer: FeedPlayer? { _typedPlayer }
 
     var engineService: PlayerEngineCoreService? {
         context.resolveService(PlayerEngineCoreService.self)

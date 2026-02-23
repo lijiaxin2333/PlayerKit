@@ -67,9 +67,9 @@ final class ShowcaseFeedPreRenderPlugin: BasePlugin, ShowcaseFeedPreRenderServic
         let hasPlayerView = container.subviews.contains(where: { $0 is PlayerEngineRenderView })
         guard !hasPlayerView else { return }
 
-        guard let feedPlayer = sceneCtx.feedPlayer else { return }
-        if feedPlayer.engineService?.avPlayer?.currentItem != nil {
-            attachPlayerViewToContainer(feedPlayer)
+        guard let player = sceneCtx.player else { return }
+        if player.engineService?.avPlayer?.currentItem != nil {
+            attachPlayerViewToContainer(player)
             return
         }
 
@@ -81,18 +81,18 @@ final class ShowcaseFeedPreRenderPlugin: BasePlugin, ShowcaseFeedPreRenderServic
             return
         }
 
-        feedPlayer.bindPool(identifier: "showcase")
-        feedPlayer.adoptEngine(from: preRenderedPlayer)
-        attachPlayerViewToContainer(feedPlayer)
+        player.bindPool(identifier: "showcase")
+        player.adoptEngine(from: preRenderedPlayer)
+        attachPlayerViewToContainer(player)
     }
 
     func removePrerenderPlayerView() {
         playerContainerView?.subviews.forEach { $0.removeFromSuperview() }
     }
 
-    private func attachPlayerViewToContainer(_ feedPlayer: FeedPlayer) {
+    private func attachPlayerViewToContainer(_ player: Player) {
         guard let container = playerContainerView else { return }
-        guard let pv = feedPlayer.playerView else { return }
+        guard let pv = player.playerView else { return }
         pv.translatesAutoresizingMaskIntoConstraints = false
         pv.isHidden = false
         container.addSubview(pv)

@@ -14,7 +14,7 @@ public class FeedSceneConfiguration {
 @MainActor
 final class FeedSceneRegProvider: RegisterProvider {
     func registerPlugins(with registerSet: PluginRegisterSet) {
-        registerSet.addEntry(pluginClass: PlayerTypedPlayerLayeredPlugin.self, serviceType: PlayerTypedPlayerLayeredService.self)
+        registerSet.addEntry(pluginClass: PlayerPlayerLayeredPlugin.self, serviceType: PlayerPlayerLayeredService.self)
         registerSet.addEntry(pluginClass: PlayerScenePlayerProcessPlugin.self, serviceType: PlayerScenePlayerProcessService.self)
     }
 }
@@ -24,7 +24,7 @@ public final class FeedSceneContext: ScenePlayerProtocol {
 
     public let context: PublicContext
 
-    private var _typedPlayer: FeedPlayer?
+    private var _player: Player?
     private let configuration: FeedSceneConfiguration
     private let regProvider = FeedSceneRegProvider()
 
@@ -35,36 +35,43 @@ public final class FeedSceneContext: ScenePlayerProtocol {
         ctx.addRegProvider(regProvider)
     }
 
-    // MARK: - PlayerScenePlayerProtocol
+    // MARK: - ScenePlayerProtocol
 
-    public var typedPlayer: (any TypedPlayerProtocol)? {
-        _typedPlayer
+    public var player: Player? {
+        _player
     }
 
-    public func createTypedPlayer(prerenderKey: String?) -> any TypedPlayerProtocol {
-        let config = FeedPlayerConfiguration()
-        config.prerenderKey = prerenderKey
-        config.autoPlay = configuration.autoPlay
-        let feedPlayer = FeedPlayer(configuration: config)
-        return feedPlayer
+    public func createPlayer(prerenderKey: String?) -> Player {
+        let player = Player(name: "FeedPlayer.\(UUID().uuidString)")
+
+        // 配置引擎
+        let configModel = PlayerEngineCoreConfigModel()
+        configModel.autoPlay = configuration.autoPlay
+        player.context.configPlugin(serviceProtocol: PlayerEngineCoreService.self, withModel: configModel)
+
+        // 配置预渲染 key
+        if let key = prerenderKey {
+            player.context.configPlugin(serviceProtocol: PlayerPreRenderService.self, withModel: key)
+        }
+
+        return player
     }
 
-    public func addTypedPlayer(_ typedPlayer: any TypedPlayerProtocol) {
-        guard let feedPlayer = typedPlayer as? FeedPlayer else { return }
-        if _typedPlayer === feedPlayer { return }
-        removeTypedPlayer()
-        _typedPlayer = feedPlayer
-        (context as? Context)?.addSubContext(feedPlayer.context)
+    public func addPlayer(_ player: Player) {
+        if _player === player { return }
+        removePlayer()
+        _player = player
+        (context as? Context)?.addSubContext(player.context)
     }
 
-    public func removeTypedPlayer() {
-        guard let feedPlayer = _typedPlayer else { return }
-        (context as? Context)?.removeSubContext(feedPlayer.context)
-        _typedPlayer = nil
+    public func removePlayer() {
+        guard let player = _player else { return }
+        (context as? Context)?.removeSubContext(player.context)
+        _player = nil
     }
 
-    public func hasTypedPlayer() -> Bool {
-        _typedPlayer != nil
+    public func hasPlayer() -> Bool {
+        _player != nil
     }
 
     // MARK: - Convenience
@@ -73,8 +80,8 @@ public final class FeedSceneContext: ScenePlayerProtocol {
         context.resolveService(PlayerScenePlayerProcessService.self)
     }
 
-    public var typedPlayerLayeredService: PlayerTypedPlayerLayeredService? {
-        context.resolveService(PlayerTypedPlayerLayeredService.self)
+    public var playerLayeredService: PlayerPlayerLayeredService? {
+        context.resolveService(PlayerPlayerLayeredService.self)
     }
 
     public var engineService: PlayerEngineCoreService? {
@@ -105,8 +112,8 @@ public final class FeedSceneContext: ScenePlayerProtocol {
             prepare: prepare,
             createIfNeeded: createIfNeeded ?? { [weak self] in
                 guard let self = self else { return }
-                let player = self.createTypedPlayer(prerenderKey: nil)
-                self.addTypedPlayer(player)
+                let player = self.createPlayer(prerenderKey: nil)
+                self.addPlayer(player)
             },
             attach: nil,
             checkDataValid: nil,
@@ -117,6 +124,6 @@ public final class FeedSceneContext: ScenePlayerProtocol {
     // MARK: - Cleanup
 
     public func cleanup() {
-        removeTypedPlayer()
+        removePlayer()
     }
 }

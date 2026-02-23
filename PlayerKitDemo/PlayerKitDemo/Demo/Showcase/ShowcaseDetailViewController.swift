@@ -7,7 +7,7 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
 
     var video: ShowcaseVideo?
     var videoIndex: Int = 0
-    var feedPlayer: FeedPlayer?
+    var player: Player?
     
     var allVideos: [ShowcaseVideo] = []
     var onWillDismiss: (() -> Void)?
@@ -56,7 +56,7 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
         setupDetailControl()
         setupGestureHandlers()
 
-        attachFeedPlayer()
+        attachPlayer()
         detailControl?.scheduleControlHide()
     }
 
@@ -77,11 +77,11 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
         removeGestureHandlers()
         detailControl?.teardown()
         detailControl = nil
-        detailSceneContext.removeFeedPlayer()
+        detailSceneContext.removePlayer()
         onWillDismiss?()
         onWillDismiss = nil
         onDismiss = nil
-        feedPlayer = nil
+        player = nil
     }
 
     private func removeGestureHandlers() {
@@ -96,8 +96,8 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
     // MARK: - Register & Setup Detail Control Plugin
 
     private func setupDetailControl() {
-        guard let feedPlayer = feedPlayer else { return }
-        detailSceneContext.addFeedPlayer(feedPlayer)
+        guard let player = player else { return }
+        detailSceneContext.addPlayer(player)
 
         detailControl = detailSceneContext.context.resolveService(ShowcaseDetailControlService.self)
         guard let video = video else { return }
@@ -332,9 +332,9 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
 
     // MARK: - Attach / Detach
 
-    private func attachFeedPlayer() {
-        guard let feedPlayer = feedPlayer else { return }
-        guard let pv = feedPlayer.playerView else { return }
+    private func attachPlayer() {
+        guard let player = player else { return }
+        guard let pv = player.playerView else { return }
         pv.translatesAutoresizingMaskIntoConstraints = false
         pv.isHidden = false
         _playerContainer.addSubview(pv)

@@ -34,7 +34,6 @@
 		EC13DB8ED04A37B04EEBB728 /* ShowcaseFeedCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = D70A384A8940840324373D76 /* ShowcaseFeedCell.swift */; };
 		ED8B361F0D68988D48EF0FC7 /* ShowcaseFeedCellViewPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = E589F05F99FA998DB4C2EACC /* ShowcaseFeedCellViewPlugin.swift */; };
 		F4671601CE68B68D0D7D18A9 /* PlayerKit in Frameworks */ = {isa = PBXBuildFile; productRef = 37F022EF2F2D6D78DDAAAAFC /* PlayerKit */; };
-		F562BB0C0BDD0AA4F2DA12CD /* FeedPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE20625573AB487A2436EF25 /* FeedPlayer.swift */; };
 		F864BEDD7681D25676E46CC2 /* ShowcaseGestureHandlers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2693DD18DB3CB2F4A35B723 /* ShowcaseGestureHandlers.swift */; };
 /* End PBXBuildFile section */
 
@@ -58,7 +57,6 @@
 		A2693DD18DB3CB2F4A35B723 /* ShowcaseGestureHandlers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseGestureHandlers.swift; sourceTree = "<group>"; };
 		A675B83F19DDB7554B02C241 /* ShowcaseDetailControlPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseDetailControlPlugin.swift; sourceTree = "<group>"; };
 		A9EC2A9BF7C3C9263CCB3682 /* PlayerKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = PlayerKit; path = ../Packages/PlayerKit; sourceTree = SOURCE_ROOT; };
-		AE20625573AB487A2436EF25 /* FeedPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedPlayer.swift; sourceTree = "<group>"; };
 		B3E24F07AD2188212EEE17B3 /* ShowcaseFeedOverlayPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseFeedOverlayPlugin.swift; sourceTree = "<group>"; };
 		B79B3CFD31BF8006BCC2C6ED /* PlayerDemoMenuViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerDemoMenuViewController.swift; sourceTree = "<group>"; };
 		BA67D9F0EB72B679CBAE9682 /* ShowcaseFeedSectionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseFeedSectionViewModel.swift; sourceTree = "<group>"; };
@@ -174,7 +172,6 @@
 		9563952644348ED2C75EEF9D /* Feed */ = {
 			isa = PBXGroup;
 			children = (
-				AE20625573AB487A2436EF25 /* FeedPlayer.swift */,
 				D4EE57BB8840ABE48608158B /* FeedPlayerPool.swift */,
 				92E1D0F01C2AA61984DFF358 /* Scene */,
 			);
@@ -262,7 +259,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				94F2DB8C71A71CB49AFBACCC /* AppDelegate.swift in Sources */,
-				F562BB0C0BDD0AA4F2DA12CD /* FeedPlayer.swift in Sources */,
 				0CB126164802F6E56E55814E /* FeedPlayerPool.swift in Sources */,
 				D7F97320313E30466161D967 /* FeedSceneContext.swift in Sources */,
 				8B8CC9832C8984910778FF78 /* PlayerConfiguration.swift in Sources */,

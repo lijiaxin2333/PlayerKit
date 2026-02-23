@@ -414,12 +414,33 @@ public final class Context: PublicContext, ExtendContext {
 
     // MARK: - Sticky Events
 
-    /// 绑定 Sticky 事件
+    /// 绑定 Sticky 事件（底层版本，需要手动设置 shouldSend.pointee）
     /// - Parameters:
     ///   - event: 事件名称
-    ///   - bindBlock: 绑定回调，在添加监听时调用。通过设置 shouldSend 指示是否触发事件，返回事件携带的对象
+    ///   - bindBlock: 绑定回调，在添加监听时调用。通过设置 shouldSend.pointee 指示是否触发事件，返回事件携带的对象
     public func bindStickyEvent(_ event: Event, bindBlock: @escaping StickyEventBindBlock) {
         stickyEventBlocks[event] = bindBlock
+    }
+
+    /// 绑定 Sticky 事件（简化版本，返回值决定是否触发）
+    /// - Parameters:
+    ///   - event: 事件名称
+    ///   - bindBlock: 绑定回调，返回 nil 不触发，返回元组则触发并携带对象
+    /// 示例:
+    /// ```swift
+    /// context.bindStickyEvent(.playerEngineDidCreateSticky) { [weak self] in
+    ///     guard let self = self else { return nil }
+    ///     return (true, self)  // 或使用 .shouldSend(self)
+    /// }
+    /// ```
+    public func bindStickyEvent(_ event: Event, bindBlock: @escaping StickyEventSimpleBindBlock) {
+        stickyEventBlocks[event] = { shouldSend in
+            guard let result = bindBlock() else {
+                return nil
+            }
+            shouldSend.pointee = result.shouldSend
+            return result.object
+        }
     }
 
     /// 触发绑定的 Sticky 事件

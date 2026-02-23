@@ -29,10 +29,9 @@ public final class PlayerExtensionLayeredPlugin: BasePlugin, PlayerExtensionLaye
     public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
         // 绑定 sticky event（对齐 Gaga 模式）
-        (self.context as? Context)?.bindStickyEvent(.extensionDidAddToContextSticky) { [weak self] shouldSend in
-            guard let self = self else { return nil }
-            shouldSend.pointee = self._hasExtended
-            return self._hasExtended
+        (self.context as? Context)?.bindStickyEvent(.extensionDidAddToContextSticky) { [weak self] in
+            guard let self = self, self._hasExtended else { return nil }
+            return .shouldSend(self._hasExtended)
         }
     }
 

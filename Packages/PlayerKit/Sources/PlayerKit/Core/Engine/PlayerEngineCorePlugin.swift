@@ -431,31 +431,27 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
      */
     private func bindStickyEvents() {
         // 引擎创建 sticky event - 始终返回 self
-        (self.context as? Context)?.bindStickyEvent(.playerEngineDidCreateSticky) { [weak self] shouldSend in
+        (self.context as? Context)?.bindStickyEvent(.playerEngineDidCreateSticky) { [weak self] in
             guard let self = self else { return nil }
-            shouldSend.pointee = true
-            return self
+            return .shouldSend(self)
         }
 
         // 准备好显示 sticky event - 根据 _isReadyForDisplay 状态决定
-        (self.context as? Context)?.bindStickyEvent(.playerReadyForDisplaySticky) { [weak self] shouldSend in
+        (self.context as? Context)?.bindStickyEvent(.playerReadyForDisplaySticky) { [weak self] in
             guard let self = self, self._isReadyForDisplay else { return nil }
-            shouldSend.pointee = true
-            return self
+            return .shouldSend(self)
         }
 
         // 准备好播放 sticky event - 根据 _isReadyToPlay 状态决定
-        (self.context as? Context)?.bindStickyEvent(.playerReadyToPlaySticky) { [weak self] shouldSend in
+        (self.context as? Context)?.bindStickyEvent(.playerReadyToPlaySticky) { [weak self] in
             guard let self = self, self._isReadyToPlay else { return nil }
-            shouldSend.pointee = true
-            return self
+            return .shouldSend(self)
         }
 
         // 播放倍数变化 sticky event - 只在播放中触发
-        (self.context as? Context)?.bindStickyEvent(.playerRateDidChangeSticky) { [weak self] shouldSend in
+        (self.context as? Context)?.bindStickyEvent(.playerRateDidChangeSticky) { [weak self] in
             guard let self = self, self.playbackState == .playing else { return nil }
-            shouldSend.pointee = true
-            return self._rate
+            return .shouldSend(self._rate)
         }
     }
 

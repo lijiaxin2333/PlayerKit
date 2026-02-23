@@ -29,10 +29,9 @@ public final class PlayerTypedPlayerLayeredPlugin: BasePlugin, PlayerTypedPlayer
     public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
         // 绑定 sticky event（对齐 Gaga 模式）
-        (self.context as? Context)?.bindStickyEvent(.typedPlayerDidAddToSceneSticky) { [weak self] shouldSend in
-            guard let self = self else { return nil }
-            shouldSend.pointee = self._hasPlayer
-            return self._hasPlayer
+        (self.context as? Context)?.bindStickyEvent(.typedPlayerDidAddToSceneSticky) { [weak self] in
+            guard let self = self, self._hasPlayer else { return nil }
+            return .shouldSend(self._hasPlayer)
         }
     }
 

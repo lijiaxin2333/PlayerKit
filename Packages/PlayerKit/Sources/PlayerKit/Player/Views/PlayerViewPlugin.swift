@@ -96,10 +96,9 @@ public final class PlayerViewPlugin: BasePlugin, PlayerViewService {
         }
 
         // 绑定 ActionView 创建的 Sticky 事件
-        (context as? Context)?.bindStickyEvent(.playerActionViewDidCreateSticky) { [weak self] shouldSend in
+        (context as? Context)?.bindStickyEvent(.playerActionViewDidCreateSticky) { [weak self] in
             guard let av = self?.actionView else { return nil }
-            shouldSend.pointee = true
-            return av
+            return .shouldSend(av)
         }
         context?.post(.playerActionViewDidCreateSticky, object: av, sender: self)
     }

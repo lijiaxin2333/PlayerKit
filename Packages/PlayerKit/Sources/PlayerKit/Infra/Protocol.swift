@@ -51,11 +51,42 @@ public protocol EventHandlerProtocol: AnyObject {
 /** 事件处理回调闭包类型 */
 public typealias EventHandlerBlock = (_ object: Any?, _ event: Event) -> Void
 
-/** Sticky 事件绑定回调闭包类型
+/** Sticky 事件绑定回调闭包类型（底层版本，需要手动设置 shouldSend.pointee）
     - Parameter shouldSend: 输出参数，指示是否应该触发事件
     - Returns: 事件携带的对象
  */
 public typealias StickyEventBindBlock = (_ shouldSend: UnsafeMutablePointer<Bool>) -> Any?
+
+/** Sticky 事件绑定回调闭包类型（简化版本）
+    - Returns: 返回一个元组，包含是否应该触发事件和事件携带的对象。
+               返回 nil 表示不触发事件。
+    示例:
+    ```swift
+    context.bindStickyEvent(.myEvent) {
+        guard let data = self.currentData else { return nil }
+        return (true, data)  // or: return .shouldSend(data)
+    }
+    ```
+ */
+public typealias StickyEventSimpleBindBlock = () -> (shouldSend: Bool, object: Any?)?
+
+// MARK: - Sticky Event Bind Result Helper
+
+/// 便捷的 Sticky 事件绑定结果构造器
+public extension Optional where Wrapped == (shouldSend: Bool, object: Any?) {
+    /// 创建一个需要触发的事件结果
+    /// - Parameter object: 事件携带的对象
+    /// - Returns: 用于 sticky event 绑定的结果
+    static func shouldSend(_ object: Any?) -> (shouldSend: Bool, object: Any?)? {
+        (true, object)
+    }
+
+    /// 创建一个不触发事件的结果
+    /// - Returns: nil，表示不触发事件
+    static func notSend() -> (shouldSend: Bool, object: Any?)? {
+        nil
+    }
+}
 
 /** 共享事件处理回调闭包类型，带 senderContext 参数用于识别事件来源 */
 public typealias SharedEventHandlerBlock = (_ senderContext: PublicContext, _ object: Any?, _ event: Event) -> Void

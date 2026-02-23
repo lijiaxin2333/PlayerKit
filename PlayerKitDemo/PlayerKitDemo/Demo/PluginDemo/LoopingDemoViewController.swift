@@ -5,11 +5,11 @@ import PlayerKit
 final class LoopingDemoViewController: PluginDemoBaseViewController {
 
     override var demoDescription: String {
-        "演示循环播放与重播功能：支持开启/关闭循环模式，播放完成后自动重播，以及手动触发重播。"
+        "演示循环播放功能：支持开启/关闭循环模式，播放完成后自动循环播放。"
     }
 
     override var demoPlugins: [String] {
-        ["PlayerLoopingPlugin", "PlayerReplayPlugin", "PlayerFinishViewPlugin", "PlayerPlaybackControlPlugin"]
+        ["PlayerLoopingPlugin", "PlayerFinishViewPlugin", "PlayerPlaybackControlPlugin"]
     }
 
     private let statusLabel = UILabel()
@@ -41,8 +41,7 @@ final class LoopingDemoViewController: PluginDemoBaseViewController {
 
     private func updateStatus() {
         let looping = player.context.resolveService(PlayerLoopingService.self)
-        let replay = player.context.resolveService(PlayerReplayService.self)
-        statusLabel.text = "循环模式: \(looping?.isLooping == true ? "开启" : "关闭")\n重播次数: \(replay?.replayCount ?? 0)"
+        statusLabel.text = "循环模式: \(looping?.isLooping == true ? "开启" : "关闭")"
     }
 
     @objc private func toggleLoop() {
@@ -50,7 +49,7 @@ final class LoopingDemoViewController: PluginDemoBaseViewController {
     }
 
     @objc private func replay() {
-        player.context.resolveService(PlayerReplayService.self)?.replay()
+        player.context.resolveService(PlayerPlaybackControlService.self)?.replay()
         updateStatus()
     }
 

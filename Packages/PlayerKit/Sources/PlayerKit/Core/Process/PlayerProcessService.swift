@@ -63,13 +63,22 @@ public protocol PlayerProcessService: PluginService {
 
     /**
      * 观察进度变化
+     * - Parameter handler: 进度回调，参数为 (progress, currentTime)
+     * - Returns: 观察者 token，用于移除监听
      */
-    func observeProgress(_ handler: @escaping (Double, TimeInterval) -> Void)
+    @discardableResult
+    func observeProgress(_ handler: @escaping (Double, TimeInterval) -> Void) -> String
 
     /**
-     * 移除观察者
+     * 移除指定观察者
+     * - Parameter token: observeProgress 返回的 token
      */
-    func removeProgressObserver(_ observer: AnyObject?)
+    func removeProgressObserver(token: String)
+
+    /**
+     * 移除所有观察者
+     */
+    func removeAllProgressObservers()
 
     /**
      * 开始拖动

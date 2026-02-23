@@ -60,10 +60,21 @@ public final class PlayerProcessPlugin: BasePlugin, PlayerProcessService {
     public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
 
+        // 使用 sticky 事件等待引擎创建，避免 engineService 为 nil
+        context.add(self, event: .playerEngineDidCreateSticky, option: .execOnlyOnce) { [weak self] _, _ in
+            self?.setupTimeObserver()
+        }
+    }
+
+    private func setupTimeObserver() {
+        guard timeObserver == nil else { return }
+
         let interval = (configModel as? PlayerProcessConfigModel)?.updateInterval ?? 0.1
         timeObserver = engineService?.addPeriodicTimeObserver(interval: interval, queue: .main) { [weak self] time in
             guard let self = self else { return }
             MainActor.assumeIsolated {
+                // scrubbing 期间跳过进度广播，避免进度条跳动
+                guard !self.isScrubbing else { return }
                 let progress = self.progress
                 for handler in self.progressHandlers.values {
                     handler(progress, time)
@@ -83,12 +94,18 @@ public final class PlayerProcessPlugin: BasePlugin, PlayerProcessService {
 
     // MARK: - PlayerProcessService
 
-    public func observeProgress(_ handler: @escaping (Double, TimeInterval) -> Void) {
+    @discardableResult
+    public func observeProgress(_ handler: @escaping (Double, TimeInterval) -> Void) -> String {
         let key = UUID().uuidString
         progressHandlers[key] = handler
+        return key
     }
 
-    public func removeProgressObserver(_ observer: AnyObject?) {
+    public func removeProgressObserver(token: String) {
+        progressHandlers.removeValue(forKey: token)
+    }
+
+    public func removeAllProgressObservers() {
         progressHandlers.removeAll()
     }
 

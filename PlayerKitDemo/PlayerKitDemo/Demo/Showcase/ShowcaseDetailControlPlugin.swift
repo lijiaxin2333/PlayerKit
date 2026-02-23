@@ -53,6 +53,7 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
     private(set) var isScrubbing = false
     private var previousSpeed: Float = 1.0
     private var controlHideTimer: Timer?
+    private var progressObserverToken: String?
 
     var onPlaybackStateChanged: ((Bool) -> Void)?
     var onProgressUpdate: ((Float, String, String) -> Void)?
@@ -79,7 +80,6 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
 
         setupGestures(gestureView: gestureView)
         setupStartTime(video: model.video)
-        setupTracker(video: model.video)
         observeEvents()
     }
 
@@ -88,14 +88,16 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
         controlHideTimer = nil
 
         context?.resolveService(PlayerStartTimeService.self)?.cacheCurrentProgress()
-        context?.resolveService(PlayerTrackerService.self)?.sendEvent("detail_exit", params: ["video_id": video?.feedId ?? ""])
 
         let gestureService = context?.resolveService(PlayerGestureService.self)
         gestureService?.isPanEnabled = false
         gestureService?.isPinchEnabled = false
         gestureService?.gestureView = nil
 
-        processService?.removeProgressObserver(self)
+        if let token = progressObserverToken {
+            processService?.removeProgressObserver(token: token)
+            progressObserverToken = nil
+        }
         context?.removeHandlers(forObserver: self)
 
         onPlaybackStateChanged = nil
@@ -121,17 +123,10 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
         }
     }
 
-    private func setupTracker(video: ShowcaseVideo) {
-        context?.resolveService(PlayerTrackerService.self)?.sendEvent("detail_enter", params: [
-            "video_id": video.feedId,
-            "video_index": videoIndex
-        ])
-    }
-
     private func observeEvents() {
         guard let ctx = context else { return }
 
-        processService?.observeProgress { [weak self] progress, time in
+        progressObserverToken = processService?.observeProgress { [weak self] progress, time in
             guard let self = self else { return }
             let scrubbing = self.isScrubbing || (self.processService?.isScrubbing == true)
             if !scrubbing {
@@ -164,7 +159,6 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
             self.onControlShouldShow?(true)
 
             self.context?.resolveService(PlayerStartTimeService.self)?.cacheCurrentProgress()
-            self.context?.resolveService(PlayerTrackerService.self)?.sendEvent("playback_finish", params: ["video_id": self.video?.feedId ?? ""])
         }
     }
 
@@ -215,7 +209,6 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
             if image != nil {
                 let toast = self.context?.resolveService(PlayerToastService.self)
                 toast?.showToast("Screenshot captured!", style: .success, duration: 2.0)
-                self.context?.resolveService(PlayerTrackerService.self)?.sendEvent("snapshot", params: ["video_id": self.video?.feedId ?? ""])
             }
             completion(image)
         }

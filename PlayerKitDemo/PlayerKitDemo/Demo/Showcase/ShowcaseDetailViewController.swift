@@ -30,7 +30,6 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
     private let loopButton = UIButton(type: .system)
     private let snapshotButton = UIButton(type: .system)
     private let subtitleButton = UIButton(type: .system)
-    private let resolutionButton = UIButton(type: .system)
     private let settingsButton = UIButton(type: .system)
     private let debugButton = UIButton(type: .system)
     private let speedIndicatorLabel = UILabel()
@@ -249,7 +248,6 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
             (muteButton, "speaker.wave.2.fill", #selector(muteTapped)),
             (loopButton, "repeat", #selector(loopTapped)),
             (subtitleButton, "captions.bubble", #selector(subtitleTapped)),
-            (resolutionButton, "slider.horizontal.below.square.and.square.filled", #selector(resolutionTapped)),
             (snapshotButton, "camera.fill", #selector(snapshotTapped)),
             (fullScreenButton, "arrow.up.left.and.arrow.down.right", #selector(fullScreenTapped)),
             (settingsButton, "gearshape", #selector(settingsTapped)),
@@ -378,11 +376,6 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
 
     @objc private func subtitleTapped() {
         _ = detailControl?.toggleSubtitle()
-    }
-
-    @objc private func resolutionTapped() {
-        let toast = detailSceneContext.context.resolveService(PlayerToastService.self)
-        toast?.showToast("Resolution: Auto", style: .info, duration: 1.5)
     }
 
     @objc private func snapshotTapped() {

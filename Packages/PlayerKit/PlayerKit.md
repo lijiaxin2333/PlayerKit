@@ -85,7 +85,6 @@ public protocol ScenePlayerProtocol: ContextHolder {
 场景层典型插件：
 
 - `PlayerScenePlayerProcessPlugin` — 场景播放流程管理
-- `PlayerPlayerLayeredPlugin` — 播放器生命周期管理
 - `ShowcaseFeedDataPlugin` — Feed 场景数据
 - `ShowcaseFeedCellViewPlugin` — Feed 场景视图
 
@@ -123,16 +122,16 @@ public protocol ScenePlayerProtocol: ContextHolder {
 ShowcaseFeedScenePlayer.context (场景层)
 │
 │   [场景插件]
-│   - PlayerPlayerLayeredPlugin
-│   - ShowcaseFeedDataPlugin
-│   - ShowcaseFeedCellViewPlugin
+│   - PlayerScenePlayerProcessPlugin (播放流程)
+│   - ShowcaseFeedDataPlugin         (Feed 数据)
+│   - ShowcaseFeedCellViewPlugin     (Cell 视图)
 │
 └── Player.context (基础层)
     │
     │   [基础插件]
-    │   - PlayerEngineCorePlugin
-    │   - PlayerProcessPlugin
-    │   - PlayerSpeedPlugin
+    │   - PlayerEngineCorePlugin     (引擎)
+    │   - PlayerProcessPlugin        (播放流程)
+    │   - PlayerSpeedPlugin          (速度)
 ```
 
 ---
@@ -739,46 +738,35 @@ func sliderDidEndDragging() {
     processService.endScrubbing()
 }
 
-// 移除监听
-processService.removeProgressObserver(token)
+// 移除指定监听
+processService.removeProgressObserver(token: token)
+
+// 或移除所有监听
+processService.removeAllProgressObservers()
 ```
 
-#### 常见问题与解决方案
+#### 已修复的问题
 
-**Q1: `removeProgressObserver` 删除全部而不是指定的**
+**Bug 1: `removeProgressObserver` 删除全部而不是指定的** ✅ 已修复
 
-```swift
-// 问题代码
-public func removeProgressObserver(_ observer: AnyObject?) {
-    progressHandlers.removeAll()  // 全清了！
-}
-```
-
-参数 `observer` 完全没用，一调就把所有订阅者都干掉了。正确做法是 `observeProgress` 返回一个 key/token，`removeProgressObserver` 按 key 移除：
+现在 `observeProgress` 返回 token，`removeProgressObserver(token:)` 按指定 token 移除：
 
 ```swift
-public func observeProgress(_ handler: ...) -> String {
+@discardableResult
+public func observeProgress(_ handler: @escaping (Double, TimeInterval) -> Void) -> String {
     let key = UUID().uuidString
     progressHandlers[key] = handler
     return key
 }
 
-public func removeProgressObserver(forKey key: String) {
-    progressHandlers.removeValue(forKey: key)
+public func removeProgressObserver(token: String) {
+    progressHandlers.removeValue(forKey: token)
 }
 ```
 
-**Q2: `pluginDidLoad` 时 `engineService` 可能还是 nil**
+**Bug 2: `pluginDidLoad` 时 `engineService` 可能是 nil** ✅ 已修复
 
-```swift
-// 问题代码
-public override func pluginDidLoad(_ context: ContextProtocol) {
-    super.pluginDidLoad(context)
-    timeObserver = engineService?.addPeriodicTimeObserver(...)  // engineService 可能是 nil
-}
-```
-
-如果引擎插件还没加载完，`engineService` 是 nil，`timeObserver` 就是 nil，进度广播永远不会启动。应该用 sticky 事件：
+现在使用 sticky 事件等待引擎创建：
 
 ```swift
 public override func pluginDidLoad(_ context: ContextProtocol) {
@@ -788,33 +776,23 @@ public override func pluginDidLoad(_ context: ContextProtocol) {
         self?.setupTimeObserver()
     }
 }
-
-private func setupTimeObserver() {
-    timeObserver = engineService?.addPeriodicTimeObserver(...)
-}
 ```
 
-**Q3: scrubbing 期间没有暂停进度广播**
+**Bug 3: scrubbing 期间进度跳动** ✅ 已修复
 
-用户在拖进度条时，`progressHandlers` 还在按 0.1s 频率广播真实播放进度，会导致进度条在"用户拖拽位置"和"真实播放位置"之间跳动。应该在 scrubbing 时跳过广播：
+现在在 timeObserver 回调中跳过 scrubbing 期间的广播：
 
 ```swift
-// 在 timeObserver 回调里加判断
-timeObserver = engineService?.addPeriodicTimeObserver(forInterval: CMTime(...)) { [weak self] time in
+timeObserver = engineService?.addPeriodicTimeObserver(...) { [weak self] time in
     guard let self = self else { return }
     guard !self.isScrubbing else { return }  // scrubbing 时跳过
-
-    self.notifyProgress(time)
+    // ...
 }
 ```
-
-**Q4: `seek(to:)` 接受的是 progress（0~1）而不是时间**
-
-方法签名是 `seek(to progress: Double)`，内部转换成时间再调引擎。这没问题，但容易和引擎的 `seek(to time:)` 混淆。建议改名为 `seekToProgress(_:)` 更清晰。
 
 #### 总结
 
-这是一个标准的进度管理中间层，核心价值是把引擎的"绝对时间"转换成"百分比进度"+ 提供 scrubbing 状态机。主要问题是 `removeProgressObserver` 的全清 bug 和 `pluginDidLoad` 时引擎可能未就绪。
+`PlayerProcessPlugin` 是进度管理的中间层，将引擎的"绝对时间"转换为"百分比进度"，并提供 scrubbing 状态机。上述问题已在当前版本中修复。
 
 ---
 

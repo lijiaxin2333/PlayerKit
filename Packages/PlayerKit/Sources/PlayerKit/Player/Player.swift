@@ -12,34 +12,20 @@ import AVFoundation
 final class PlayerRegProvider: RegisterProvider {
     /** 向注册集合中注册所有核心播放器插件 */
     func registerPlugins(with registerSet: PluginRegisterSet) {
+        // 核心插件
         registerSet.addEntry(pluginClass: PlayerDataPlugin.self, serviceType: PlayerDataService.self)
         registerSet.addEntry(pluginClass: PlayerEngineCorePlugin.self, serviceType: PlayerEngineCoreService.self)
         registerSet.addEntry(pluginClass: PlayerViewPlugin.self, serviceType: PlayerViewService.self)
         registerSet.addEntry(pluginClass: PlayerProcessPlugin.self, serviceType: PlayerProcessService.self)
         registerSet.addEntry(pluginClass: PlayerPlaybackControlPlugin.self, serviceType: PlayerPlaybackControlService.self)
         registerSet.addEntry(pluginClass: PlayerSpeedPlugin.self, serviceType: PlayerSpeedService.self)
-        registerSet.addEntry(pluginClass: PlayerSpeedPanelPlugin.self, serviceType: PlayerSpeedPanelService.self)
         registerSet.addEntry(pluginClass: PlayerLoopingPlugin.self, serviceType: PlayerLoopingService.self)
         registerSet.addEntry(pluginClass: PlayerTimeControlPlugin.self, serviceType: PlayerTimeControlService.self)
         registerSet.addEntry(pluginClass: PlayerAppActivePlugin.self, serviceType: PlayerAppActiveService.self)
         registerSet.addEntry(pluginClass: PlayerMediaControlPlugin.self, serviceType: PlayerMediaControlService.self)
-        registerSet.addEntry(pluginClass: PlayerFullScreenPlugin.self, serviceType: PlayerFullScreenService.self)
-        registerSet.addEntry(pluginClass: PlayerControlViewPlugin.self, serviceType: PlayerControlViewService.self)
-        registerSet.addEntry(pluginClass: PlayerReplayPlugin.self, serviceType: PlayerReplayService.self)
-        registerSet.addEntry(pluginClass: PlayerFinishViewPlugin.self, serviceType: PlayerFinishViewService.self)
-        registerSet.addEntry(pluginClass: PlayerCoverMaskPlugin.self, serviceType: PlayerCoverMaskService.self)
-        registerSet.addEntry(pluginClass: PlayerPanelPlugin.self, serviceType: PlayerPanelService.self)
-        registerSet.addEntry(pluginClass: PlayerTrackerPlugin.self, serviceType: PlayerTrackerService.self)
-        registerSet.addEntry(pluginClass: PlayerResolutionPlugin.self, serviceType: PlayerResolutionService.self)
         registerSet.addEntry(pluginClass: PlayerPreRenderPlugin.self, serviceType: PlayerPreRenderService.self)
-        registerSet.addEntry(pluginClass: PlayerDebugPlugin.self, serviceType: PlayerDebugService.self)
-        registerSet.addEntry(pluginClass: PlayerTipManagerPlugin.self, serviceType: PlayerTipManagerService.self)
-        registerSet.addEntry(pluginClass: PlayerToastPlugin.self, serviceType: PlayerToastService.self)
         registerSet.addEntry(pluginClass: PlayerStartTimePlugin.self, serviceType: PlayerStartTimeService.self)
-        registerSet.addEntry(pluginClass: PlayerGesturePlugin.self, serviceType: PlayerGestureService.self)
-        registerSet.addEntry(pluginClass: PlayerSubtitlePlugin.self, serviceType: PlayerSubtitleService.self)
         registerSet.addEntry(pluginClass: PlayerSnapshotPlugin.self, serviceType: PlayerSnapshotService.self)
-        registerSet.addEntry(pluginClass: PlayerZoomPlugin.self, serviceType: PlayerZoomService.self)
         // 引擎池服务（全局单例访问入口）
         registerSet.addEntry(pluginClass: PlayerEnginePoolPlugin.self, serviceType: PlayerEnginePoolService.self)
         // HTTP 代理服务（视频缓存）
@@ -127,11 +113,6 @@ public final class Player: ContextHolder {
         context.resolveService(PlayerProcessService.self)
     }
 
-    /** 埋点服务，发送播放器事件追踪 */
-    public var trackerService: PlayerTrackerService? {
-        context.resolveService(PlayerTrackerService.self)
-    }
-
     /** 视图服务，管理播放器视图层级 */
     public var viewService: PlayerViewService? {
         context.resolveService(PlayerViewService.self)
@@ -157,28 +138,8 @@ public final class Player: ContextHolder {
         context.resolveService(PlayerStartTimeService.self)
     }
 
-    /** 手势服务，管理播放器手势交互 */
-    public var gestureService: PlayerGestureService? {
-        context.resolveService(PlayerGestureService.self)
-    }
-
-    /** 字幕服务，管理视频字幕 */
-    public var subtitleService: PlayerSubtitleService? {
-        context.resolveService(PlayerSubtitleService.self)
-    }
-
     /** 截图服务，管理视频截图功能 */
     public var snapshotService: PlayerSnapshotService? {
         context.resolveService(PlayerSnapshotService.self)
-    }
-
-    /** 倍速面板服务，管理倍速选择面板 */
-    public var speedPanelService: PlayerSpeedPanelService? {
-        context.resolveService(PlayerSpeedPanelService.self)
-    }
-
-    /** 缩放服务，管理自由缩放和智能满屏 */
-    public var zoomService: PlayerZoomService? {
-        context.resolveService(PlayerZoomService.self)
     }
 }

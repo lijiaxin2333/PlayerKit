@@ -10,7 +10,7 @@ public final class PlayerScenePlayerProcessPlugin: BasePlugin, PlayerScenePlayer
     /**
      * 初始化插件
      */
-    public required override init() {
+    public required init() {
         super.init()
     }
 
@@ -20,6 +20,14 @@ public final class PlayerScenePlayerProcessPlugin: BasePlugin, PlayerScenePlayer
      */
     public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
+    }
+
+    // MARK: - Private
+
+    /// 检查场景是否有播放器（通过 context.holder 获取 ScenePlayerProtocol）
+    private var hasPlayer: Bool {
+        guard let holder = context?.holder as? ScenePlayerProtocol else { return false }
+        return holder.hasPlayer()
     }
 
     // MARK: - PlayerScenePlayerProcessService
@@ -43,9 +51,7 @@ public final class PlayerScenePlayerProcessPlugin: BasePlugin, PlayerScenePlayer
         checkDataValid: (() -> Bool)?,
         setDataIfNeeded: (() -> Void)?
     ) {
-        guard let layeredService = context?.resolveService(PlayerPlayerLayeredService.self) else { return }
-
-        if layeredService.hasPlayer {
+        if hasPlayer {
             let engine = context?.resolveService(PlayerEngineCoreService.self)
             let hasActiveEngine = engine?.currentURL != nil
             if hasActiveEngine {
@@ -96,11 +102,7 @@ public final class PlayerScenePlayerProcessPlugin: BasePlugin, PlayerScenePlayer
      * - Returns: true 表示需要执行播放
      */
     public func checkIfNeedExecPlay(replayWhenFinished: Bool) -> Bool {
-        guard let layeredService = context?.resolveService(PlayerPlayerLayeredService.self) else {
-            return true
-        }
-
-        if layeredService.hasPlayer {
+        if hasPlayer {
             guard let engine = context?.resolveService(PlayerEngineCoreService.self) else {
                 return true
             }

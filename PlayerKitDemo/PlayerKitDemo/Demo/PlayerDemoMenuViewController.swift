@@ -45,7 +45,7 @@ public class PlayerDemoMenuViewController: UIViewController {
         ]),
         DemoSection(title: "插件功能演示", items: [
             DemoItem(title: "倍速播放", subtitle: "PlayerSpeedPlugin · PlayerSpeedPanelPlugin", action: .speed),
-            DemoItem(title: "循环与重播", subtitle: "PlayerLoopingPlugin · PlayerReplayPlugin · PlayerFinishViewPlugin", action: .looping),
+            DemoItem(title: "循环播放", subtitle: "PlayerLoopingPlugin · PlayerFinishViewPlugin", action: .looping),
             DemoItem(title: "手势交互", subtitle: "PlayerGesturePlugin · 单击/双击/滑动/长按/捏合", action: .gesture),
             DemoItem(title: "视频截图", subtitle: "PlayerSnapshotPlugin · 同步/异步截帧/缩略图", action: .snapshot),
             DemoItem(title: "字幕", subtitle: "PlayerSubtitlePlugin · 加载/切换/样式调整", action: .subtitle),

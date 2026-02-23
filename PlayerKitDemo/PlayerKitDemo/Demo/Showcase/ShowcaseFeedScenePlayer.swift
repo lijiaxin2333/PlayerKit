@@ -18,14 +18,28 @@ public extension Event {
 
 @MainActor
 final class ShowcaseFeedSceneRegProvider: RegisterProvider {
+
+    private let scenePlayerRegProvider = ScenePlayerRegProvider()
+
     func registerPlugins(with registerSet: PluginRegisterSet) {
-        registerSet.addEntry(pluginClass: PlayerPlayerLayeredPlugin.self, serviceType: PlayerPlayerLayeredService.self)
-        registerSet.addEntry(pluginClass: PlayerScenePlayerProcessPlugin.self, serviceType: PlayerScenePlayerProcessService.self)
-        registerSet.addEntry(pluginClass: ShowcaseFeedDataPlugin.self, serviceType: ShowcaseFeedDataService.self)
-        registerSet.addEntry(pluginClass: ShowcaseFeedCellViewPlugin.self, serviceType: ShowcaseFeedCellViewService.self)
-        registerSet.addEntry(pluginClass: ShowcaseFeedOverlayPlugin.self, serviceType: ShowcaseFeedOverlayService.self)
-        registerSet.addEntry(pluginClass: ShowcaseAutoPlayNextPlugin.self, serviceType: ShowcaseAutoPlayNextService.self)
-        registerSet.addEntry(pluginClass: ShowcaseFeedPreRenderPlugin.self, serviceType: ShowcaseFeedPreRenderService.self)
+        // 场景层 UI 插件（控制视图、手势、全屏等）
+        scenePlayerRegProvider.registerPlugins(with: registerSet)
+
+        // 场景播放流程
+        registerSet.addEntry(pluginClass: PlayerScenePlayerProcessPlugin.self,
+                            serviceType: PlayerScenePlayerProcessService.self)
+
+        // Feed 场景特有插件
+        registerSet.addEntry(pluginClass: ShowcaseFeedDataPlugin.self,
+                            serviceType: ShowcaseFeedDataService.self)
+        registerSet.addEntry(pluginClass: ShowcaseFeedCellViewPlugin.self,
+                            serviceType: ShowcaseFeedCellViewService.self)
+        registerSet.addEntry(pluginClass: ShowcaseFeedOverlayPlugin.self,
+                            serviceType: ShowcaseFeedOverlayService.self)
+        registerSet.addEntry(pluginClass: ShowcaseAutoPlayNextPlugin.self,
+                            serviceType: ShowcaseAutoPlayNextService.self)
+        registerSet.addEntry(pluginClass: ShowcaseFeedPreRenderPlugin.self,
+                            serviceType: ShowcaseFeedPreRenderService.self)
     }
 }
 

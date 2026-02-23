@@ -13,9 +13,16 @@ public class FeedSceneConfiguration {
 
 @MainActor
 final class FeedSceneRegProvider: RegisterProvider {
+
+    private let scenePlayerRegProvider = ScenePlayerRegProvider()
+
     func registerPlugins(with registerSet: PluginRegisterSet) {
-        registerSet.addEntry(pluginClass: PlayerPlayerLayeredPlugin.self, serviceType: PlayerPlayerLayeredService.self)
-        registerSet.addEntry(pluginClass: PlayerScenePlayerProcessPlugin.self, serviceType: PlayerScenePlayerProcessService.self)
+        // 场景层 UI 插件
+        scenePlayerRegProvider.registerPlugins(with: registerSet)
+
+        // 场景播放流程
+        registerSet.addEntry(pluginClass: PlayerScenePlayerProcessPlugin.self,
+                            serviceType: PlayerScenePlayerProcessService.self)
     }
 }
 
@@ -78,10 +85,6 @@ public final class FeedSceneContext: ScenePlayerProtocol {
 
     public var sceneProcessService: PlayerScenePlayerProcessService? {
         context.resolveService(PlayerScenePlayerProcessService.self)
-    }
-
-    public var playerLayeredService: PlayerPlayerLayeredService? {
-        context.resolveService(PlayerPlayerLayeredService.self)
     }
 
     public var engineService: PlayerEngineCoreService? {

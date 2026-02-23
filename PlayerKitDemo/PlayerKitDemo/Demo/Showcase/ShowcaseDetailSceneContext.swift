@@ -4,7 +4,13 @@ import PlayerKit
 @MainActor
 final class ShowcaseDetailRegProvider: RegisterProvider {
 
+    private let scenePlayerRegProvider = ScenePlayerRegProvider()
+
     func registerPlugins(with registerSet: PluginRegisterSet) {
+        // 场景层 UI 插件（全屏、手势、缩放等）
+        scenePlayerRegProvider.registerPlugins(with: registerSet)
+
+        // Detail 场景特有插件
         registerSet.addEntry(
             pluginClass: ShowcaseDetailControlPlugin.self,
             serviceType: ShowcaseDetailControlService.self
@@ -17,17 +23,9 @@ final class ShowcaseDetailRegProvider: RegisterProvider {
 }
 
 @MainActor
-final class ShowcaseDetailSceneBaseRegProvider: RegisterProvider {
-    func registerPlugins(with registerSet: PluginRegisterSet) {
-        registerSet.addEntry(pluginClass: PlayerPlayerLayeredPlugin.self, serviceType: PlayerPlayerLayeredService.self)
-    }
-}
-
-@MainActor
 final class ShowcaseDetailSceneContext: ContextHolder {
 
     let context: PublicContext
-    private let baseRegProvider = ShowcaseDetailSceneBaseRegProvider()
     private let regProvider = ShowcaseDetailRegProvider()
     private weak var _player: Player?
 
@@ -37,7 +35,6 @@ final class ShowcaseDetailSceneContext: ContextHolder {
         let ctx = Context(name: "ShowcaseDetailSceneContext")
         self.context = ctx
         ctx.holder = self
-        ctx.addRegProvider(baseRegProvider)
     }
 
     func addPlayer(_ player: Player) {

@@ -97,11 +97,15 @@ public protocol PlayerDataService: PluginService {
     func updatePlayerInfo()
 }
 
-/** 数据模型即将更新事件 */
-public let PlayerDataModelWillUpdateEvent = "PlayerDataModelWillUpdateEvent"
+// MARK: - Data Events
 
-/** 数据模型已更新事件 */
-public let PlayerDataModelDidUpdateEvent = "PlayerDataModelDidUpdateEvent"
-
-/** 数据模型变化事件 */
-public let PlayerDataModelChangedEvent = "PlayerDataModelChangedEvent"
+public extension Event {
+    /// 数据模型即将更新
+    static let playerDataModelWillUpdate: Event = "PlayerDataModelWillUpdateEvent"
+    /// 数据模型已更新
+    static let playerDataModelDidUpdate: Event = "PlayerDataModelDidUpdateEvent"
+    /// 数据模型已更新（粘性事件）
+    static let playerDataModelDidUpdateSticky: Event = "PlayerDataModelDidUpdateSticky"
+    /// 数据模型变化
+    static let playerDataModelChanged: Event = "PlayerDataModelChangedEvent"
+}

@@ -9,24 +9,38 @@ import Foundation
 import AVFoundation
 import UIKit
 
-// MARK: - 进度状态
+// MARK: - Types
 
 public enum PlayerProgressState {
-    /**
-     * 空闲
-     */
     case idle
-    /**
-     * 拖动中
-     */
     case scrubbing
-    /**
-     * Seek 中
-     */
     case seeking
 }
 
-// MARK: - 进度管理服务
+// MARK: - Process Events
+
+public extension Event {
+    /// 进度开始拖动
+    static let playerProgressBeginScrubbing: Event = "PlayerProgressBeginScrubbing"
+    /// 进度拖动中
+    static let playerProgressScrubbing: Event = "PlayerProgressScrubbing"
+    /// 进度结束拖动
+    static let playerProgressEndScrubbing: Event = "PlayerProgressEndScrubbing"
+    /// Slider 触发的 Seek 开始
+    static let playerSliderSeekBegin: Event = "PlayerSliderSeekBegin"
+    /// Slider 触发的 Seek 结束
+    static let playerSliderSeekEnd: Event = "PlayerSliderSeekEnd"
+    /// 手势触发的 Seek 开始
+    static let playerGestureSeekBegin: Event = "PlayerGestureSeekBegin"
+    /// 手势触发的 Seek 结束
+    static let playerGestureSeekEnd: Event = "PlayerGestureSeekEnd"
+    /// Seek 开始
+    static let playerSeekBegin: Event = "PlayerSeekBegin"
+    /// Seek 结束
+    static let playerSeekEnd: Event = "PlayerSeekEnd"
+}
+
+// MARK: - PlayerProcessService Protocol
 
 @MainActor
 public protocol PlayerProcessService: PluginService {

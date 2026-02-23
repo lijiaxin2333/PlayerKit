@@ -9,31 +9,25 @@ import Foundation
 import AVFoundation
 import UIKit
 
-// MARK: - 时间格式化样式
+// MARK: - Types
 
-/**
- * 时间格式化样式枚举
- */
 public enum PlayerTimeStyle {
-    /**
-     * 标准格式，00:00
-     */
     case standard
-    /**
-     * 完整格式，00:00:00
-     */
     case full
-    /**
-     * 简短格式，0:00
-     */
     case short
-    /**
-     * verbose 格式，如 1分30秒
-     */
     case verbose
 }
 
-// MARK: - 时间控制服务
+// MARK: - Time Events
+
+public extension Event {
+    /// 时间更新
+    static let playerTimeDidChange: Event = "PlayerTimeDidChange"
+    /// 总时长已设置
+    static let playerDurationDidSet: Event = "PlayerDurationDidSet"
+}
+
+// MARK: - PlayerTimeControlService Protocol
 
 /**
  * 时间控制服务协议

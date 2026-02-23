@@ -54,21 +54,21 @@ public final class PlayerDataPlugin: BasePlugin, PlayerDataService {
     }
 
     public func updateDataModel(_ model: PlayerDataModel) {
-        context?.post(PlayerDataModelWillUpdateEvent, object: _dataModel, sender: self)
+        context?.post(.playerDataModelWillUpdate, object: _dataModel, sender: self)
 
         _dataModel = model
         _isDataReady = true
 
         updatePlayerInfo()
 
-        context?.post(PlayerDataModelDidUpdateEvent, object: model, sender: self)
-        context?.post(PlayerDataModelChangedEvent, object: model, sender: self)
+        context?.post(.playerDataModelDidUpdate, object: model, sender: self)
+        context?.post(.playerDataModelChanged, object: model, sender: self)
     }
 
     public func clearData() {
         _dataModel = PlayerDataModel()
         _isDataReady = false
-        context?.post(PlayerDataModelChangedEvent, object: _dataModel, sender: self)
+        context?.post(.playerDataModelChanged, object: _dataModel, sender: self)
     }
 
     public func updatePlayerInfo() {
@@ -80,11 +80,11 @@ public final class PlayerDataPlugin: BasePlugin, PlayerDataService {
     public func updateVideoSize(width: Int, height: Int) {
         _dataModel.videoWidth = width
         _dataModel.videoHeight = height
-        context?.post(PlayerDataModelChangedEvent, object: _dataModel, sender: self)
+        context?.post(.playerDataModelChanged, object: _dataModel, sender: self)
     }
 
     public func updateDuration(_ duration: TimeInterval) {
         _dataModel.duration = duration
-        context?.post(PlayerDataModelChangedEvent, object: _dataModel, sender: self)
+        context?.post(.playerDataModelChanged, object: _dataModel, sender: self)
     }
 }

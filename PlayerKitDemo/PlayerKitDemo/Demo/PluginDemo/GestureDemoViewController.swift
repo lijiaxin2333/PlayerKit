@@ -12,6 +12,11 @@ final class GestureDemoViewController: PluginDemoBaseViewController {
         ["PlayerGesturePlugin", "PlayerPlaybackControlPlugin", "PlayerProcessPlugin"]
     }
 
+    /// 场景层插件注册器
+    override var sceneRegProvider: RegisterProvider? {
+        GestureDemoSceneRegProvider()
+    }
+
     private let gestureLog = UITextView()
     private var logLines: [String] = []
     private var handlers: [PlayerGestureHandler] = []
@@ -19,6 +24,10 @@ final class GestureDemoViewController: PluginDemoBaseViewController {
     override func onPlayerReady() {
         guard let gestureService = player.gestureService else { return }
         gestureService.gestureView = playerContainer
+
+        // 启用所有手势类型
+        gestureService.isPanEnabled = true
+        gestureService.isPinchEnabled = true
 
         let singleTap = DemoSingleTapHandler { [weak self] in self?.appendLog("👆 单击") }
         let doubleTap = DemoDoubleTapHandler { [weak self] in self?.appendLog("👆👆 双击") }
@@ -131,5 +140,16 @@ private final class DemoPinchHandler: PlayerGestureHandler {
         if pinch.state == .ended {
             onEvent("🤏 捏合 scale=\(String(format: "%.2f", pinch.scale))")
         }
+    }
+}
+
+// MARK: - Scene RegProvider
+
+@MainActor
+private final class GestureDemoSceneRegProvider: RegisterProvider {
+    func registerPlugins(with registerSet: PluginRegisterSet) {
+        // 场景层 UI 插件
+        registerSet.addEntry(pluginClass: PlayerGesturePlugin.self,
+                            serviceType: PlayerGestureService.self)
     }
 }

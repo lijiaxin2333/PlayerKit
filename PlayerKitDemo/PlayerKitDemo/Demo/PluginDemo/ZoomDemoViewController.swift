@@ -12,11 +12,17 @@ final class ZoomDemoViewController: PluginDemoBaseViewController {
         ["PlayerZoomPlugin", "PlayerGesturePlugin", "PlayerFullScreenPlugin"]
     }
 
+    /// 场景层插件注册器
+    override var sceneRegProvider: RegisterProvider? {
+        ZoomDemoSceneRegProvider()
+    }
+
     private let statusLabel = UILabel()
 
     override func onPlayerReady() {
         guard let gestureService = player.gestureService else { return }
         gestureService.gestureView = playerContainer
+        gestureService.isPinchEnabled = true  // 启用捏合缩放
 
         statusLabel.font = .monospacedDigitSystemFont(ofSize: 13, weight: .medium)
         statusLabel.textColor = .secondaryLabel
@@ -83,5 +89,20 @@ final class ZoomDemoViewController: PluginDemoBaseViewController {
     @objc private func toggleFullScreen() {
         let fs = player.context.resolveService(PlayerFullScreenService.self)
         fs?.toggleFullScreen(orientation: .landscapeRight, animated: true)
+    }
+}
+
+// MARK: - Scene RegProvider
+
+@MainActor
+private final class ZoomDemoSceneRegProvider: RegisterProvider {
+    func registerPlugins(with registerSet: PluginRegisterSet) {
+        // 场景层 UI 插件
+        registerSet.addEntry(pluginClass: PlayerZoomPlugin.self,
+                            serviceType: PlayerZoomService.self)
+        registerSet.addEntry(pluginClass: PlayerGesturePlugin.self,
+                            serviceType: PlayerGestureService.self)
+        registerSet.addEntry(pluginClass: PlayerFullScreenPlugin.self,
+                            serviceType: PlayerFullScreenService.self)
     }
 }

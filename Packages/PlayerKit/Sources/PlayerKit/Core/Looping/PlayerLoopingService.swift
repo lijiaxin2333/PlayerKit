@@ -9,24 +9,22 @@ import Foundation
 import AVFoundation
 import UIKit
 
-// MARK: - 循环模式
+// MARK: - Types
 
-/**
- * 循环模式枚举
- * - 播放器只感知当前视频的循环，列表循环由列表层负责
- */
+/// 循环模式枚举
 public enum PlayerLoopingMode {
-    /**
-     * 不循环
-     */
     case none
-    /**
-     * 单视频循环
-     */
     case loop
 }
 
-// MARK: - 循环播放服务
+// MARK: - Looping Events
+
+public extension Event {
+    /// 循环状态改变
+    static let playerLoopingDidChange: Event = "PlayerLoopingDidChange"
+}
+
+// MARK: - PlayerLoopingService Protocol
 
 /**
  * 循环播放服务协议

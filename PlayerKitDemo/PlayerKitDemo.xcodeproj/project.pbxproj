@@ -67,7 +67,7 @@
 		FB2D13B888BFA7BA6E4862CE /* PlayerZoomService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 340B94B339C497C2985D5F4B /* PlayerZoomService.swift */; };
 		PLAYEREXT01ABCDEF01234567 /* Player+SceneServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = PLAYEREXT02ABCDEF01234567 /* Player+SceneServices.swift */; };
 		SCENE1234567890ABCDEF01 /* ScenePlayerRegProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = SCENE1234567890ABCDEF02 /* ScenePlayerRegProvider.swift */; };
-		SCENE1234567890ABCDEF04 /* ScenePlayerEventDefine.swift in Sources */ = {isa = PBXBuildFile; fileRef = SCENE1234567890ABCDEF03 /* ScenePlayerEventDefine.swift */; };
+		SWIFTUI001234567890ABCDEF /* SwiftUIPlayerDemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SWIFTUI002345678901ABCDEF /* SwiftUIPlayerDemoView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -133,7 +133,7 @@
 		FD6D51A0779EAAB7D0E0F3F6 /* LoopingDemoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopingDemoViewController.swift; sourceTree = "<group>"; };
 		PLAYEREXT02ABCDEF01234567 /* Player+SceneServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Player+SceneServices.swift"; sourceTree = "<group>"; };
 		SCENE1234567890ABCDEF02 /* ScenePlayerRegProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScenePlayerRegProvider.swift; sourceTree = "<group>"; };
-		SCENE1234567890ABCDEF03 /* ScenePlayerEventDefine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScenePlayerEventDefine.swift; sourceTree = "<group>"; };
+		SWIFTUI002345678901ABCDEF /* SwiftUIPlayerDemoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftUIPlayerDemoView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -292,8 +292,17 @@
 				6870C8B0A43B7D54441D5AD9 /* Features */,
 				3D1083E4EE6C8980D8CDB5FB /* PluginDemo */,
 				1A4B0AC3C28B7F575CB13343 /* Showcase */,
+				SWIFTUI003456789012ABCDEF /* SwiftUI */,
 			);
 			path = Demo;
+			sourceTree = "<group>";
+		};
+		SWIFTUI003456789012ABCDEF /* SwiftUI */ = {
+			isa = PBXGroup;
+			children = (
+				SWIFTUI002345678901ABCDEF /* SwiftUIPlayerDemoView.swift */,
+			);
+			path = SwiftUI;
 			sourceTree = "<group>";
 		};
 		7BF8B8B0BDF6EADC7D21047A /* Debug */ = {
@@ -354,7 +363,6 @@
 			isa = PBXGroup;
 			children = (
 				SCENE1234567890ABCDEF02 /* ScenePlayerRegProvider.swift */,
-				SCENE1234567890ABCDEF03 /* ScenePlayerEventDefine.swift */,
 				07D99DAEE1CAE3E5A01A3DF8 /* Plugins */,
 			);
 			path = ScenePlayer;
@@ -534,7 +542,7 @@
 				B8DA8406D53E11EC6C13ACAE /* ViewController.swift in Sources */,
 				DD3C3D691A53ECAABB8D1128 /* ZoomDemoViewController.swift in Sources */,
 				SCENE1234567890ABCDEF01 /* ScenePlayerRegProvider.swift in Sources */,
-				SCENE1234567890ABCDEF04 /* ScenePlayerEventDefine.swift in Sources */,
+				SWIFTUI001234567890ABCDEF /* SwiftUIPlayerDemoView.swift in Sources */,
 				PLAYEREXT01ABCDEF01234567 /* Player+SceneServices.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

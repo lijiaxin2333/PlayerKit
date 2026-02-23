@@ -1,5 +1,22 @@
 import Foundation
 
+// MARK: - Pool Events
+
+public extension Event {
+    /// 引擎入队到回收池
+    static let playerEngineDidEnqueueToPool: Event = "PlayerEngineDidEnqueueToPool"
+    /// 引擎从回收池出队
+    static let playerEngineDidDequeueFromPool: Event = "PlayerEngineDidDequeueFromPool"
+    /// 回收池已清空
+    static let playerEnginePoolDidClear: Event = "PlayerEnginePoolDidClear"
+    /// 引擎即将转移
+    static let playerEngineWillTransfer: Event = "PlayerEngineWillTransfer"
+    /// 引擎已完成转移
+    static let playerEngineDidTransfer: Event = "PlayerEngineDidTransfer"
+}
+
+// MARK: - PlayerEnginePoolService Protocol
+
 @MainActor
 public protocol PlayerEnginePoolService: AnyObject {
 

@@ -12,10 +12,19 @@ class PluginDemoBaseViewController: UIViewController {
     var demoDescription: String { "" }
     var demoPlugins: [String] { [] }
 
+    /// 场景层插件注册器（子类可重写来注册场景层插件）
+    var sceneRegProvider: RegisterProvider? { nil }
+
     private var video: ShowcaseVideo?
 
     override func viewDidLoad() {
         super.viewDidLoad()
+
+        // 注册场景层插件（如果有）
+        if let provider = sceneRegProvider {
+            player.context.addRegProvider(provider)
+        }
+
         view.backgroundColor = .systemBackground
         setupLayout()
         loadVideoAndPlay()

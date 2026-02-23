@@ -1,9 +1,14 @@
 import Foundation
 import UIKit
 
-/**
- * 快照服务协议，提供截取视频帧和生成缩略图能力
- */
+// MARK: - Snapshot Events
+
+public extension Event {
+    /// 截屏完成
+    static let playerSnapshotDidCapture: Event = "PlayerSnapshotDidCapture"
+}
+
+// MARK: - PlayerSnapshotService Protocol
 @MainActor
 public protocol PlayerSnapshotService: PluginService {
 

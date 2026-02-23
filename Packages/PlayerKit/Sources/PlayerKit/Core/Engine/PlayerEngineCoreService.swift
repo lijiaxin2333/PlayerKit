@@ -9,87 +9,74 @@ import Foundation
 import AVFoundation
 import UIKit
 
-// MARK: - 播放状态
+// MARK: - Types
 
-/**
- * 播放状态枚举
- */
+/// 播放状态枚举
 public enum PlayerPlaybackState: Int, Sendable {
-    /**
-     * 已停止
-     */
     case stopped = 0
-    /**
-     * 播放中
-     */
     case playing
-    /**
-     * 已暂停
-     */
     case paused
-    /**
-     * Seek 中
-     */
     case seeking
-    /**
-     * 播放失败
-     */
     case failed
 }
 
-// MARK: - 加载状态
-
-/**
- * 加载状态枚举
- */
+/// 加载状态枚举
 public enum PlayerLoadState: Int {
-    /**
-     * 空闲
-     */
     case idle = 0
-    /**
-     * 准备中
-     */
     case preparing
-    /**
-     * 就绪
-     */
     case ready
-    /**
-     * 加载中
-     */
     case loading
-    /**
-     * 卡顿
-     */
     case stalled
-    /**
-     * 失败
-     */
     case failed
 }
 
-// MARK: - 视频缩放模式
-
-/**
- * 视频缩放模式枚举
- */
+/// 视频缩放模式枚举
 public enum PlayerScalingMode: Int {
-    /**
-     * 适应屏幕，留黑边
-     */
     case fit
-    /**
-     * 填充屏幕，可能裁剪
-     */
     case fill
-    /**
-     * 等比例填充，不裁剪
-     */
     case fillEdge
 }
 
-// MARK: - 播放引擎核心服务
+// MARK: - Engine Events
+
+public extension Event {
+    /// 播放器引擎已创建（粘性事件）
+    static let playerEngineDidCreateSticky: Event = "PlayerEngineDidCreateSticky"
+    /// 播放器引擎已改变
+    static let playerEngineDidChange: Event = "PlayerEngineDidChange"
+    /// 播放器引擎视图变化
+    static let playerEngineViewDidChanged: Event = "PlayerEngineViewDidChanged"
+    /// 播放器引擎创建渲染视图
+    static let playerEngineDidCreateRenderView: Event = "PlayerEngineDidCreateRenderView"
+    /// 获取到引擎模型
+    static let playerDidFetchEngineModel: Event = "PlayerDidFetchEngineModel"
+    /// 播放状态改变
+    static let playerPlaybackStateChanged: Event = "PlayerPlaybackStateChanged"
+    /// 准备好显示（粘性事件）
+    static let playerReadyForDisplaySticky: Event = "PlayerReadyForDisplaySticky"
+    /// 准备播放
+    static let playerReadyToPlay: Event = "PlayerReadyToPlay"
+    /// 准备播放（粘性事件）
+    static let playerReadyToPlaySticky: Event = "PlayerReadyToPlaySticky"
+    /// 加载状态改变
+    static let playerLoadStateDidChange: Event = "PlayerLoadStateDidChange"
+    /// 播放完成
+    static let playerPlaybackDidFinish: Event = "PlayerPlaybackDidFinish"
+    /// 播放失败
+    static let playerPlaybackDidFail: Event = "PlayerPlaybackDidFail"
+    /// 开始卡顿
+    static let playerPlayingStalledBegin: Event = "PlayerPlayingStalledBegin"
+    /// 结束卡顿
+    static let playerPlayingStalledEnd: Event = "PlayerPlayingStalledEnd"
+    /// 缩放模式改变
+    static let playerScaleModeChanged: Event = "PlayerScaleModeChanged"
+    /// 起播前开始加载缓存
+    static let playerStartPlayLoadBufferBegin: Event = "PlayerStartPlayLoadBufferBegin"
+    /// 起播前结束加载缓存
+    static let playerStartPlayLoadBufferEnd: Event = "PlayerStartPlayLoadBufferEnd"
+}
+
+// MARK: - PlayerEngineCoreService Protocol
 
 /**
  * 播放引擎核心服务协议（基于 AVPlayer）

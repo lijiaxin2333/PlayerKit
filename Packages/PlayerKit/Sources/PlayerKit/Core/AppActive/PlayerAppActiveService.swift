@@ -9,9 +9,8 @@ import Foundation
 import AVFoundation
 import UIKit
 
-/**
- * 应用状态枚举
- */
+// MARK: - Types
+
 public enum PlayerAppState {
     case didBecomeActive
     case didResignActive
@@ -19,9 +18,16 @@ public enum PlayerAppState {
     case didEnterBackground
 }
 
-/**
- * 应用前后台服务协议
- */
+// MARK: - AppActive Events
+
+public extension Event {
+    /// 应用变为活跃
+    static let playerAppDidBecomeActive: Event = "PlayerAppDidBecomeActive"
+    /// 应用失去活跃
+    static let playerAppDidResignActive: Event = "PlayerAppDidResignActive"
+}
+
+// MARK: - PlayerAppActiveService Protocol
 @MainActor
 public protocol PlayerAppActiveService: PluginService {
 

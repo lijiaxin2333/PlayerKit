@@ -2,6 +2,8 @@ import Foundation
 import UIKit
 import PlayerKit
 
+// MARK: - Gesture Types
+
 public enum PlayerGestureType: Int {
     case singleTap = 0
     case doubleTap
@@ -17,11 +19,30 @@ public enum PlayerPanDirection: Int {
     case verticalRight
 }
 
+// MARK: - Gesture Events
+
+public extension Event {
+    /// 单击手势
+    static let playerGestureSingleTap: Event = "PlayerGestureSingleTap"
+    /// 双击手势
+    static let playerGestureDoubleTap: Event = "PlayerGestureDoubleTap"
+    /// 滑动手势
+    static let playerGesturePan: Event = "PlayerGesturePan"
+    /// 捏合手势
+    static let playerGesturePinch: Event = "PlayerGesturePinch"
+    /// 长按手势
+    static let playerGestureLongPress: Event = "PlayerGestureLongPress"
+}
+
+// MARK: - Gesture Handler Protocol
+
 @MainActor
 public protocol PlayerGestureHandler: AnyObject {
     var gestureType: PlayerGestureType { get }
     func handleGesture(_ recognizer: UIGestureRecognizer, direction: PlayerPanDirection)
 }
+
+// MARK: - Gesture Service Protocol
 
 @MainActor
 public protocol PlayerGestureService: PluginService {

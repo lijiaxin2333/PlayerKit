@@ -9,36 +9,30 @@ import Foundation
 import AVFoundation
 import UIKit
 
-// MARK: - 倍速选项
+// MARK: - Types
 
-/**
- * 倍速选项结构体
- */
 public struct PlayerSpeedOption: Equatable, Sendable {
-    /**
-     * 播放速率
-     */
     public let rate: Float
-    /**
-     * 显示名称
-     */
     public let displayName: String
 
-    /**
-     * 初始化
-     */
     public init(rate: Float, displayName: String) {
         self.rate = rate
         self.displayName = displayName
     }
 
-    /**
-     * 默认倍速（1.0x 正常）
-     */
     public static let `default` = PlayerSpeedOption(rate: 1.0, displayName: "正常")
 }
 
-// MARK: - 倍速服务
+// MARK: - Speed Events
+
+public extension Event {
+    /// 倍速改变
+    static let playerSpeedDidChange: Event = "PlayerSpeedDidChange"
+    /// 倍速（粘性事件）
+    static let playerRateDidChangeSticky: Event = "PlayerRateDidChangeSticky"
+}
+
+// MARK: - PlayerSpeedService Protocol
 
 /**
  * 倍速播放服务协议

@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SwiftUI
 
 /// 播放器功能演示主菜单
 @MainActor
@@ -19,6 +20,7 @@ public class PlayerDemoMenuViewController: UIViewController {
 
     private enum DemoAction {
         case showcase
+        case swiftUI
         case speed
         case looping
         case gesture
@@ -41,6 +43,7 @@ public class PlayerDemoMenuViewController: UIViewController {
     private let demoSections: [DemoSection] = [
         DemoSection(title: "综合场景", items: [
             DemoItem(title: "综合演示", subtitle: "35个Comp全能力展示", action: .showcase),
+            DemoItem(title: "SwiftUI 演示", subtitle: "SwiftUI 集成 · 插件化架构演示", action: .swiftUI),
         ]),
         DemoSection(title: "插件功能演示", items: [
             DemoItem(title: "倍速播放", subtitle: "PlayerSpeedPlugin · PlayerSpeedPanelPlugin", action: .speed),
@@ -89,6 +92,9 @@ public class PlayerDemoMenuViewController: UIViewController {
         switch action {
         case .showcase:
             viewController = ShowcaseFeedListViewController()
+        case .swiftUI:
+            let swiftUIView = SwiftUIPlayerDemoView()
+            viewController = UIHostingController(rootView: swiftUIView)
         case .speed:
             viewController = SpeedDemoViewController()
         case .looping:

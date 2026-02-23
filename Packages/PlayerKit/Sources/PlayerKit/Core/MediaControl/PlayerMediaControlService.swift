@@ -2,19 +2,23 @@ import Foundation
 import AVFoundation
 import UIKit
 
-/**
- * 媒体控制类型枚举
- */
+// MARK: - Types
+
 public enum PlayerMediaControlType {
-    /** 音量控制 */
     case volume
-    /** 亮度控制 */
     case brightness
 }
 
-/**
- * 媒体控制服务协议（音量/亮度）
- */
+// MARK: - MediaControl Events
+
+public extension Event {
+    /// 音量改变
+    static let playerVolumeDidChange: Event = "PlayerVolumeDidChange"
+    /// 亮度改变
+    static let playerBrightnessDidChange: Event = "PlayerBrightnessDidChange"
+}
+
+// MARK: - PlayerMediaControlService Protocol
 @MainActor
 public protocol PlayerMediaControlService: PluginService {
 

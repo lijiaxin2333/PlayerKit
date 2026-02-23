@@ -9,11 +9,9 @@ import Foundation
 import UIKit
 import PlayerKit
 
-// MARK: - 缩放模式
+// MARK: - Zoom Types
 
-/**
- * 自由缩放模式
- */
+/// 自由缩放模式
 public enum PlayerZoomMode: Int, Sendable {
     /// 原始大小，不缩放
     case noZoom = 0
@@ -23,11 +21,7 @@ public enum PlayerZoomMode: Int, Sendable {
     case custom
 }
 
-// MARK: - 缩放状态
-
-/**
- * 缩放状态信息
- */
+/// 缩放状态信息
 public struct PlayerZoomState: Sendable {
     /// 当前缩放模式
     public let mode: PlayerZoomMode
@@ -43,11 +37,17 @@ public struct PlayerZoomState: Sendable {
     }
 }
 
-// MARK: - 缩放服务协议
+// MARK: - Zoom Events
 
-/**
- * 自由缩放服务协议
- */
+public extension Event {
+    /// 自由缩放状态变化
+    static let playerZoomStateDidChanged: Event = "PlayerZoomStateDidChanged"
+    /// 智能满屏开关变化
+    static let playerAspectFillDidChanged: Event = "PlayerAspectFillDidChanged"
+}
+
+// MARK: - Zoom Service Protocol
+
 @MainActor
 public protocol PlayerZoomService: PluginService {
 
@@ -79,29 +79,21 @@ public protocol PlayerZoomService: PluginService {
     // MARK: - 控制
 
     /// 开启/关闭智能满屏
-    /// - Parameters:
-    ///   - enable: 是否开启
-    ///   - animated: 是否动画
     func setAspectFillEnable(_ enable: Bool, animated: Bool)
 
     /// 设置缩放比例
-    /// - Parameter scale: 缩放比例
     func setScale(_ scale: CGFloat)
 
     /// 设置播放器复用时是否继承智能满屏状态
-    /// - Parameter enable: 是否继承（默认继承）
     func setAspectFillStateInherit(_ enable: Bool)
 
     /// 设置全屏时智能满屏是否限制最大移动距离不超出屏幕
-    /// - Parameter fullScreenStickBottomSlide: 是否限制
     func setFullScreenStickBottomSlide(_ fullScreenStickBottomSlide: Bool)
 }
 
-// MARK: - 配置模型
+// MARK: - Zoom Config Model
 
-/**
- * 自由缩放配置模型
- */
+/// 自由缩放配置模型
 public class PlayerZoomConfigModel {
 
     /// 是否禁用智能满屏
@@ -119,6 +111,5 @@ public class PlayerZoomConfigModel {
     /// 是否支持旋转
     public var rotationEnabled: Bool = true
 
-    /// 初始化
     public init() {}
 }

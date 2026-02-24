@@ -1,7 +1,7 @@
 import Foundation
 import UIKit
 
-struct ShowcaseVideo {
+public struct ShowcaseVideo {
     let feedId: String
     let creatorId: String
     let title: String

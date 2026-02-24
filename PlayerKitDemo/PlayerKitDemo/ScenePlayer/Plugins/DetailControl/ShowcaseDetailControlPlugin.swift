@@ -2,61 +2,19 @@ import UIKit
 import PlayerKit
 
 @MainActor
-class ShowcaseDetailControlConfigModel {
-    let video: ShowcaseVideo
-    let allVideos: [ShowcaseVideo]
-    let videoIndex: Int
-    weak var gestureView: UIView?
-
-    init(video: ShowcaseVideo, allVideos: [ShowcaseVideo], videoIndex: Int, gestureView: UIView) {
-        self.video = video
-        self.allVideos = allVideos
-        self.videoIndex = videoIndex
-        self.gestureView = gestureView
-    }
-}
-
-@MainActor
-protocol ShowcaseDetailControlService: PluginService {
-    var isScrubbing: Bool { get }
-    var onPlaybackStateChanged: ((Bool) -> Void)? { get set }
-    var onProgressUpdate: ((Float, String, String) -> Void)? { get set }
-    var onControlShouldShow: ((Bool) -> Void)? { get set }
-    func teardown()
-    func togglePlayPause()
-    func cycleSpeed() -> Float
-    func toggleMute() -> Bool
-    func toggleLoop() -> Bool
-    func captureSnapshot(completion: @escaping (UIImage?) -> Void)
-    func toggleFullScreen()
-    func showDebugPanel()
-    func beginSliderScrub()
-    func sliderChanged(to value: Float) -> String?
-    func endSliderScrub()
-    func scheduleControlHide()
-    func contextName() -> String
-    func handlePanBegin(direction: PlayerPanDirection)
-    func handlePanChange(direction: PlayerPanDirection, delta: Float) -> String?
-    func handlePanEnd(direction: PlayerPanDirection)
-    func handleLongPressBegin()
-    func handleLongPressEnd()
-    func handlePinch(scale: CGFloat) -> String?
-}
-
-@MainActor
-final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlService {
+public final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlService {
 
     private var video: ShowcaseVideo?
     private var videoIndex: Int = 0
 
-    private(set) var isScrubbing = false
+    private(set) public var isScrubbing = false
     private var previousSpeed: Float = 1.0
     private var controlHideTimer: Timer?
     private var progressObserverToken: String?
 
-    var onPlaybackStateChanged: ((Bool) -> Void)?
-    var onProgressUpdate: ((Float, String, String) -> Void)?
-    var onControlShouldShow: ((Bool) -> Void)?
+    public var onPlaybackStateChanged: ((Bool) -> Void)?
+    public var onProgressUpdate: ((Float, String, String) -> Void)?
+    public var onControlShouldShow: ((Bool) -> Void)?
 
     @PlayerPlugin private var engineService: PlayerEngineCoreService?
     @PlayerPlugin private var processService: PlayerProcessService?
@@ -72,7 +30,7 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
     @PlayerPlugin private var fullScreenService: PlayerFullScreenService?
     @PlayerPlugin private var debugService: PlayerDebugService?
 
-    override func config(_ configModel: Any?) {
+    public override func config(_ configModel: Any?) {
         super.config(configModel)
         guard let model = configModel as? ShowcaseDetailControlConfigModel else { return }
         guard let gestureView = model.gestureView else { return }
@@ -84,7 +42,7 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
         observeEvents()
     }
 
-    func teardown() {
+    public func teardown() {
         controlHideTimer?.invalidate()
         controlHideTimer = nil
 
@@ -159,12 +117,12 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
 
     }
 
-    func togglePlayPause() {
+    public func togglePlayPause() {
         playbackControl?.togglePlayPause()
         scheduleControlHide()
     }
 
-    func cycleSpeed() -> Float {
+    public func cycleSpeed() -> Float {
         guard let speedService = speedService else { return 1.0 }
         let speeds: [Float] = [0.5, 1.0, 1.5, 2.0]
         let current = speedService.currentSpeed
@@ -176,19 +134,19 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
         return next
     }
 
-    func toggleMute() -> Bool {
+    public func toggleMute() -> Bool {
         mediaService?.toggleMute()
         return mediaService?.isMuted == true
     }
 
-    func toggleLoop() -> Bool {
+    public func toggleLoop() -> Bool {
         guard let engine = engineService else { return false }
         engine.isLooping.toggle()
         toastService?.showToast(engine.isLooping ? "Loop: ON" : "Loop: OFF", style: .info, duration: 1.5)
         return engine.isLooping
     }
 
-    func captureSnapshot(completion: @escaping (UIImage?) -> Void) {
+    public func captureSnapshot(completion: @escaping (UIImage?) -> Void) {
         snapshotService?.currentFrameImage { [weak self] image in
             guard let self = self else { completion(nil); return }
             if image != nil {
@@ -198,21 +156,21 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
         }
     }
 
-    func toggleFullScreen() {
+    public func toggleFullScreen() {
         fullScreenService?.toggleFullScreen(orientation: .auto, animated: true)
     }
 
-    func showDebugPanel() {
+    public func showDebugPanel() {
         debugService?.isDebugEnabled = true
         debugService?.showDebugPanel()
     }
 
-    func beginSliderScrub() {
+    public func beginSliderScrub() {
         isScrubbing = true
         processService?.beginScrubbing()
     }
 
-    func sliderChanged(to value: Float) -> String? {
+    public func sliderChanged(to value: Float) -> String? {
         processService?.scrubbing(to: Double(value))
         if let duration = engineService?.duration {
             return formatTime(TimeInterval(value) * duration)
@@ -220,14 +178,14 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
         return nil
     }
 
-    func endSliderScrub() {
+    public func endSliderScrub() {
         processService?.endScrubbing()
         context?.add(self, event: .playerProgressEndScrubbing, option: .execOnlyOnce) { [weak self] _, _ in
             self?.isScrubbing = false
         }
     }
 
-    func scheduleControlHide() {
+    public func scheduleControlHide() {
         controlHideTimer?.invalidate()
         controlHideTimer = Timer.scheduledTimer(withTimeInterval: 4.0, repeats: false) { [weak self] _ in
             guard let self = self else { return }
@@ -237,18 +195,18 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
         }
     }
 
-    func contextName() -> String {
+    public func contextName() -> String {
         (context as? Context)?.name ?? "N/A"
     }
 
-    func handlePanBegin(direction: PlayerPanDirection) {
+    public func handlePanBegin(direction: PlayerPanDirection) {
         if direction == .horizontal {
             isScrubbing = true
             processService?.beginScrubbing()
         }
     }
 
-    func handlePanChange(direction: PlayerPanDirection, delta: Float) -> String? {
+    public func handlePanChange(direction: PlayerPanDirection, delta: Float) -> String? {
         switch direction {
         case .horizontal:
             let current = processService?.progress ?? 0
@@ -269,7 +227,7 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
         }
     }
 
-    func handlePanEnd(direction: PlayerPanDirection) {
+    public func handlePanEnd(direction: PlayerPanDirection) {
         if direction == .horizontal {
             processService?.endScrubbing()
             context?.add(self, event: .playerProgressEndScrubbing, option: .execOnlyOnce) { [weak self] _, _ in
@@ -278,16 +236,16 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
         }
     }
 
-    func handleLongPressBegin() {
+    public func handleLongPressBegin() {
         previousSpeed = speedService?.currentSpeed ?? 1.0
         speedService?.setSpeed(2.0)
     }
 
-    func handleLongPressEnd() {
+    public func handleLongPressEnd() {
         speedService?.setSpeed(previousSpeed)
     }
 
-    func handlePinch(scale: CGFloat) -> String? {
+    public func handlePinch(scale: CGFloat) -> String? {
         if scale > 1.2 {
             engineService?.scalingMode = .fill
         } else if scale < 0.8 {

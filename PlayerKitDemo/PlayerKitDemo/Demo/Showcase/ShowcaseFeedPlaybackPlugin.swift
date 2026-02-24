@@ -158,11 +158,14 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
     func consumePreRendered(identifier: String) -> Player? {
         guard let player = preRenderPlayers[identifier] else { return nil }
         let state = player.preRenderService?.preRenderState ?? .idle
-        guard state == .readyToPlay || state == .readyToDisplay else { return nil }
+        guard state == .preparing || state == .readyToPlay || state == .readyToDisplay else { return nil }
         preRenderPlayers.removeValue(forKey: identifier)
         cancelTimeout(identifier: identifier)
-        player.engineService?.pause()
-        player.engineService?.avPlayer?.seek(to: .zero, toleranceBefore: .zero, toleranceAfter: .zero)
+        if state == .readyToPlay || state == .readyToDisplay {
+            player.engineService?.pause()
+            player.engineService?.avPlayer?.seek(to: .zero, toleranceBefore: .zero, toleranceAfter: .zero)
+        }
+        // preparing 状态：引擎正在加载解码，不 pause 也不 seek，adopt 后继续加载
         return player
     }
 
@@ -469,14 +472,14 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         guard let ctx = listContext else { return }
         guard let cv = ctx.scrollView() as? UICollectionView else { return }
         if let cell = cv.cellForItem(at: IndexPath(item: 0, section: index)) as? ShowcaseFeedCell {
-            cell.stopAndDetachPlayer()
+            cell.stopAndRecycleEngine()
             if currentPlayingCell === cell {
                 currentPlayingCell = nil
             }
             return
         }
         if currentPlayingCell?.videoIndex == index {
-            currentPlayingCell?.stopAndDetachPlayer()
+            currentPlayingCell?.stopAndRecycleEngine()
             currentPlayingCell = nil
         }
     }

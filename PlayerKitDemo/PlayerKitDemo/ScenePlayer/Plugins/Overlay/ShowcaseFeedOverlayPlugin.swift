@@ -1,22 +1,14 @@
 import UIKit
 import PlayerKit
 
-@MainActor
-protocol ShowcaseFeedOverlayService: PluginService {
-    var gradientView: ShowcaseFeedGradientView { get }
-    var infoView: ShowcaseFeedInfoView { get }
-    var socialView: ShowcaseFeedSocialView { get }
-    func bringOverlaysToFront()
-}
-
 // MARK: - Gradient Layer
 
 @MainActor
-final class ShowcaseFeedGradientView: UIView {
+public final class ShowcaseFeedGradientView: UIView {
 
     private let gradientLayer = CAGradientLayer()
 
-    override init(frame: CGRect) {
+    public override init(frame: CGRect) {
         super.init(frame: frame)
         isUserInteractionEnabled = false
         gradientLayer.colors = [
@@ -29,7 +21,7 @@ final class ShowcaseFeedGradientView: UIView {
 
     required init?(coder: NSCoder) { fatalError() }
 
-    override func layoutSubviews() {
+    public override func layoutSubviews() {
         super.layoutSubviews()
         gradientLayer.frame = CGRect(
             x: 0,
@@ -43,17 +35,17 @@ final class ShowcaseFeedGradientView: UIView {
 // MARK: - Info Layer
 
 @MainActor
-final class ShowcaseFeedInfoView: UIView {
+public final class ShowcaseFeedInfoView: UIView {
 
-    weak var overlayContext: ContextProtocol?
-    private(set) var videoIndex: Int = 0
+    public weak var overlayContext: ContextProtocol?
+    private(set) public var videoIndex: Int = 0
 
     private let avatarImageView = UIImageView()
     private let authorLabel = UILabel()
     private let descLabel = UILabel()
     private var avatarTask: URLSessionDataTask?
 
-    override init(frame: CGRect) {
+    public override init(frame: CGRect) {
         super.init(frame: frame)
         isUserInteractionEnabled = true
         setupViews()
@@ -102,7 +94,7 @@ final class ShowcaseFeedInfoView: UIView {
         ])
     }
 
-    func configure(video: ShowcaseVideo, index: Int) {
+    public func configure(video: ShowcaseVideo, index: Int) {
         videoIndex = index
         authorLabel.text = "@\(video.creator.nickname)"
         descLabel.text = video.desc.isEmpty ? video.title : video.desc
@@ -124,7 +116,7 @@ final class ShowcaseFeedInfoView: UIView {
         avatarTask?.resume()
     }
 
-    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+    public override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         let result = super.hitTest(point, with: event)
         return result === self ? nil : result
     }
@@ -133,10 +125,10 @@ final class ShowcaseFeedInfoView: UIView {
 // MARK: - Social Layer
 
 @MainActor
-final class ShowcaseFeedSocialView: UIView {
+public final class ShowcaseFeedSocialView: UIView {
 
-    weak var overlayContext: ContextProtocol?
-    private(set) var videoIndex: Int = 0
+    public weak var overlayContext: ContextProtocol?
+    private(set) public var videoIndex: Int = 0
 
     private let likeButton = UIButton(type: .system)
     private let likeCountLabel = UILabel()
@@ -148,7 +140,7 @@ final class ShowcaseFeedSocialView: UIView {
 
     private var isLiked = false
 
-    override init(frame: CGRect) {
+    public override init(frame: CGRect) {
         super.init(frame: frame)
         isUserInteractionEnabled = true
         setupViews()
@@ -186,7 +178,7 @@ final class ShowcaseFeedSocialView: UIView {
         ])
     }
 
-    func configure(video: ShowcaseVideo, index: Int) {
+    public func configure(video: ShowcaseVideo, index: Int) {
         videoIndex = index
         likeCountLabel.text = Self.formatCount(video.likeCount)
         commentCountLabel.text = Self.formatCount(video.commentCount)
@@ -262,14 +254,14 @@ final class ShowcaseFeedSocialView: UIView {
         return c
     }
 
-    static func formatCount(_ count: Int) -> String {
+    public static func formatCount(_ count: Int) -> String {
         if count <= 0 { return "" }
         if count >= 10000 { return String(format: "%.1fw", Double(count) / 10000.0) }
         if count >= 1000 { return String(format: "%.1fk", Double(count) / 1000.0) }
         return "\(count)"
     }
 
-    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+    public override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         let result = super.hitTest(point, with: event)
         return result === self ? nil : result
     }
@@ -278,21 +270,21 @@ final class ShowcaseFeedSocialView: UIView {
 // MARK: - Overlay Plugin
 
 @MainActor
-final class ShowcaseFeedOverlayPlugin: BasePlugin, ShowcaseFeedOverlayService {
+public final class ShowcaseFeedOverlayPlugin: BasePlugin, ShowcaseFeedOverlayService {
 
-    let gradientView = ShowcaseFeedGradientView()
-    let infoView = ShowcaseFeedInfoView()
-    let socialView = ShowcaseFeedSocialView()
+    public let gradientView = ShowcaseFeedGradientView()
+    public let infoView = ShowcaseFeedInfoView()
+    public let socialView = ShowcaseFeedSocialView()
     private var isInstalled = false
 
     @PlayerPlugin private var feedDataService: ShowcaseFeedDataService?
     @PlayerPlugin private var cellViewService: ShowcaseFeedCellViewService?
 
-    required override init() {
+    public required override init() {
         super.init()
     }
 
-    override func pluginDidLoad(_ context: ContextProtocol) {
+    public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
 
         infoView.overlayContext = context
@@ -312,7 +304,7 @@ final class ShowcaseFeedOverlayPlugin: BasePlugin, ShowcaseFeedOverlayService {
         }
     }
 
-    func bringOverlaysToFront() {
+    public func bringOverlaysToFront() {
         guard let contentView = cellViewService?.contentView else { return }
         contentView.bringSubviewToFront(gradientView)
         contentView.bringSubviewToFront(infoView)

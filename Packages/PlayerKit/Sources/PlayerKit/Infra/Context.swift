@@ -327,6 +327,8 @@ public final class Context: PublicContext, ExtendContext {
         let key = Self.typeKey(type)
         guard let plugin = plugins.removeValue(forKey: key) else { return nil }
         services.removeValue(forKey: key)
+        // 清理该插件绑定的事件监听，避免 registerInstance 后重复触发
+        eventHandler.removeHandlers(forObserver: plugin)
         plugin.context = nil
         return plugin
     }

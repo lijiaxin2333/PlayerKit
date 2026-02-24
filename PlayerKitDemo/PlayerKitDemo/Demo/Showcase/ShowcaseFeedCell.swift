@@ -135,6 +135,8 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         if let preRenderedPlayer = playbackPlugin.consumePreRendered(identifier: identifier),
            preRenderedPlayer.engineService?.currentURL == video.url {
             player.adoptEngine(from: preRenderedPlayer)
+            // 预渲染引擎的 isLooping=true，正式播放需要恢复为 false
+            player.engineService?.isLooping = false
             return
         }
 

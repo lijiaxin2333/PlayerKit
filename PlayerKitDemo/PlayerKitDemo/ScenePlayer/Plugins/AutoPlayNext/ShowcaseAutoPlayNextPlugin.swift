@@ -2,23 +2,7 @@ import Foundation
 import PlayerKit
 
 @MainActor
-protocol ShowcaseAutoPlayNextService: PluginService {
-    var isEnabled: Bool { get set }
-}
-
-@MainActor
-final class ShowcaseAutoPlayNextConfigModel {
-    var totalCount: Int = 0
-    var isEnabled: Bool = true
-
-    init(totalCount: Int, isEnabled: Bool = true) {
-        self.totalCount = totalCount
-        self.isEnabled = isEnabled
-    }
-}
-
-@MainActor
-final class ShowcaseAutoPlayNextPlugin: BasePlugin, ShowcaseAutoPlayNextService {
+public final class ShowcaseAutoPlayNextPlugin: BasePlugin, ShowcaseAutoPlayNextService {
 
     @PlayerPlugin private var dataService: ShowcaseFeedDataService?
     @PlayerPlugin private var engineService: PlayerEngineCoreService?
@@ -26,23 +10,23 @@ final class ShowcaseAutoPlayNextPlugin: BasePlugin, ShowcaseAutoPlayNextService 
     private var _isEnabled: Bool = true
     private var _totalCount: Int = 0
 
-    var isEnabled: Bool {
+    public var isEnabled: Bool {
         get { _isEnabled }
         set { _isEnabled = newValue }
     }
 
-    required override init() {
+    public required override init() {
         super.init()
     }
 
-    override func pluginDidLoad(_ context: ContextProtocol) {
+    public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
         context.add(self, event: .playerPlaybackDidFinish) { [weak self] _, _ in
             self?.handlePlaybackFinished()
         }
     }
 
-    override func config(_ configModel: Any?) {
+    public override func config(_ configModel: Any?) {
         super.config(configModel)
         guard let config = configModel as? ShowcaseAutoPlayNextConfigModel else { return }
         _totalCount = config.totalCount

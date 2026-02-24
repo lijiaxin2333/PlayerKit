@@ -2,38 +2,21 @@ import UIKit
 import PlayerKit
 
 @MainActor
-class ShowcaseFeedCellViewConfigModel {
-    weak var contentView: UIView?
-    weak var playerContainer: UIView?
-
-    init(contentView: UIView, playerContainer: UIView) {
-        self.contentView = contentView
-        self.playerContainer = playerContainer
-    }
-}
-
-@MainActor
-protocol ShowcaseFeedCellViewService: PluginService {
-    var playerContainerView: UIView? { get }
-    var contentView: UIView? { get }
-}
-
-@MainActor
-final class ShowcaseFeedCellViewPlugin: BasePlugin, ShowcaseFeedCellViewService {
+public final class ShowcaseFeedCellViewPlugin: BasePlugin, ShowcaseFeedCellViewService {
 
     private weak var _contentView: UIView?
     private weak var _playerContainer: UIView?
 
-    var playerContainerView: UIView? { _playerContainer }
-    var contentView: UIView? { _contentView }
+    public var playerContainerView: UIView? { _playerContainer }
+    public var contentView: UIView? { _contentView }
 
     @PlayerPlugin private var engineService: PlayerEngineCoreService?
 
-    required override init() {
+    public required override init() {
         super.init()
     }
 
-    override func pluginDidLoad(_ context: ContextProtocol) {
+    public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
         context.add(self, event: .showcaseFeedCellViewDidSet) { [weak self] object, _ in
             guard let self = self,
@@ -47,11 +30,11 @@ final class ShowcaseFeedCellViewPlugin: BasePlugin, ShowcaseFeedCellViewService 
         }
     }
 
-    override func contextDidAddSubContext(_ subContext: PublicContext) {
+    public override func contextDidAddSubContext(_ subContext: PublicContext) {
         attachPlayerViewIfNeeded()
     }
 
-    override func contextWillRemoveSubContext(_ subContext: PublicContext) {
+    public override func contextWillRemoveSubContext(_ subContext: PublicContext) {
         detachPlayerView()
     }
 

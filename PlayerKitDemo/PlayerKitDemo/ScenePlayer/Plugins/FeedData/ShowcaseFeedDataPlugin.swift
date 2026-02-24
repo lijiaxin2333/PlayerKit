@@ -2,45 +2,27 @@ import Foundation
 import PlayerKit
 
 @MainActor
-class ShowcaseFeedDataConfigModel {
-    let video: ShowcaseVideo
-    let index: Int
-
-    init(video: ShowcaseVideo, index: Int) {
-        self.video = video
-        self.index = index
-    }
-}
-
-@MainActor
-protocol ShowcaseFeedDataService: PluginService {
-    var video: ShowcaseVideo? { get }
-    var videoIndex: Int { get }
-    func clearData()
-}
-
-@MainActor
-final class ShowcaseFeedDataPlugin: BasePlugin, ShowcaseFeedDataService {
+public final class ShowcaseFeedDataPlugin: BasePlugin, ShowcaseFeedDataService {
 
     private var _video: ShowcaseVideo?
     private var _videoIndex: Int = -1
 
-    var video: ShowcaseVideo? { _video }
-    var videoIndex: Int { _videoIndex }
+    public var video: ShowcaseVideo? { _video }
+    public var videoIndex: Int { _videoIndex }
 
     @PlayerPlugin private var playerDataService: PlayerDataService?
 
-    required override init() {
+    public required override init() {
         super.init()
     }
 
-    override func config(_ configModel: Any?) {
+    public override func config(_ configModel: Any?) {
         super.config(configModel)
         guard let model = configModel as? ShowcaseFeedDataConfigModel else { return }
         applyModel(model)
     }
 
-    func clearData() {
+    public func clearData() {
         _video = nil
         _videoIndex = -1
     }

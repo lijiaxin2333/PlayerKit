@@ -94,7 +94,6 @@ public final class PlayerPreRenderPool {
         // 启动超时计时器
         scheduleTimeout(identifier: identifier)
 
-        PLog.preRenderStart(identifier, activeCount: count)
     }
 
     public func cancel(identifier: String) {
@@ -110,7 +109,6 @@ public final class PlayerPreRenderPool {
         }
 
         statistics.totalCancelled += 1
-        PLog.preRenderCancel(identifier, reason: "cancelled")
     }
 
     public func cancelAll() {
@@ -133,8 +131,6 @@ public final class PlayerPreRenderPool {
         entry.engine.avPlayer?.seek(to: .zero, toleranceBefore: .zero, toleranceAfter: .zero)
 
         statistics.totalConsumed += 1
-        PLog.preRenderConsume(identifier, state: entry.state == .readyToPlay ? "readyToPlay" : "readyToDisplay")
-
         return entry.engine
     }
 
@@ -246,8 +242,6 @@ public final class PlayerPreRenderPool {
         entry.completedAt = Date()
         entries[identifier] = entry
         statistics.totalCompleted += 1
-
-        PLog.preRenderReadyToPlay(identifier, elapsedMs: elapsedMs)
     }
 
     private func evictOldest() {
@@ -276,7 +270,6 @@ public final class PlayerPreRenderPool {
         guard entries[identifier] != nil else { return }
         cancel(identifier: identifier)
         statistics.totalTimeouts += 1
-        PLog.preRenderCancel(identifier, reason: "timeout")
     }
 }
 

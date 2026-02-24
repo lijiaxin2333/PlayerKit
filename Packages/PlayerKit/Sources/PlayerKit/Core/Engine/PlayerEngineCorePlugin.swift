@@ -172,10 +172,6 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
      */
     private var keepUpObserver: NSKeyValueObservation?
     /**
-     * 监听 isPlaybackBufferEmpty
-     */
-    private var bufferEmptyObserver: NSKeyValueObservation?
-    /**
      * 监听 loadedTimeRanges
      */
     private var loadedRangesObserver: NSKeyValueObservation?
@@ -867,16 +863,6 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
                 self.tryResumeIfStalled(source: "loadedRanges", playerName: pName)
             }
         }
-
-        bufferEmptyObserver = item.observe(\.isPlaybackBufferEmpty, options: [.new]) { [weak self] item, _ in
-            DispatchQueue.main.async { [weak self] in
-                guard let self = self else { return }
-                guard self._playbackState == .playing else { return }
-                if item.isPlaybackBufferEmpty {
-                    PLog.bufferEmpty(pName)
-                }
-            }
-        }
     }
 
     /**
@@ -898,7 +884,6 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         if keepUp || buffered > 0.3 { // TODO: jason 优化项, 可以根据网络带宽动态修改这个值
             hasResumedFromBuffer = true
             let targetRate = _rate > 0 ? _rate : 1.0
-            PLog.bufferResume(playerName, source: source, buffered: buffered, keepUp: keepUp)
             avPlayerInstance?.play()
             avPlayerInstance?.rate = targetRate
             avPlayerInstance?.currentItem?.preferredForwardBufferDuration = 5
@@ -929,8 +914,6 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
     private func removeBufferObservers() {
         keepUpObserver?.invalidate()
         keepUpObserver = nil
-        bufferEmptyObserver?.invalidate()
-        bufferEmptyObserver = nil
         loadedRangesObserver?.invalidate()
         loadedRangesObserver = nil
     }

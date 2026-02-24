@@ -377,7 +377,6 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         guard index >= 0, index < videos.count else { return }
         guard videos[index].url != nil else { return }
 
-        PLog.scrollPlay(index)
 
         if currentPlayingIndex >= 0, currentPlayingIndex != index {
             stopCell(at: currentPlayingIndex)

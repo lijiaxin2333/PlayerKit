@@ -55,7 +55,7 @@ public final class PlayerSpeedPlugin: BasePlugin, PlayerSpeedService {
 
     // MARK: - Initialization
 
-    public required override init() {
+    public required init() {
         super.init()
     }
 

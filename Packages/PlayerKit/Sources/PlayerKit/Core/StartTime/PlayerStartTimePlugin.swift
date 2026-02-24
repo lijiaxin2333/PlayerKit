@@ -21,7 +21,7 @@ public final class PlayerStartTimePlugin: BasePlugin, PlayerStartTimeService {
     /** 播放引擎服务，用于 seek 和获取当前播放信息 */
     @PlayerPlugin private var engine: PlayerEngineCoreService?
 
-    public required override init() {
+    public required init() {
         super.init()
     }
 

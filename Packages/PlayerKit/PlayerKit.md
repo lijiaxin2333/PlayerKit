@@ -84,7 +84,7 @@ public protocol ScenePlayerProtocol: ContextHolder {
 
 场景层典型插件：
 
-- `PlayerScenePlayerProcessPlugin` — 场景播放流程管理
+- `ScenePlayerProcessPlugin` — 场景播放流程管理
 - `ShowcaseFeedDataPlugin` — Feed 场景数据
 - `ShowcaseFeedCellViewPlugin` — Feed 场景视图
 
@@ -122,7 +122,7 @@ public protocol ScenePlayerProtocol: ContextHolder {
 ShowcaseFeedScenePlayer.context (场景层)
 │
 │   [场景插件]
-│   - PlayerScenePlayerProcessPlugin (播放流程)
+│   - ScenePlayerProcessPlugin (播放流程)
 │   - ShowcaseFeedDataPlugin         (Feed 数据)
 │   - ShowcaseFeedCellViewPlugin     (Cell 视图)
 │

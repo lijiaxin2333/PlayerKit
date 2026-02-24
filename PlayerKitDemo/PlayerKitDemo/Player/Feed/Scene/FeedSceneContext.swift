@@ -21,8 +21,8 @@ final class FeedSceneRegProvider: RegisterProvider {
         scenePlayerRegProvider.registerPlugins(with: registerSet)
 
         // 场景播放流程
-        registerSet.addEntry(pluginClass: PlayerScenePlayerProcessPlugin.self,
-                            serviceType: PlayerScenePlayerProcessService.self)
+        registerSet.addEntry(pluginClass: ScenePlayerProcessPlugin.self,
+                            serviceType: ScenePlayerProcessService.self)
     }
 }
 
@@ -83,8 +83,8 @@ public final class FeedSceneContext: ScenePlayerProtocol {
 
     // MARK: - Convenience
 
-    public var sceneProcessService: PlayerScenePlayerProcessService? {
-        context.resolveService(PlayerScenePlayerProcessService.self)
+    public var sceneProcessService: ScenePlayerProcessService? {
+        context.resolveService(ScenePlayerProcessService.self)
     }
 
     public var engineService: PlayerEngineCoreService? {

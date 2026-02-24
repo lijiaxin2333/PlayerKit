@@ -91,7 +91,6 @@ public final class PlayerEnginePool: PlayerEnginePoolService {
         }
         pool[identifier]?.append(PoolEntry(engine: engine, enqueueTime: Date()))
         _statistics.totalEnqueued += 1
-        PLog.poolEnqueue(identifier, countAfter: count)
 
         if _idleTimeout > 0 {
             scheduleIdleTimer(for: engine, identifier: identifier)
@@ -102,7 +101,6 @@ public final class PlayerEnginePool: PlayerEnginePoolService {
         guard var entries = pool[identifier], !entries.isEmpty else {
             _statistics.poolMisses += 1
             _statistics.totalDequeued += 1
-            PLog.poolDequeue(identifier, hit: false, countAfter: count)
             autoReplenishIfNeeded(identifier: identifier)
             return nil
         }
@@ -111,7 +109,6 @@ public final class PlayerEnginePool: PlayerEnginePoolService {
         pool[identifier] = entries.isEmpty ? nil : entries
         _statistics.poolHits += 1
         _statistics.totalDequeued += 1
-        PLog.poolDequeue(identifier, hit: true, countAfter: count)
 
         cancelIdleTimer(for: entry.engine)
         entry.engine.didDequeueForReuse()

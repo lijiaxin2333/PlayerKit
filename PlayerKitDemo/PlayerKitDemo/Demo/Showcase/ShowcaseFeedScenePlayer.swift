@@ -26,8 +26,8 @@ final class ShowcaseFeedSceneRegProvider: RegisterProvider {
         scenePlayerRegProvider.registerPlugins(with: registerSet)
 
         // 场景播放流程
-        registerSet.addEntry(pluginClass: PlayerScenePlayerProcessPlugin.self,
-                            serviceType: PlayerScenePlayerProcessService.self)
+        registerSet.addEntry(pluginClass: ScenePlayerProcessPlugin.self,
+                            serviceType: ScenePlayerProcessService.self)
 
         // Feed 场景特有插件
         registerSet.addEntry(pluginClass: ShowcaseFeedDataPlugin.self,

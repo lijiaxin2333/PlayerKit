@@ -35,7 +35,7 @@ public final class PlayerViewPlugin: BasePlugin, PlayerViewService {
     /// 引擎服务依赖
     @PlayerPlugin private var engineService: PlayerEngineCoreService?
 
-    public required override init() {
+    public required init() {
         self.config = PlayerViewConfigModel()
         super.init()
     }

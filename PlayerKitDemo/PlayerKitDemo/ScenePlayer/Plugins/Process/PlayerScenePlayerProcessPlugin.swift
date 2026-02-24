@@ -1,11 +1,12 @@
 import Foundation
+import PlayerKit
 
 /**
  * 播放器场景播放流程插件
  * 协调播放准备、创建、挂载及播放控制的执行流程
  */
 @MainActor
-public final class PlayerScenePlayerProcessPlugin: BasePlugin, PlayerScenePlayerProcessService {
+public final class ScenePlayerProcessPlugin: BasePlugin, ScenePlayerProcessService {
 
     /**
      * 初始化插件

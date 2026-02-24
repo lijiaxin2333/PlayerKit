@@ -1,11 +1,12 @@
 import Foundation
+import PlayerKit
 
 /**
  * 播放器场景播放流程服务协议
  * 定义播放流程执行及是否需要执行播放的检查能力
  */
 @MainActor
-public protocol PlayerScenePlayerProcessService: PluginService {
+public protocol ScenePlayerProcessService: PluginService {
 
     /**
      * 执行播放流程

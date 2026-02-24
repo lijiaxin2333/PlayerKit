@@ -12,16 +12,19 @@
 		0E2F30F7781F68D1F0648EA7 /* PlayerCoverMaskPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 287181332FC7C5088D9BA912 /* PlayerCoverMaskPlugin.swift */; };
 		12D7134C3FA162F6B30C683D /* PlayerSpeedPanelPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 292027AF722AB2C9EA8D548E /* PlayerSpeedPanelPlugin.swift */; };
 		152F78C4F2D8DBC57C8B605D /* ShowcaseDetailControlPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A675B83F19DDB7554B02C241 /* ShowcaseDetailControlPlugin.swift */; };
+		157B1E06F0C7502443D62E22 /* PlayerScenePlayerProcessService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DAF2E907C3DED13C7C01F96 /* PlayerScenePlayerProcessService.swift */; };
 		1C383F3DE609B3CEFDC38607 /* ShowcaseFeedListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AA7178FB8FD997439BE4895 /* ShowcaseFeedListViewModel.swift */; };
 		1EB8C9C31647171C1E123789 /* PlayerDebugService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A8D41BBCCF60A68688A19C3 /* PlayerDebugService.swift */; };
 		1EEB10ADEDB6ECE3AF87BAB1 /* StartTimeDemoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63D9BB72A18CD704A187A913 /* StartTimeDemoViewController.swift */; };
 		21235922C56DA6557C69192B /* ShowcaseFeedPreRenderPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C7D8E87A6189733939E7B62 /* ShowcaseFeedPreRenderPlugin.swift */; };
+		23FBD2DFE74934625D389EB0 /* ScenePlayerRegProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91971AA6E4A77F1362C76D7C /* ScenePlayerRegProvider.swift */; };
 		252574559963A9A23A0E56E8 /* SnapshotDemoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D243291D3817BD26E2C5A54 /* SnapshotDemoViewController.swift */; };
 		25700B577521E358EEBAA477 /* PlayerDemoMenuViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B79B3CFD31BF8006BCC2C6ED /* PlayerDemoMenuViewController.swift */; };
 		29500245CDD248A60F752C99 /* PlayerToastPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BF240B0D9ABD4FB132D2321 /* PlayerToastPlugin.swift */; };
 		295D7F537049A008EAD2B359 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4823F044FDF75E9040A2C600 /* SceneDelegate.swift */; };
 		2F2C272C1135D72AF7F02A27 /* PlayerTipManagerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ABEBDBCDA96427BBB9D4E82 /* PlayerTipManagerService.swift */; };
 		3971DA2DC19A145B46BD8021 /* PlayerPanelService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B42634BDE60C366E10C2E001 /* PlayerPanelService.swift */; };
+		3B589E45EAE8FC2DE0F34044 /* PlayerScenePlayerProcessPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 211224E32C134600A8B44200 /* PlayerScenePlayerProcessPlugin.swift */; };
 		3EFFCB7B4BAD59DAE3B2C1F7 /* PlayerTipManagerPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E3E7AB97B692D3FA6C2098B /* PlayerTipManagerPlugin.swift */; };
 		52932836644D7973CD55CBAD /* ShowcaseFeedCellViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9ADA14A144176E13E0156BCC /* ShowcaseFeedCellViewModel.swift */; };
 		673879FF5024DD93718B6797 /* PluginDemoBaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB89CC27EBCFF6E37F3EE0F2 /* PluginDemoBaseViewController.swift */; };
@@ -48,7 +51,9 @@
 		C4CC8EC0B3DEE14AFFFCE901 /* PlayerControlViewService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A4E6ABEEF584640634B139A /* PlayerControlViewService.swift */; };
 		CA101E8C4775161903D5A741 /* PlayerDebugPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = E626055570D14098D33EDA0C /* PlayerDebugPlugin.swift */; };
 		CA34F6FE14A2FD7913134342 /* ShowcaseDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D33EB5E11A99887B46D48083 /* ShowcaseDetailViewController.swift */; };
+		CF30818FA7E355C84EBE15D4 /* SwiftUIPlayerDemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 018E62EEF329B82CAA365528 /* SwiftUIPlayerDemoView.swift */; };
 		CF695D0DCE70E1890629CB41 /* PlayerControlViewPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 581E837D6A151BF67860C33A /* PlayerControlViewPlugin.swift */; };
+		D0C6E6D8CA379A9DACEA305A /* Player+SceneServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = D818B272197D6F8264BB804B /* Player+SceneServices.swift */; };
 		D0F91612CFE24C38AE59C7A8 /* ShowcaseFeedPlaybackPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61A259D4B8F7FC60E296465F /* ShowcaseFeedPlaybackPlugin.swift */; };
 		D3F2A83B22646052AAE6A992 /* ShowcaseFeedSectionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA67D9F0EB72B679CBAE9682 /* ShowcaseFeedSectionViewModel.swift */; };
 		D40F627DA326D87B6F0C60AD /* PlayerCoverMaskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA20A2716DD1A71AA1E3977B /* PlayerCoverMaskService.swift */; };
@@ -65,18 +70,18 @@
 		F4671601CE68B68D0D7D18A9 /* PlayerKit in Frameworks */ = {isa = PBXBuildFile; productRef = 37F022EF2F2D6D78DDAAAAFC /* PlayerKit */; };
 		F864BEDD7681D25676E46CC2 /* ShowcaseGestureHandlers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2693DD18DB3CB2F4A35B723 /* ShowcaseGestureHandlers.swift */; };
 		FB2D13B888BFA7BA6E4862CE /* PlayerZoomService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 340B94B339C497C2985D5F4B /* PlayerZoomService.swift */; };
-		PLAYEREXT01ABCDEF01234567 /* Player+SceneServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = PLAYEREXT02ABCDEF01234567 /* Player+SceneServices.swift */; };
-		SCENE1234567890ABCDEF01 /* ScenePlayerRegProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = SCENE1234567890ABCDEF02 /* ScenePlayerRegProvider.swift */; };
-		SWIFTUI001234567890ABCDEF /* SwiftUIPlayerDemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SWIFTUI002345678901ABCDEF /* SwiftUIPlayerDemoView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		018E62EEF329B82CAA365528 /* SwiftUIPlayerDemoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftUIPlayerDemoView.swift; sourceTree = "<group>"; };
 		04FA6B1F9A90F063BCA227C1 /* PlayerFinishViewService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerFinishViewService.swift; sourceTree = "<group>"; };
 		0D243291D3817BD26E2C5A54 /* SnapshotDemoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotDemoViewController.swift; sourceTree = "<group>"; };
+		0DAF2E907C3DED13C7C01F96 /* PlayerScenePlayerProcessService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerScenePlayerProcessService.swift; sourceTree = "<group>"; };
 		1A4E6ABEEF584640634B139A /* PlayerControlViewService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerControlViewService.swift; sourceTree = "<group>"; };
 		1AAEB1101CF22693A7565568 /* FeedSceneContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedSceneContext.swift; sourceTree = "<group>"; };
 		1BCECE80D2529ED40EB1CAF5 /* PlayerSpeedPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSpeedPanelView.swift; sourceTree = "<group>"; };
 		1D3BCA95CAF5FDE921DC513A /* ShowcaseFeedScenePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseFeedScenePlayer.swift; sourceTree = "<group>"; };
+		211224E32C134600A8B44200 /* PlayerScenePlayerProcessPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerScenePlayerProcessPlugin.swift; sourceTree = "<group>"; };
 		21AEBF9F4BCB9EAB761B9A71 /* PlayerGesturePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerGesturePlugin.swift; sourceTree = "<group>"; };
 		287181332FC7C5088D9BA912 /* PlayerCoverMaskPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerCoverMaskPlugin.swift; sourceTree = "<group>"; };
 		292027AF722AB2C9EA8D548E /* PlayerSpeedPanelPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSpeedPanelPlugin.swift; sourceTree = "<group>"; };
@@ -102,6 +107,7 @@
 		6E5C83E4BFF16AE27F23463B /* PlayerKitDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PlayerKitDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7FF7541EFC0AC0E95857BF7B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		8596D75076C16739EDEF5AD3 /* PlayerZoomPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerZoomPlugin.swift; sourceTree = "<group>"; };
+		91971AA6E4A77F1362C76D7C /* ScenePlayerRegProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScenePlayerRegProvider.swift; sourceTree = "<group>"; };
 		990A46EC5472B01DA03BA14F /* ShowcaseFeedSectionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseFeedSectionController.swift; sourceTree = "<group>"; };
 		9ADA14A144176E13E0156BCC /* ShowcaseFeedCellViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseFeedCellViewModel.swift; sourceTree = "<group>"; };
 		9C7D8E87A6189733939E7B62 /* ShowcaseFeedPreRenderPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseFeedPreRenderPlugin.swift; sourceTree = "<group>"; };
@@ -121,6 +127,7 @@
 		D33EB5E11A99887B46D48083 /* ShowcaseDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseDetailViewController.swift; sourceTree = "<group>"; };
 		D4EE57BB8840ABE48608158B /* FeedPlayerPool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedPlayerPool.swift; sourceTree = "<group>"; };
 		D70A384A8940840324373D76 /* ShowcaseFeedCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseFeedCell.swift; sourceTree = "<group>"; };
+		D818B272197D6F8264BB804B /* Player+SceneServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Player+SceneServices.swift"; sourceTree = "<group>"; };
 		DB89CC27EBCFF6E37F3EE0F2 /* PluginDemoBaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginDemoBaseViewController.swift; sourceTree = "<group>"; };
 		E146581D2E6CC1E5435E77F9 /* ShowcaseDetailSceneContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseDetailSceneContext.swift; sourceTree = "<group>"; };
 		E20EFA5A475C963304460EFE /* PlayerSpeedPanelService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSpeedPanelService.swift; sourceTree = "<group>"; };
@@ -131,9 +138,6 @@
 		F2652D80C2E3741EA1B9E762 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F93F780693EB4833336B7A42 /* GestureDemoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GestureDemoViewController.swift; sourceTree = "<group>"; };
 		FD6D51A0779EAAB7D0E0F3F6 /* LoopingDemoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopingDemoViewController.swift; sourceTree = "<group>"; };
-		PLAYEREXT02ABCDEF01234567 /* Player+SceneServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Player+SceneServices.swift"; sourceTree = "<group>"; };
-		SCENE1234567890ABCDEF02 /* ScenePlayerRegProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScenePlayerRegProvider.swift; sourceTree = "<group>"; };
-		SWIFTUI002345678901ABCDEF /* SwiftUIPlayerDemoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftUIPlayerDemoView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -186,6 +190,7 @@
 				E11AC4F052D38C12F2D2924E /* FullScreen */,
 				BDC5B3E942C0578D8D1B560B /* Gesture */,
 				D0D7D892282904E4DDF793A8 /* Panel */,
+				BB2FBCF19EC9F4515FC58A70 /* Process */,
 				963CD464180EC955C75AAA64 /* SpeedPanel */,
 				772A0987D72CB178C15CC5E6 /* TipManager */,
 				5849229BA96CEE9907E894D8 /* Toast */,
@@ -260,6 +265,14 @@
 			path = PluginDemo;
 			sourceTree = "<group>";
 		};
+		45947557BB7F35FC0131CF06 /* SwiftUI */ = {
+			isa = PBXGroup;
+			children = (
+				018E62EEF329B82CAA365528 /* SwiftUIPlayerDemoView.swift */,
+			);
+			path = SwiftUI;
+			sourceTree = "<group>";
+		};
 		5849229BA96CEE9907E894D8 /* Toast */ = {
 			isa = PBXGroup;
 			children = (
@@ -292,17 +305,9 @@
 				6870C8B0A43B7D54441D5AD9 /* Features */,
 				3D1083E4EE6C8980D8CDB5FB /* PluginDemo */,
 				1A4B0AC3C28B7F575CB13343 /* Showcase */,
-				SWIFTUI003456789012ABCDEF /* SwiftUI */,
+				45947557BB7F35FC0131CF06 /* SwiftUI */,
 			);
 			path = Demo;
-			sourceTree = "<group>";
-		};
-		SWIFTUI003456789012ABCDEF /* SwiftUI */ = {
-			isa = PBXGroup;
-			children = (
-				SWIFTUI002345678901ABCDEF /* SwiftUIPlayerDemoView.swift */,
-			);
-			path = SwiftUI;
 			sourceTree = "<group>";
 		};
 		7BF8B8B0BDF6EADC7D21047A /* Debug */ = {
@@ -317,7 +322,7 @@
 		8057B573C3DCE185B5D815F8 /* Player */ = {
 			isa = PBXGroup;
 			children = (
-				PLAYEREXT02ABCDEF01234567 /* Player+SceneServices.swift */,
+				D818B272197D6F8264BB804B /* Player+SceneServices.swift */,
 				DBCA3D6686499E80FA79C89B /* Configuration */,
 				9563952644348ED2C75EEF9D /* Feed */,
 			);
@@ -362,7 +367,7 @@
 		A8D9C506BC6DC9F4B4B95D06 /* ScenePlayer */ = {
 			isa = PBXGroup;
 			children = (
-				SCENE1234567890ABCDEF02 /* ScenePlayerRegProvider.swift */,
+				91971AA6E4A77F1362C76D7C /* ScenePlayerRegProvider.swift */,
 				07D99DAEE1CAE3E5A01A3DF8 /* Plugins */,
 			);
 			path = ScenePlayer;
@@ -375,6 +380,15 @@
 				1A4E6ABEEF584640634B139A /* PlayerControlViewService.swift */,
 			);
 			path = ControlView;
+			sourceTree = "<group>";
+		};
+		BB2FBCF19EC9F4515FC58A70 /* Process */ = {
+			isa = PBXGroup;
+			children = (
+				211224E32C134600A8B44200 /* PlayerScenePlayerProcessPlugin.swift */,
+				0DAF2E907C3DED13C7C01F96 /* PlayerScenePlayerProcessService.swift */,
+			);
+			path = Process;
 			sourceTree = "<group>";
 		};
 		BDC5B3E942C0578D8D1B560B /* Gesture */ = {
@@ -490,6 +504,7 @@
 				D7F97320313E30466161D967 /* FeedSceneContext.swift in Sources */,
 				A449CEA749DDC45A9ECB9B82 /* GestureDemoViewController.swift in Sources */,
 				F38563BDF75673C72F6F6D40 /* LoopingDemoViewController.swift in Sources */,
+				D0C6E6D8CA379A9DACEA305A /* Player+SceneServices.swift in Sources */,
 				8B8CC9832C8984910778FF78 /* PlayerConfiguration.swift in Sources */,
 				CF695D0DCE70E1890629CB41 /* PlayerControlViewPlugin.swift in Sources */,
 				C4CC8EC0B3DEE14AFFFCE901 /* PlayerControlViewService.swift in Sources */,
@@ -506,6 +521,8 @@
 				921197E634346D9CE2ACBC9D /* PlayerGestureService.swift in Sources */,
 				DEB2B8D8C5F3753CCDA12B2E /* PlayerPanelPlugin.swift in Sources */,
 				3971DA2DC19A145B46BD8021 /* PlayerPanelService.swift in Sources */,
+				3B589E45EAE8FC2DE0F34044 /* PlayerScenePlayerProcessPlugin.swift in Sources */,
+				157B1E06F0C7502443D62E22 /* PlayerScenePlayerProcessService.swift in Sources */,
 				12D7134C3FA162F6B30C683D /* PlayerSpeedPanelPlugin.swift in Sources */,
 				83FE66A05B69AB2EC7A279B5 /* PlayerSpeedPanelService.swift in Sources */,
 				70BF11961C053EC0C414DDD0 /* PlayerSpeedPanelView.swift in Sources */,
@@ -517,6 +534,7 @@
 				FB2D13B888BFA7BA6E4862CE /* PlayerZoomService.swift in Sources */,
 				673879FF5024DD93718B6797 /* PluginDemoBaseViewController.swift in Sources */,
 				295D7F537049A008EAD2B359 /* SceneDelegate.swift in Sources */,
+				23FBD2DFE74934625D389EB0 /* ScenePlayerRegProvider.swift in Sources */,
 				0CA18A67344544B6AEE2E65D /* ShowcaseAutoPlayNextPlugin.swift in Sources */,
 				152F78C4F2D8DBC57C8B605D /* ShowcaseDetailControlPlugin.swift in Sources */,
 				B8B0A9475448479E74FAF6D9 /* ShowcaseDetailLongPressSpeedPlugin.swift in Sources */,
@@ -539,11 +557,9 @@
 				252574559963A9A23A0E56E8 /* SnapshotDemoViewController.swift in Sources */,
 				6D224B35BF2E5B4D9E1E9D29 /* SpeedDemoViewController.swift in Sources */,
 				1EEB10ADEDB6ECE3AF87BAB1 /* StartTimeDemoViewController.swift in Sources */,
+				CF30818FA7E355C84EBE15D4 /* SwiftUIPlayerDemoView.swift in Sources */,
 				B8DA8406D53E11EC6C13ACAE /* ViewController.swift in Sources */,
 				DD3C3D691A53ECAABB8D1128 /* ZoomDemoViewController.swift in Sources */,
-				SCENE1234567890ABCDEF01 /* ScenePlayerRegProvider.swift in Sources */,
-				SWIFTUI001234567890ABCDEF /* SwiftUIPlayerDemoView.swift in Sources */,
-				PLAYEREXT01ABCDEF01234567 /* Player+SceneServices.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

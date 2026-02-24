@@ -103,7 +103,7 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         playbackPlugin: ShowcaseFeedPlaybackPlugin
     ) {
         scenePlayer.player?.bindPool(identifier: "showcase")
-        guard let processService = scenePlayer.resolveService(PlayerScenePlayerProcessService.self) else { return }
+        guard let processService = scenePlayer.resolveService(ScenePlayerProcessService.self) else { return }
         processService.execPlay(
             isAutoPlay: isAutoPlay,
             prepare: nil,
@@ -163,7 +163,6 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
 
     func detachPlayer() {
         guard let index = _cellViewModel?.videoIndex else { return }
-        PLog.detachPlayerLog(index)
         _playerContainer.subviews.forEach { $0.removeFromSuperview() }
         scenePlayer.removePlayer()
     }
@@ -223,9 +222,6 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         super.prepareForReuse()
         hasAppear = false
         isTransferringPlayer = false
-        if let index = _cellViewModel?.videoIndex {
-            PLog.prepareForReuse(index)
-        }
         scenePlayer.post(.cellPrepareForReuse, sender: self)
         stopAndRecycleEngine()
         if !scenePlayer.hasPlayer() {

@@ -70,7 +70,6 @@ final class ShowcaseFeedListViewController: BaseListViewController<ShowcaseFeedL
         viewModel.removeAllBusinessPlugins()
         viewModel.sectionViewModelsArray.removeAll()
         ShowcaseDataSource.shared.reset()
-        PLog.clearCellVisibleCache()
     }
 
     override var prefersStatusBarHidden: Bool { true }

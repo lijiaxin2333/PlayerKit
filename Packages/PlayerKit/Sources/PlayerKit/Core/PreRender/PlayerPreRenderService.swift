@@ -4,7 +4,7 @@ import UIKit
 
 // MARK: - Types
 
-public enum PlayerPreRenderState: Int {
+public enum PlayerPreRenderState: Int, Sendable {
     case idle = 0
     case preparing
     case readyToDisplay

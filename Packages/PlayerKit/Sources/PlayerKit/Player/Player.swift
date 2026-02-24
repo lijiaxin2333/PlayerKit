@@ -28,6 +28,8 @@ final class PlayerRegProvider: RegisterProvider {
         registerSet.addEntry(pluginClass: PlayerSnapshotPlugin.self, serviceType: PlayerSnapshotService.self)
         // 引擎池服务（全局单例访问入口）
         registerSet.addEntry(pluginClass: PlayerEnginePoolPlugin.self, serviceType: PlayerEnginePoolService.self)
+        // 预渲染池服务（全局单例访问入口）
+        registerSet.addEntry(pluginClass: PlayerPreRenderPoolPlugin.self, serviceType: PlayerPreRenderPoolService.self)
         // HTTP 代理服务（视频缓存）
         registerSet.addEntry(pluginClass: PlayerHTTPProxyPlugin.self, serviceType: PlayerHTTPProxyService.self)
     }
@@ -141,5 +143,19 @@ public final class Player: ContextHolder {
     /** 截图服务，管理视频截图功能 */
     public var snapshotService: PlayerSnapshotService? {
         context.resolveService(PlayerSnapshotService.self)
+    }
+
+    /** 预渲染池服务，管理预渲染播放器 */
+    public var preRenderPoolService: PlayerPreRenderPoolService? {
+        context.resolveService(PlayerPreRenderPoolService.self)
+    }
+
+    // MARK: - PreRender Pool
+
+    /** 绑定预渲染引擎到当前播放器 */
+    @discardableResult
+    public func adoptEngine(fromPreRender identifier: String) -> Bool {
+        guard let pool = preRenderPoolService else { return false }
+        return pool.consumeAndTransfer(identifier: identifier, to: self)
     }
 }

@@ -157,7 +157,6 @@ public final class Context: PublicContext, ExtendContext {
         extCtx.baseContext = self
         extCtx.plugins.values.forEach { $0.contextDidExtend(on: self) }
 
-        // 对齐 Gaga: 父 Context 向扩展 Context 重发 sticky events（不递归遍历 subContexts）
         reissueStickyEvents(to: extCtx, shouldIterate: false)
     }
 

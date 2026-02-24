@@ -419,7 +419,6 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         super.pluginDidLoad(context)
         createPlayerIfNeeded()
 
-        // 绑定所有 sticky events（对齐 Gaga 模式：在 pluginDidLoad 中绑定，bindBlock 动态返回当前状态）
         bindStickyEvents()
 
         // 发送引擎创建事件
@@ -437,8 +436,7 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         }
 
         // 准备好显示 sticky event - 根据 _isReadyForDisplay 状态决定
-        (self.context as? Context)?.bindStickyEvent(.playerReadyForDisplaySticky) { [weak self] in
-            guard let self = self, self._isReadyForDisplay else { return nil }
+        (self.context as? Context)?.bindStickyEvent(.playerReadyForDisplaySticky) { [weak self] in guard let self = self, self._isReadyForDisplay else { return nil }
             return .shouldSend(self)
         }
 

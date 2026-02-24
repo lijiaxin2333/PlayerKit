@@ -4,7 +4,6 @@ import AVFoundation
 /**
  * 预渲染池插件，提供对全局预渲染池的服务访问
  * - 作为 PlayerPreRenderPoolService 的访问入口
- * - 业务层通过 Context.resolveService 获取预渲染池服务
  */
 @MainActor
 public final class PlayerPreRenderPoolPlugin: BasePlugin, PlayerPreRenderPoolService {

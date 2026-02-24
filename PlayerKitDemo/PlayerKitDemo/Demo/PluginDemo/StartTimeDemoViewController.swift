@@ -54,8 +54,7 @@ final class StartTimeDemoViewController: PluginDemoBaseViewController {
         let process = player.processService
         guard let process = process, !process.isScrubbing else { return }
         progressSlider.value = Float(process.progress)
-        let time = player.context.resolveService(PlayerTimeControlService.self)
-        statusLabel.text = "当前: \(time?.currentTimeString(style: .standard) ?? "--") / \(time?.durationString(style: .standard) ?? "--")\n起播时间: \(String(format: "%.1f", player.startTimeService?.startTime ?? 0))s"
+        statusLabel.text = "当前: \(player.timeControlService?.currentTimeString(style: .standard) ?? "--") / \(player.timeControlService?.durationString(style: .standard) ?? "--")\n起播时间: \(String(format: "%.1f", player.startTimeService?.startTime ?? 0))s"
     }
 
     @objc private func startAt0() {
@@ -99,16 +98,14 @@ final class StartTimeDemoViewController: PluginDemoBaseViewController {
 
     @objc private func cacheProgress() {
         player.startTimeService?.cacheCurrentProgress()
-        let toast = player.context.resolveService(PlayerToastService.self)
-        toast?.showToast("进度已缓存", style: .info, duration: 1.5)
+        player.toastService?.showToast("进度已缓存", style: .info, duration: 1.5)
     }
 
     @objc private func restoreProgress() {
         let cached = player.startTimeService?.cachedProgress(forKey: player.dataService?.dataModel.vid ?? "default")
         if let cached = cached {
             player.processService?.seek(to: cached / max(player.processService?.duration ?? 1, 1), completion: nil)
-            let toast = player.context.resolveService(PlayerToastService.self)
-            toast?.showToast("已恢复到 \(String(format: "%.1f", cached))s", style: .info, duration: 1.5)
+            player.toastService?.showToast("已恢复到 \(String(format: "%.1f", cached))s", style: .info, duration: 1.5)
         }
     }
 }

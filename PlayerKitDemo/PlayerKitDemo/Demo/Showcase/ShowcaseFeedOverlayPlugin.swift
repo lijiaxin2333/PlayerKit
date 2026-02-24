@@ -285,6 +285,9 @@ final class ShowcaseFeedOverlayPlugin: BasePlugin, ShowcaseFeedOverlayService {
     let socialView = ShowcaseFeedSocialView()
     private var isInstalled = false
 
+    @PlayerPlugin private var feedDataService: ShowcaseFeedDataService?
+    @PlayerPlugin private var cellViewService: ShowcaseFeedCellViewService?
+
     required override init() {
         super.init()
     }
@@ -298,10 +301,10 @@ final class ShowcaseFeedOverlayPlugin: BasePlugin, ShowcaseFeedOverlayService {
         context.add(self, event: .showcaseFeedDataDidUpdate) { [weak self] _, _ in
             guard let self = self else { return }
             self.installIfNeeded()
-            guard let dataService = self.context?.resolveService(ShowcaseFeedDataService.self),
-                  let video = dataService.video else { return }
-            self.infoView.configure(video: video, index: dataService.videoIndex)
-            self.socialView.configure(video: video, index: dataService.videoIndex)
+            guard let video = self.feedDataService?.video else { return }
+            let index = self.feedDataService?.videoIndex ?? 0
+            self.infoView.configure(video: video, index: index)
+            self.socialView.configure(video: video, index: index)
         }
 
         context.add(self, event: .cellPrepareForReuse) { [weak self] _, _ in
@@ -310,7 +313,7 @@ final class ShowcaseFeedOverlayPlugin: BasePlugin, ShowcaseFeedOverlayService {
     }
 
     func bringOverlaysToFront() {
-        guard let contentView = context?.resolveService(ShowcaseFeedCellViewService.self)?.contentView else { return }
+        guard let contentView = cellViewService?.contentView else { return }
         contentView.bringSubviewToFront(gradientView)
         contentView.bringSubviewToFront(infoView)
         contentView.bringSubviewToFront(socialView)
@@ -318,8 +321,7 @@ final class ShowcaseFeedOverlayPlugin: BasePlugin, ShowcaseFeedOverlayService {
 
     private func installIfNeeded() {
         guard !isInstalled else { return }
-        guard let cellViewService = context?.resolveService(ShowcaseFeedCellViewService.self),
-              let contentView = cellViewService.contentView else { return }
+        guard let contentView = cellViewService?.contentView else { return }
 
         for view in [gradientView as UIView, infoView, socialView] {
             view.translatesAutoresizingMaskIntoConstraints = false

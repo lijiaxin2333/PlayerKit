@@ -44,7 +44,7 @@ final class SnapshotDemoViewController: PluginDemoBaseViewController {
         guard let snapshot = player.snapshotService else { return }
         let image = snapshot.currentFrameImage(size: nil)
         previewImageView.image = image
-        let time = player.context.resolveService(PlayerTimeControlService.self)?.currentTime ?? 0
+        let time = player.timeControlService?.currentTime ?? 0
         infoLabel.text = "同步截取 @ \(String(format: "%.1f", time))s"
     }
 

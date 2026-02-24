@@ -8,24 +8,17 @@ import PlayerKit
 @MainActor
 public final class ScenePlayerProcessPlugin: BasePlugin, ScenePlayerProcessService {
 
-    /**
-     * 初始化插件
-     */
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
+    @PlayerPlugin private var playbackControl: PlayerPlaybackControlService?
+
     public required init() {
         super.init()
     }
 
-    /**
-     * 插件加载完成时调用
-     * - Parameter context: Context 协议实例
-     */
     public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
     }
 
-    // MARK: - Private
-
-    /// 检查场景是否有播放器（通过 context.holder 获取 ScenePlayerProtocol）
     private var hasPlayer: Bool {
         guard let holder = context?.holder as? ScenePlayerProtocol else { return false }
         return holder.hasPlayer()
@@ -53,15 +46,14 @@ public final class ScenePlayerProcessPlugin: BasePlugin, ScenePlayerProcessServi
         setDataIfNeeded: (() -> Void)?
     ) {
         if hasPlayer {
-            let engine = context?.resolveService(PlayerEngineCoreService.self)
-            let hasActiveEngine = engine?.currentURL != nil
-            if hasActiveEngine {
-                if engine?.playbackState == .playing {
+            let hasActiveEngine = engineService?.currentURL != nil
+            if hasActiveEngine == true {
+                if engineService?.playbackState == .playing {
                     return
                 }
             }
             prepare?()
-            if !hasActiveEngine {
+            if hasActiveEngine != true {
                 createIfNeeded?()
             }
         } else {
@@ -81,8 +73,7 @@ public final class ScenePlayerProcessPlugin: BasePlugin, ScenePlayerProcessServi
         attach?()
 
         if isAutoPlay {
-            if let playbackControl = context?.resolveService(PlayerPlaybackControlService.self),
-               !playbackControl.isPlaying {
+            if let playbackControl = playbackControl, !playbackControl.isPlaying {
                 playbackControl.play()
             }
         }
@@ -104,7 +95,7 @@ public final class ScenePlayerProcessPlugin: BasePlugin, ScenePlayerProcessServi
      */
     public func checkIfNeedExecPlay(replayWhenFinished: Bool) -> Bool {
         if hasPlayer {
-            guard let engine = context?.resolveService(PlayerEngineCoreService.self) else {
+            guard let engine = engineService else {
                 return true
             }
             if engine.playbackState == .playing {

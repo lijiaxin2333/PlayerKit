@@ -58,17 +58,19 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
     var onProgressUpdate: ((Float, String, String) -> Void)?
     var onControlShouldShow: ((Bool) -> Void)?
 
-    private var engineService: PlayerEngineCoreService? {
-        context?.resolveService(PlayerEngineCoreService.self)
-    }
-
-    private var processService: PlayerProcessService? {
-        context?.resolveService(PlayerProcessService.self)
-    }
-
-    private var speedService: PlayerSpeedService? {
-        context?.resolveService(PlayerSpeedService.self)
-    }
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
+    @PlayerPlugin private var processService: PlayerProcessService?
+    @PlayerPlugin private var speedService: PlayerSpeedService?
+    @PlayerPlugin private var startTimeService: PlayerStartTimeService?
+    @PlayerPlugin private var gestureService: PlayerGestureService?
+    @PlayerPlugin private var tipService: PlayerTipManagerService?
+    @PlayerPlugin private var finishViewService: PlayerFinishViewService?
+    @PlayerPlugin private var playbackControl: PlayerPlaybackControlService?
+    @PlayerPlugin private var toastService: PlayerToastService?
+    @PlayerPlugin private var mediaService: PlayerMediaControlService?
+    @PlayerPlugin private var snapshotService: PlayerSnapshotService?
+    @PlayerPlugin private var fullScreenService: PlayerFullScreenService?
+    @PlayerPlugin private var debugService: PlayerDebugService?
 
     override func config(_ configModel: Any?) {
         super.config(configModel)
@@ -86,9 +88,8 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
         controlHideTimer?.invalidate()
         controlHideTimer = nil
 
-        context?.resolveService(PlayerStartTimeService.self)?.cacheCurrentProgress()
+        startTimeService?.cacheCurrentProgress()
 
-        let gestureService = context?.resolveService(PlayerGestureService.self)
         gestureService?.isPanEnabled = false
         gestureService?.isPinchEnabled = false
         gestureService?.gestureView = nil
@@ -105,14 +106,14 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
     }
 
     private func setupGestures(gestureView: UIView) {
-        guard let gestureService = context?.resolveService(PlayerGestureService.self) else { return }
+        guard let gestureService = gestureService else { return }
         gestureService.gestureView = gestureView
         gestureService.isPanEnabled = true
         gestureService.isPinchEnabled = true
     }
 
     private func setupStartTime(video: ShowcaseVideo) {
-        guard let startTimeService = context?.resolveService(PlayerStartTimeService.self) else { return }
+        guard let startTimeService = startTimeService else { return }
         startTimeService.cacheProgressEnabled = true
         if let url = video.url {
             let key = url.absoluteString
@@ -142,29 +143,24 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
         }
 
         ctx.add(self, event: .playerPlayingStalledBegin) { [weak self] _, _ in
-            let tip = self?.context?.resolveService(PlayerTipManagerService.self)
-            tip?.showTip(.buffering, message: "Buffering...")
+            self?.tipService?.showTip(.buffering, message: "Buffering...")
         }
 
         ctx.add(self, event: .playerPlayingStalledEnd) { [weak self] _, _ in
-            let tip = self?.context?.resolveService(PlayerTipManagerService.self)
-            tip?.hideTip(.buffering)
+            self?.tipService?.hideTip(.buffering)
         }
 
         ctx.add(self, event: .playerPlaybackDidFinish) { [weak self] _, _ in
             guard let self = self else { return }
-            let finish = self.context?.resolveService(PlayerFinishViewService.self)
-            finish?.showFinishView()
+            self.finishViewService?.showFinishView()
             self.onControlShouldShow?(true)
-
-            self.context?.resolveService(PlayerStartTimeService.self)?.cacheCurrentProgress()
+            self.startTimeService?.cacheCurrentProgress()
         }
 
     }
 
     func togglePlayPause() {
-        let playback = context?.resolveService(PlayerPlaybackControlService.self)
-        playback?.togglePlayPause()
+        playbackControl?.togglePlayPause()
         scheduleControlHide()
     }
 
@@ -176,45 +172,39 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
         let next = speeds[nextIdx % speeds.count]
         speedService.setSpeed(next)
 
-        let toast = context?.resolveService(PlayerToastService.self)
-        toast?.showToast("Speed: \(next)x", style: .info, duration: 1.5)
+        toastService?.showToast("Speed: \(next)x", style: .info, duration: 1.5)
         return next
     }
 
     func toggleMute() -> Bool {
-        let media = context?.resolveService(PlayerMediaControlService.self)
-        media?.toggleMute()
-        return media?.isMuted == true
+        mediaService?.toggleMute()
+        return mediaService?.isMuted == true
     }
 
     func toggleLoop() -> Bool {
         guard let engine = engineService else { return false }
         engine.isLooping.toggle()
-        let toast = context?.resolveService(PlayerToastService.self)
-        toast?.showToast(engine.isLooping ? "Loop: ON" : "Loop: OFF", style: .info, duration: 1.5)
+        toastService?.showToast(engine.isLooping ? "Loop: ON" : "Loop: OFF", style: .info, duration: 1.5)
         return engine.isLooping
     }
 
     func captureSnapshot(completion: @escaping (UIImage?) -> Void) {
-        context?.resolveService(PlayerSnapshotService.self)?.currentFrameImage { [weak self] image in
+        snapshotService?.currentFrameImage { [weak self] image in
             guard let self = self else { completion(nil); return }
             if image != nil {
-                let toast = self.context?.resolveService(PlayerToastService.self)
-                toast?.showToast("Screenshot captured!", style: .success, duration: 2.0)
+                self.toastService?.showToast("Screenshot captured!", style: .success, duration: 2.0)
             }
             completion(image)
         }
     }
 
     func toggleFullScreen() {
-        let fs = context?.resolveService(PlayerFullScreenService.self)
-        fs?.toggleFullScreen(orientation: .auto, animated: true)
+        fullScreenService?.toggleFullScreen(orientation: .auto, animated: true)
     }
 
     func showDebugPanel() {
-        let debug = context?.resolveService(PlayerDebugService.self)
-        debug?.isDebugEnabled = true
-        debug?.showDebugPanel()
+        debugService?.isDebugEnabled = true
+        debugService?.showDebugPanel()
     }
 
     func beginSliderScrub() {
@@ -259,8 +249,6 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
     }
 
     func handlePanChange(direction: PlayerPanDirection, delta: Float) -> String? {
-        let media = context?.resolveService(PlayerMediaControlService.self)
-
         switch direction {
         case .horizontal:
             let current = processService?.progress ?? 0
@@ -271,11 +259,11 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
             }
             return nil
         case .verticalLeft:
-            media?.setBrightness((media?.brightness ?? 0.5) + delta * 0.5, animated: false)
-            return String(format: "Brightness: %.0f%%", (media?.brightness ?? 0) * 100)
+            mediaService?.setBrightness((mediaService?.brightness ?? 0.5) + delta * 0.5, animated: false)
+            return String(format: "Brightness: %.0f%%", (mediaService?.brightness ?? 0) * 100)
         case .verticalRight:
-            media?.setVolume((media?.volume ?? 0.5) + delta * 0.5, animated: false)
-            return String(format: "Volume: %.0f%%", (media?.volume ?? 0) * 100)
+            mediaService?.setVolume((mediaService?.volume ?? 0.5) + delta * 0.5, animated: false)
+            return String(format: "Volume: %.0f%%", (mediaService?.volume ?? 0) * 100)
         default:
             return nil
         }
@@ -300,15 +288,13 @@ final class ShowcaseDetailControlPlugin: BasePlugin, ShowcaseDetailControlServic
     }
 
     func handlePinch(scale: CGFloat) -> String? {
-        let engine = engineService
         if scale > 1.2 {
-            engine?.scalingMode = .fill
+            engineService?.scalingMode = .fill
         } else if scale < 0.8 {
-            engine?.scalingMode = .fit
+            engineService?.scalingMode = .fit
         }
-        let toast = context?.resolveService(PlayerToastService.self)
-        let mode = engine?.scalingMode == .fill ? "Fill" : "Fit"
-        toast?.showToast("Scale: \(mode)", style: .info, duration: 1.5)
+        let mode = engineService?.scalingMode == .fill ? "Fill" : "Fit"
+        toastService?.showToast("Scale: \(mode)", style: .info, duration: 1.5)
         return mode
     }
 

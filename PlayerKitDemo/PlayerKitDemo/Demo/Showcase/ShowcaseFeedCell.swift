@@ -103,7 +103,7 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         playbackPlugin: ShowcaseFeedPlaybackPlugin
     ) {
         scenePlayer.player?.bindPool(identifier: "showcase")
-        guard let processService = scenePlayer.resolveService(ScenePlayerProcessService.self) else { return }
+        guard let processService = scenePlayer.processService else { return }
         processService.execPlay(
             isAutoPlay: isAutoPlay,
             prepare: nil,
@@ -189,7 +189,7 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
     func canDetachPlayer() -> Bool {
         guard let player = scenePlayer.player else { return false }
         guard player.engineService != nil else { return false }
-        return scenePlayer.resolveService(PlayerPlaybackControlService.self)?.isPlaying == true
+        return scenePlayer.playbackControl?.isPlaying == true
     }
 
     func attachTransferredPlayer(_ player: Player) {

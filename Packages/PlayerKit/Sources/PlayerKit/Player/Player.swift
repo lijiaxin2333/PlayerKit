@@ -57,10 +57,7 @@ public final class Player: ContextHolder {
     /** 引擎池标识符（用于从池中获取/回收引擎） */
     private var _poolIdentifier: String?
 
-    /** 引擎池服务，通过 Context 获取全局池 */
-    public var poolService: PlayerEnginePoolService? {
-        context.resolveService(PlayerEnginePoolService.self)
-    }
+    @PlayerPlugin public var poolService: PlayerEnginePoolService?
 
     /** 绑定引擎池标识符，用于引擎复用 */
     public func bindPool(identifier: String) {
@@ -105,49 +102,22 @@ public final class Player: ContextHolder {
 
     // MARK: - 便捷服务访问
 
-    /** 数据服务，管理视频数据模型 */
-    public var dataService: PlayerDataService? {
-        context.resolveService(PlayerDataService.self)
-    }
+    @PlayerPlugin public var dataService: PlayerDataService?
+    @PlayerPlugin public var processService: PlayerProcessService?
+    @PlayerPlugin public var viewService: PlayerViewService?
+    @PlayerPlugin public var engineCoreService: PlayerEngineCoreService?
+    @PlayerPlugin public var speedService: PlayerSpeedService?
+    @PlayerPlugin public var startTimeService: PlayerStartTimeService?
+    @PlayerPlugin public var snapshotService: PlayerSnapshotService?
+    @PlayerPlugin public var preRenderPoolService: PlayerPreRenderPoolService?
+    @PlayerPlugin public var preRenderService: PlayerPreRenderService?
+    @PlayerPlugin public var playbackControlService: PlayerPlaybackControlService?
+    @PlayerPlugin public var loopingService: PlayerLoopingService?
+    @PlayerPlugin public var timeControlService: PlayerTimeControlService?
+    @PlayerPlugin public var mediaControlService: PlayerMediaControlService?
 
-    /** 流程服务，管理播放流程状态 */
-    public var processService: PlayerProcessService? {
-        context.resolveService(PlayerProcessService.self)
-    }
-
-    /** 视图服务，管理播放器视图层级 */
-    public var viewService: PlayerViewService? {
-        context.resolveService(PlayerViewService.self)
-    }
-
-    /** 引擎核心服务，提供底层播放能力 */
-    public var engineCoreService: PlayerEngineCoreService? {
-        context.resolveService(PlayerEngineCoreService.self)
-    }
-
-    /** 倍速服务，管理播放倍速 */
-    public var speedService: PlayerSpeedService? {
-        context.resolveService(PlayerSpeedService.self)
-    }
-
-    /** 引擎服务的便捷别名 */
     public var engineService: PlayerEngineCoreService? {
         return engineCoreService
-    }
-
-    /** 起播时间服务，管理视频起播时间点 */
-    public var startTimeService: PlayerStartTimeService? {
-        context.resolveService(PlayerStartTimeService.self)
-    }
-
-    /** 截图服务，管理视频截图功能 */
-    public var snapshotService: PlayerSnapshotService? {
-        context.resolveService(PlayerSnapshotService.self)
-    }
-
-    /** 预渲染池服务，管理预渲染播放器 */
-    public var preRenderPoolService: PlayerPreRenderPoolService? {
-        context.resolveService(PlayerPreRenderPoolService.self)
     }
 
     // MARK: - PreRender Pool

@@ -15,9 +15,11 @@ final class ShowcaseDetailLongPressSpeedPlugin: BasePlugin, ShowcaseDetailLongPr
     private var savedSpeed: Float = 1.0
     private let longPressSpeed: Float = 3.0
 
+    @PlayerPlugin private var speedService: PlayerSpeedService?
+
     func beginLongPressSpeed() {
         guard !isLongPressSpeedActive else { return }
-        guard let speedService = context?.resolveService(PlayerSpeedService.self) else { return }
+        guard let speedService = speedService else { return }
         savedSpeed = speedService.currentSpeed
         speedService.setSpeed(longPressSpeed)
         isLongPressSpeedActive = true
@@ -25,7 +27,7 @@ final class ShowcaseDetailLongPressSpeedPlugin: BasePlugin, ShowcaseDetailLongPr
 
     func endLongPressSpeed() {
         guard isLongPressSpeedActive else { return }
-        guard let speedService = context?.resolveService(PlayerSpeedService.self) else { return }
+        guard let speedService = speedService else { return }
         speedService.setSpeed(savedSpeed)
         isLongPressSpeedActive = false
     }

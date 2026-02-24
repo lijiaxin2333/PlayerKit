@@ -40,24 +40,23 @@ final class LoopingDemoViewController: PluginDemoBaseViewController {
     }
 
     private func updateStatus() {
-        let looping = player.context.resolveService(PlayerLoopingService.self)
-        statusLabel.text = "循环模式: \(looping?.isLooping == true ? "开启" : "关闭")"
+        statusLabel.text = "循环模式: \(player.loopingService?.isLooping == true ? "开启" : "关闭")"
     }
 
     @objc private func toggleLoop() {
-        player.context.resolveService(PlayerLoopingService.self)?.toggleLooping()
+        player.loopingService?.toggleLooping()
     }
 
     @objc private func replay() {
-        player.context.resolveService(PlayerPlaybackControlService.self)?.replay()
+        player.playbackControlService?.replay()
         updateStatus()
     }
 
     @objc private func togglePlay() {
-        player.context.resolveService(PlayerPlaybackControlService.self)?.togglePlayPause()
+        player.playbackControlService?.togglePlayPause()
     }
 
     @objc private func showFinish() {
-        player.context.resolveService(PlayerFinishViewService.self)?.showFinishView()
+        player.finishViewService?.showFinishView()
     }
 }

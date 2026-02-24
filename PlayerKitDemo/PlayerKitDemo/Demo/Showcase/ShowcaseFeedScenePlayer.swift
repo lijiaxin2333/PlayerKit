@@ -50,13 +50,12 @@ final class ShowcaseFeedScenePlayer: ScenePlayerProtocol {
     private var _player: Player?
     private let regProvider = ShowcaseFeedSceneRegProvider()
 
-    var dataService: ShowcaseFeedDataService? {
-        context.resolveService(ShowcaseFeedDataService.self)
-    }
-
-    var cellViewService: ShowcaseFeedCellViewService? {
-        context.resolveService(ShowcaseFeedCellViewService.self)
-    }
+    @PlayerPlugin var dataService: ShowcaseFeedDataService?
+    @PlayerPlugin var cellViewService: ShowcaseFeedCellViewService?
+    @PlayerPlugin var processService: ScenePlayerProcessService?
+    @PlayerPlugin var playbackControl: PlayerPlaybackControlService?
+    @PlayerPlugin var preRenderService: ShowcaseFeedPreRenderService?
+    @PlayerPlugin var autoPlayNextService: ShowcaseAutoPlayNextService?
 
     init() {
         let ctx = Context(name: "ShowcaseFeedSceneContext")
@@ -107,9 +106,7 @@ final class ShowcaseFeedScenePlayer: ScenePlayerProtocol {
 
     // MARK: - Convenience
 
-    var engineService: PlayerEngineCoreService? {
-        context.resolveService(PlayerEngineCoreService.self)
-    }
+    @PlayerPlugin var engineService: PlayerEngineCoreService?
 
     var playerView: UIView? {
         engineService?.playerView

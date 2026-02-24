@@ -83,21 +83,10 @@ public final class FeedSceneContext: ScenePlayerProtocol {
 
     // MARK: - Convenience
 
-    public var sceneProcessService: ScenePlayerProcessService? {
-        context.resolveService(ScenePlayerProcessService.self)
-    }
-
-    public var engineService: PlayerEngineCoreService? {
-        context.resolveService(PlayerEngineCoreService.self)
-    }
-
-    public var dataService: PlayerDataService? {
-        context.resolveService(PlayerDataService.self)
-    }
-
-    public var viewService: PlayerViewService? {
-        context.resolveService(PlayerViewService.self)
-    }
+    @PlayerPlugin public var sceneProcessService: ScenePlayerProcessService?
+    @PlayerPlugin public var engineService: PlayerEngineCoreService?
+    @PlayerPlugin public var dataService: PlayerDataService?
+    @PlayerPlugin public var viewService: PlayerViewService?
 
     public var playerView: UIView? {
         engineService?.playerView

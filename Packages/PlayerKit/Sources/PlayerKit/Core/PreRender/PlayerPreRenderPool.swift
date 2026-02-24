@@ -279,7 +279,7 @@ public extension Player {
 
     /// 从预渲染池消费并转移引擎
     func adoptFromPreRenderPool(identifier: String) -> Bool {
-        guard let poolPlugin = context.resolveService(PlayerPreRenderPoolService.self) else { return false }
+        guard let poolPlugin = preRenderPoolService else { return false }
         return poolPlugin.consumeAndTransfer(identifier: identifier, to: self)
     }
 }

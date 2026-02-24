@@ -25,16 +25,15 @@ final class ShowcaseFeedPreRenderPlugin: BasePlugin, ShowcaseFeedPreRenderServic
     private var consumePreRendered: ((String) -> Player?)?
     private var cancelPreRenderFn: ((String) -> Void)?
 
+    @PlayerPlugin private var cellViewService: ShowcaseFeedCellViewService?
+    @PlayerPlugin private var dataService: ShowcaseFeedDataService?
+
     private var playerContainerView: UIView? {
-        context?.resolveService(ShowcaseFeedCellViewService.self)?.playerContainerView
+        cellViewService?.playerContainerView
     }
 
     private var sceneContext: ShowcaseFeedScenePlayer? {
         (context as? Context)?.holder as? ShowcaseFeedScenePlayer
-    }
-
-    private var dataService: ShowcaseFeedDataService? {
-        context?.resolveService(ShowcaseFeedDataService.self)
     }
 
     override func pluginDidLoad(_ context: ContextProtocol) {

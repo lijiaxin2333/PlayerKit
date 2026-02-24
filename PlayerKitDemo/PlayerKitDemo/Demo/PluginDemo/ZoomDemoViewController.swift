@@ -87,8 +87,7 @@ final class ZoomDemoViewController: PluginDemoBaseViewController {
     }
 
     @objc private func toggleFullScreen() {
-        let fs = player.context.resolveService(PlayerFullScreenService.self)
-        fs?.toggleFullScreen(orientation: .landscapeRight, animated: true)
+        player.fullScreenService?.toggleFullScreen(orientation: .landscapeRight, animated: true)
     }
 }
 

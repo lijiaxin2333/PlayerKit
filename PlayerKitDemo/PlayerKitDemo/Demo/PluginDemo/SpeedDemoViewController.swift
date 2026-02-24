@@ -50,7 +50,6 @@ final class SpeedDemoViewController: PluginDemoBaseViewController {
     }
 
     @objc private func togglePlay() {
-        let playback = player.context.resolveService(PlayerPlaybackControlService.self)
-        playback?.togglePlayPause()
+        player.playbackControlService?.togglePlayPause()
     }
 }

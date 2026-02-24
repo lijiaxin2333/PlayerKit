@@ -48,7 +48,7 @@ final class ShowcaseFeedSectionController: BaseListSectionController, FeedAutoPl
 
     var isFeedAutoPlaying: Bool {
         guard let cell = feedCell else { return false }
-        guard let engineService = cell.scenePlayer.context.resolveService(PlayerEngineCoreService.self) else { return false }
+        guard let engineService = cell.scenePlayer.engineService else { return false }
         return engineService.playbackState == .playing
     }
 
@@ -117,7 +117,7 @@ final class ShowcaseFeedSectionController: BaseListSectionController, FeedAutoPl
             )
             feedCell.scenePlayer.context.configPlugin(serviceProtocol: ShowcaseFeedPreRenderService.self, withModel: config)
         }
-        feedCell.scenePlayer.resolveService(ShowcaseFeedPreRenderService.self)?.attachPrerenderPlayerView()
+        feedCell.scenePlayer.preRenderService?.attachPrerenderPlayerView()
     }
 
     override func didSelectItem(atIndex index: Int, model: AnyObject) {}

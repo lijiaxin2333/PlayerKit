@@ -107,15 +107,6 @@ public extension ScenePlayerProtocol {
     }
 
     /**
-     * 解析指定协议的服务实例
-     * - Parameter serviceProtocol: 服务协议类型
-     * - Returns: 解析到的服务实例，若不存在则返回 nil
-     */
-    func resolveService<T>(_ serviceProtocol: T.Type) -> T? {
-        context.resolveService(serviceProtocol)
-    }
-
-    /**
      * 配置指定服务的插件
      * - Parameters:
      *   - serviceProtocol: 服务协议类型

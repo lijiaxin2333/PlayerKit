@@ -136,7 +136,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
 
         preRenderPlayers[identifier] = player
 
-        player.context.resolveService(PlayerPreRenderService.self)?.prerenderIfNeed()
+        player.preRenderService?.prerenderIfNeed()
 
         scheduleTimeout(identifier: identifier)
     }
@@ -157,7 +157,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
 
     func consumePreRendered(identifier: String) -> Player? {
         guard let player = preRenderPlayers[identifier] else { return nil }
-        let state = player.context.resolveService(PlayerPreRenderService.self)?.preRenderState ?? .idle
+        let state = player.preRenderService?.preRenderState ?? .idle
         guard state == .readyToPlay || state == .readyToDisplay else { return nil }
         preRenderPlayers.removeValue(forKey: identifier)
         cancelTimeout(identifier: identifier)
@@ -168,7 +168,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
 
     func preRenderState(for identifier: String) -> PlayerPreRenderState {
         guard let player = preRenderPlayers[identifier] else { return .idle }
-        return player.context.resolveService(PlayerPreRenderService.self)?.preRenderState ?? .idle
+        return player.preRenderService?.preRenderState ?? .idle
     }
 
     private func evictOldestPreRender() {
@@ -406,7 +406,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
             playbackPlugin: self
         )
 
-        if let autoPlayPlugin = targetCell.scenePlayer.context.resolveService(ShowcaseAutoPlayNextService.self) {
+        if let autoPlayPlugin = targetCell.scenePlayer.autoPlayNextService {
             let autoPlayConfig = ShowcaseAutoPlayNextConfigModel(totalCount: videos.count, isEnabled: true)
             (autoPlayPlugin as? BasePlugin)?.configModel = autoPlayConfig
         }

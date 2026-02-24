@@ -84,7 +84,7 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
     }
 
     private func removeGestureHandlers() {
-        guard let gestureService = detailSceneContext.context.resolveService(PlayerGestureService.self) else { return }
+        guard let gestureService = detailSceneContext.gestureService else { return }
         if let h = singleTapHandler { gestureService.removeHandler(h) }
         if let h = doubleTapHandler { gestureService.removeHandler(h) }
         if let h = panHandler { gestureService.removeHandler(h) }
@@ -98,7 +98,7 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
         guard let player = player else { return }
         detailSceneContext.addPlayer(player)
 
-        detailControl = detailSceneContext.context.resolveService(ShowcaseDetailControlService.self)
+        detailControl = detailSceneContext.detailControlService
         guard let video = video else { return }
         let controlConfig = ShowcaseDetailControlConfigModel(
             video: video,
@@ -128,7 +128,7 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
     }
 
     private func setupGestureHandlers() {
-        guard let gestureService = detailSceneContext.context.resolveService(PlayerGestureService.self) else { return }
+        guard let gestureService = detailSceneContext.gestureService else { return }
 
         singleTapHandler = ShowcaseSingleTapHandler()
         singleTapHandler.delegate = self
@@ -471,7 +471,7 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
             stack.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
         ])
 
-        let panelService = detailSceneContext.context.resolveService(PlayerPanelService.self)
+        let panelService = detailSceneContext.panelService
         panelService?.showPanel(panel as AnyObject, at: .bottom, animated: true)
 
         panel.translatesAutoresizingMaskIntoConstraints = false
@@ -605,16 +605,14 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
 
     func didBeginLongPress() {
         detailControl?.handleLongPressBegin()
-        let longPressService = detailSceneContext.context.resolveService(ShowcaseDetailLongPressSpeedService.self)
-        longPressService?.beginLongPressSpeed()
+        detailSceneContext.longPressSpeedService?.beginLongPressSpeed()
         speedIndicatorLabel.text = "  3.0x  "
         speedIndicatorLabel.isHidden = false
     }
 
     func didEndLongPress() {
         detailControl?.handleLongPressEnd()
-        let longPressService = detailSceneContext.context.resolveService(ShowcaseDetailLongPressSpeedService.self)
-        longPressService?.endLongPressSpeed()
+        detailSceneContext.longPressSpeedService?.endLongPressSpeed()
         speedIndicatorLabel.isHidden = true
     }
 

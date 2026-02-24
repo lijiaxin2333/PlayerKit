@@ -3,7 +3,6 @@ import Foundation
 /**
  * 引擎池插件，提供对全局引擎池的服务访问
  * - 作为 PlayerEnginePoolService 的访问入口
- * - 业务层通过 Context.resolveService 获取池服务
  */
 @MainActor
 public final class PlayerEnginePoolPlugin: BasePlugin, PlayerEnginePoolService {
@@ -14,7 +13,7 @@ public final class PlayerEnginePoolPlugin: BasePlugin, PlayerEnginePoolService {
     /**
      * 初始化
      */
-    public required override init() {
+    public required init() {
         super.init()
     }
 

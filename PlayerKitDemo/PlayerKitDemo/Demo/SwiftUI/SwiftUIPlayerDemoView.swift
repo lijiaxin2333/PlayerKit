@@ -535,7 +535,7 @@ class PlayerViewModel: ObservableObject {
         self.playerView = player.playerView
 
         // 配置数据
-        if let dataService = player.context.resolveService(PlayerDataService.self) {
+        if let dataService = player.dataService {
             var model = PlayerDataModel()
             model.videoURL = url
             model.title = video.title
@@ -545,8 +545,7 @@ class PlayerViewModel: ObservableObject {
             dataService.updateDataModel(model)
         }
 
-        // 准备播放
-        player.context.resolveService(PlayerEngineCoreService.self)?.prepareToPlay()
+        player.engineCoreService?.prepareToPlay()
 
         // 监听事件
         setupEventObservers(player: player)
@@ -576,7 +575,7 @@ class PlayerViewModel: ObservableObject {
 
         ctx.add(self, event: .playerLoadStateDidChange) { [weak self] _, _ in
             guard let self = self else { return }
-            if let engine = self.player?.context.resolveService(PlayerEngineCoreService.self) {
+            if let engine = self.player?.engineCoreService {
                 self.loadStateText = self.loadStateDescription(engine.loadState)
                 self.bufferProgress = engine.bufferProgress
             }
@@ -584,19 +583,19 @@ class PlayerViewModel: ObservableObject {
 
         ctx.add(self, event: .playerLoopingDidChange) { [weak self] _, _ in
             guard let self = self else { return }
-            self.isLooping = self.player?.context.resolveService(PlayerEngineCoreService.self)?.isLooping ?? false
+            self.isLooping = self.player?.engineCoreService?.isLooping ?? false
         }
 
         ctx.add(self, event: .playerFullScreenStateChanged) { [weak self] _, _ in
             guard let self = self else { return }
-            if let fsService = self.player?.context.resolveService(PlayerFullScreenService.self) {
+            if let fsService = self.player?.fullScreenService {
                 self.isFullScreen = fsService.isFullScreen
             }
         }
     }
 
     private func setupProgressObserver(player: Player) {
-        guard let processService = player.context.resolveService(PlayerProcessService.self) else { return }
+        guard let processService = player.processService else { return }
 
         progressObserverToken = processService.observeProgress { [weak self] progress, time in
             guard let self = self else { return }
@@ -611,36 +610,35 @@ class PlayerViewModel: ObservableObject {
     // MARK: - Controls
 
     func togglePlayPause() {
-        player?.context.resolveService(PlayerPlaybackControlService.self)?.togglePlayPause()
+        player?.playbackControlService?.togglePlayPause()
     }
 
     func toggleFullScreen() {
-        player?.context.resolveService(PlayerFullScreenService.self)?.toggleFullScreen(orientation: .auto, animated: true)
+        player?.fullScreenService?.toggleFullScreen(orientation: .auto, animated: true)
     }
 
     func setSpeed(_ speed: Float) {
-        player?.context.resolveService(PlayerSpeedService.self)?.setSpeed(speed)
+        player?.speedService?.setSpeed(speed)
     }
 
     func toggleLoop() {
-        if let engine = player?.context.resolveService(PlayerEngineCoreService.self) {
+        if let engine = player?.engineCoreService {
             engine.isLooping.toggle()
             isLooping = engine.isLooping
         }
     }
 
     func toggleMute() {
-        let mediaService = player?.context.resolveService(PlayerMediaControlService.self)
-        mediaService?.toggleMute()
-        isMuted = mediaService?.isMuted ?? false
+        player?.mediaControlService?.toggleMute()
+        isMuted = player?.mediaControlService?.isMuted ?? false
     }
 
     func showToast(_ message: String) {
-        player?.context.resolveService(PlayerToastService.self)?.showToast(message, style: .info, duration: 2.0)
+        player?.toastService?.showToast(message, style: .info, duration: 2.0)
     }
 
     func captureSnapshot() {
-        player?.context.resolveService(PlayerSnapshotService.self)?.currentFrameImage { [weak self] image in
+        player?.snapshotService?.currentFrameImage { [weak self] image in
             self?.snapshotImage = image
             if image != nil {
                 self?.showToast("截图成功!")
@@ -649,14 +647,14 @@ class PlayerViewModel: ObservableObject {
     }
 
     func replay() {
-        player?.context.resolveService(PlayerEngineCoreService.self)?.seek(to: 0)
-        player?.context.resolveService(PlayerPlaybackControlService.self)?.play()
+        player?.engineCoreService?.seek(to: 0)
+        player?.playbackControlService?.play()
     }
 
     // MARK: - Helpers
 
     private func updateTimeText(currentTime: TimeInterval) {
-        guard let duration = player?.context.resolveService(PlayerEngineCoreService.self)?.duration else { return }
+        guard let duration = player?.engineCoreService?.duration else { return }
         timeText = "\(formatTime(currentTime)) / \(formatTime(duration))"
     }
 
@@ -692,7 +690,7 @@ class PlayerViewModel: ObservableObject {
 
     private func cleanupPlayer() {
         if let token = progressObserverToken {
-            player?.context.resolveService(PlayerProcessService.self)?.removeProgressObserver(token: token)
+            player?.processService?.removeProgressObserver(token: token)
             progressObserverToken = nil
         }
         player?.context.removeHandlers(forObserver: self)

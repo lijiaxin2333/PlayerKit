@@ -29,6 +29,11 @@ final class ShowcaseDetailSceneContext: ContextHolder {
     private let regProvider = ShowcaseDetailRegProvider()
     private weak var _player: Player?
 
+    @PlayerPlugin var gestureService: PlayerGestureService?
+    @PlayerPlugin var detailControlService: ShowcaseDetailControlService?
+    @PlayerPlugin var panelService: PlayerPanelService?
+    @PlayerPlugin var longPressSpeedService: ShowcaseDetailLongPressSpeedService?
+
     private static let detailBlacklist: Set<String> = [String(reflecting: PlayerSpeedPanelService.self)]
 
     init() {

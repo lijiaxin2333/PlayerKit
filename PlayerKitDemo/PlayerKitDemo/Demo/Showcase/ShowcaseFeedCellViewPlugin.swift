@@ -27,6 +27,8 @@ final class ShowcaseFeedCellViewPlugin: BasePlugin, ShowcaseFeedCellViewService 
     var playerContainerView: UIView? { _playerContainer }
     var contentView: UIView? { _contentView }
 
+    @PlayerPlugin private var engineService: PlayerEngineCoreService?
+
     required override init() {
         super.init()
     }
@@ -55,8 +57,7 @@ final class ShowcaseFeedCellViewPlugin: BasePlugin, ShowcaseFeedCellViewService 
 
     private func attachPlayerViewIfNeeded() {
         guard let container = _playerContainer else { return }
-        guard let engine = context?.resolveService(PlayerEngineCoreService.self),
-              let pv = engine.playerView else { return }
+        guard let pv = engineService?.playerView else { return }
         if pv.superview === container {
             if let rv = pv as? PlayerEngineRenderView {
                 rv.isHidden = false

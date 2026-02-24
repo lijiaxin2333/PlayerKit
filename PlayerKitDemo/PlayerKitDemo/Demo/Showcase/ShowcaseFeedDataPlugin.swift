@@ -28,6 +28,8 @@ final class ShowcaseFeedDataPlugin: BasePlugin, ShowcaseFeedDataService {
     var video: ShowcaseVideo? { _video }
     var videoIndex: Int { _videoIndex }
 
+    @PlayerPlugin private var playerDataService: PlayerDataService?
+
     required override init() {
         super.init()
     }
@@ -45,7 +47,7 @@ final class ShowcaseFeedDataPlugin: BasePlugin, ShowcaseFeedDataService {
 
     private func syncToPlayerData() {
         guard let video = _video else { return }
-        guard let playerDataService = context?.resolveService(PlayerDataService.self) else { return }
+        guard let playerDataService = playerDataService else { return }
 
         let config = PlayerDataConfigModel()
         var dataModel = PlayerDataModel()

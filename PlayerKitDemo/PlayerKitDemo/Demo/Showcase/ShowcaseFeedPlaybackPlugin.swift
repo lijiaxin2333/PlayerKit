@@ -50,10 +50,9 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
     var transferringPlayer: Player?
 
     let prefetchManager: ListPrefetchService
+    private let preRenderPool = PlayerPreRenderPool.shared
 
-    private var preRenderPlayers: [String: Player] = [:]
-    private var preRenderTimeouts: [String: Timer] = [:]
-    private let maxPreRenderCount: Int
+    private let preRenderMaxCount: Int
     private let preRenderTimeout: TimeInterval
 
     private var pendingScrollTasks: [() -> Void] = []
@@ -66,7 +65,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         PlayerEnginePool.shared.maxCapacity = configuration.enginePoolMaxCapacity
         PlayerEnginePool.shared.maxPerIdentifier = configuration.enginePoolMaxPerIdentifier
 
-        self.maxPreRenderCount = configuration.preRenderMaxCount
+        self.preRenderMaxCount = configuration.preRenderMaxCount
         self.preRenderTimeout = configuration.preRenderTimeout
 
         let prefetchConfig = PreloadConfig(
@@ -76,6 +75,11 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
             windowBehind: configuration.prefetchWindowBehind
         )
         self.prefetchManager = ListPrefetchPlugin(config: prefetchConfig)
+        self.preRenderPool.config = PlayerPreRenderPoolConfig(
+            maxCount: configuration.preRenderMaxCount,
+            timeout: configuration.preRenderTimeout,
+            poolIdentifier: "showcase"
+        )
 
         super.init()
     }
@@ -101,97 +105,50 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
 
         cancelAllPreRenders()
         prefetchManager.cancelAll()
-        // 清空 preRenderPlayers 并回收引擎
-        for (_, player) in preRenderPlayers {
-            player.recycleEngine()
-        }
-        preRenderPlayers.removeAll()
     }
 
     // MARK: - PreRender Pool
 
     func preRender(url: URL, identifier: String) {
-        if preRenderPlayers[identifier] != nil {
+        if preRenderState(for: identifier) != .idle {
             cancelPreRender(identifier: identifier)
         }
-
-        guard preRenderPlayers.count < maxPreRenderCount else {
+        if preRenderPool.count >= preRenderMaxCount {
             evictOldestPreRender()
-            guard preRenderPlayers.count < maxPreRenderCount else { return }
-            return
+            if preRenderPool.count >= preRenderMaxCount { return }
         }
-
-        let player = Player(name: "PreRender_\(identifier)")
-        player.bindPool(identifier: "showcase")
-        player.acquireEngine()
-
-        let engineConfig = PlayerEngineCoreConfigModel()
-        engineConfig.isLooping = true
-        engineConfig.initialVolume = 0
-        player.context.configPlugin(serviceProtocol: PlayerEngineCoreService.self, withModel: engineConfig)
-
-        let dataConfig = PlayerDataConfigModel()
-        dataConfig.initialDataModel = PlayerDataModel(videoURL: url)
-        player.dataService?.config(dataConfig)
-
-        preRenderPlayers[identifier] = player
-
-        player.preRenderService?.prerenderIfNeed()
-
-        scheduleTimeout(identifier: identifier)
+        preRenderPool.preRender(url: url, identifier: identifier, extraConfig: nil)
     }
 
     func cancelPreRender(identifier: String) {
-        guard let player = preRenderPlayers.removeValue(forKey: identifier) else { return }
-        cancelTimeout(identifier: identifier)
-        player.engineService?.stop()
-        player.recycleEngine()
+        preRenderPool.cancel(identifier: identifier)
     }
 
     func cancelAllPreRenders() {
-        let ids = Array(preRenderPlayers.keys)
-        for id in ids {
-            cancelPreRender(identifier: id)
-        }
+        preRenderPool.cancelAll()
     }
 
     func consumePreRendered(identifier: String) -> Player? {
-        guard let player = preRenderPlayers[identifier] else { return nil }
-        let state = player.preRenderService?.preRenderState ?? .idle
-        guard state == .preparing || state == .readyToPlay || state == .readyToDisplay else { return nil }
-        preRenderPlayers.removeValue(forKey: identifier)
-        cancelTimeout(identifier: identifier)
-        if state == .readyToPlay || state == .readyToDisplay {
-            player.engineService?.pause()
-            player.engineService?.avPlayer?.seek(to: .zero, toleranceBefore: .zero, toleranceAfter: .zero)
-        }
-        // preparing 状态：引擎正在加载解码，不 pause 也不 seek，adopt 后继续加载
+        guard let engine = preRenderPool.consume(identifier: identifier) else { return nil }
+        guard let enginePlugin = engine as? BasePlugin else { return nil }
+        let player = Player(name: "Consumed_\(identifier)")
+        player.context.detachInstance(for: PlayerEngineCoreService.self)
+        player.context.registerInstance(enginePlugin, protocol: PlayerEngineCoreService.self)
         return player
     }
 
     func preRenderState(for identifier: String) -> PlayerPreRenderState {
-        guard let player = preRenderPlayers[identifier] else { return .idle }
-        return player.preRenderService?.preRenderState ?? .idle
+        preRenderPool.state(for: identifier)
     }
 
     private func evictOldestPreRender() {
-        guard let oldestKey = preRenderPlayers.keys.first else { return }
+        let oldestKey = preRenderPool
+            .allEntries()
+            .sorted { $0.createdAt < $1.createdAt }
+            .first?
+            .identifier
+        guard let oldestKey else { return }
         cancelPreRender(identifier: oldestKey)
-    }
-
-    private func scheduleTimeout(identifier: String) {
-        preRenderTimeouts[identifier]?.invalidate()
-        let timer = Timer.scheduledTimer(withTimeInterval: preRenderTimeout, repeats: false) { [weak self] _ in
-            MainActor.assumeIsolated {
-                self?.cancelPreRender(identifier: identifier)
-            }
-        }
-        preRenderTimeouts[identifier] = timer
-    }
-
-    private func cancelTimeout(identifier: String) {
-        preRenderTimeouts[identifier]?.invalidate()
-        preRenderTimeouts.removeValue(forKey: identifier)
     }
 
     // MARK: - ListProtocol Lifecycle
@@ -431,15 +388,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
     // MARK: - PreRender Adjacent
 
     func preRenderAdjacent(currentIndex: Int, videos: [ShowcaseVideo]) {
-        let keepRange = (currentIndex - 2)...(currentIndex + 2)
-        for (id, _) in preRenderPlayers {
-            if let idxStr = id.split(separator: "_").last, let idx = Int(idxStr) {
-                if !keepRange.contains(idx) {
-                    cancelPreRender(identifier: id)
-                }
-            }
-        }
-
+        preRenderPool.keepRange((currentIndex - 2)...(currentIndex + 2), identifierPrefix: "showcase")
         for offset in [-1, 1, -2, 2] {
             let idx = currentIndex + offset
             guard idx >= 0, idx < videos.count else { continue }

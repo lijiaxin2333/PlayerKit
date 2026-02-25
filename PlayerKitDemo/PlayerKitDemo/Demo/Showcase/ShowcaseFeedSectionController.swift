@@ -77,9 +77,6 @@ final class ShowcaseFeedSectionController: BaseListSectionController, FeedAutoPl
         if let vm = feedViewModel,
            let plugin = vm.listContext?.responderForProtocol(ShowcaseFeedPlaybackPluginProtocol.self) as? ShowcaseFeedPlaybackPlugin {
             let config = ShowcaseFeedPreRenderConfigModel(
-                consumePreRendered: { [weak plugin] identifier in
-                    plugin?.consumePreRendered(identifier: identifier)
-                },
                 cancelPreRender: { [weak plugin] identifier in
                     plugin?.cancelPreRender(identifier: identifier)
                 }
@@ -91,6 +88,15 @@ final class ShowcaseFeedSectionController: BaseListSectionController, FeedAutoPl
     /// Cell 显示回调，触发 Cell 的 cellWillDisplay
     override func sectionWillDisplayCell(_ cell: UICollectionViewCell, index: Int, model: AnyObject) {
         guard let feedCell = cell as? ShowcaseFeedCell else { return }
+        if let vm = feedViewModel,
+           let plugin = vm.listContext?.responderForProtocol(ShowcaseFeedPlaybackPluginProtocol.self) as? ShowcaseFeedPlaybackPlugin {
+            feedCell.startPlay(
+                isAutoPlay: false,
+                video: vm.video,
+                index: vm.videoIndex,
+                playbackPlugin: plugin
+            )
+        }
         feedCell.cellWillDisplay(duplicateReload: false)
     }
 
@@ -108,9 +114,6 @@ final class ShowcaseFeedSectionController: BaseListSectionController, FeedAutoPl
             plugin.preRenderAdjacent(currentIndex: vm.videoIndex, videos: videosFromContext())
 
             let config = ShowcaseFeedPreRenderConfigModel(
-                consumePreRendered: { [weak plugin] identifier in
-                    plugin?.consumePreRendered(identifier: identifier)
-                },
                 cancelPreRender: { [weak plugin] identifier in
                     plugin?.cancelPreRender(identifier: identifier)
                 }

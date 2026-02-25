@@ -17,7 +17,7 @@ public final class PlayerPreRenderPoolPlugin: BasePlugin, PlayerPreRenderPoolSer
     /**
      * 使用共享实例初始化
      */
-    public required override init() {
+    public required init() {
         self.pool = .shared
         self.useShared = true
         super.init()

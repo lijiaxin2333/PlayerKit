@@ -46,7 +46,7 @@ public final class ScenePlayerProcessPlugin: BasePlugin, ScenePlayerProcessServi
         setDataIfNeeded: (() -> Void)?
     ) {
         if hasPlayer {
-            let hasActiveEngine = engineService?.currentURL != nil
+            let hasActiveEngine = engineService?.avPlayer?.currentItem != nil
             if hasActiveEngine == true {
                 if engineService?.playbackState == .playing {
                     return

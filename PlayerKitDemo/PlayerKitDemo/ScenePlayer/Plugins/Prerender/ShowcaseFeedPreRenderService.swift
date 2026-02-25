@@ -9,12 +9,9 @@ public protocol ShowcaseFeedPreRenderService: PluginService {
 
 @MainActor
 public final class ShowcaseFeedPreRenderConfigModel {
-    public let consumePreRendered: (String) -> Player?
     public let cancelPreRender: (String) -> Void
 
-    public init(consumePreRendered: @escaping (String) -> Player?,
-         cancelPreRender: @escaping (String) -> Void) {
-        self.consumePreRendered = consumePreRendered
+    public init(cancelPreRender: @escaping (String) -> Void) {
         self.cancelPreRender = cancelPreRender
     }
 }

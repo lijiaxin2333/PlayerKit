@@ -102,6 +102,33 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         index: Int,
         playbackPlugin: ShowcaseFeedPlaybackPlugin
     ) {
+        runPlayFlow(
+            isAutoPlay: isAutoPlay,
+            video: video,
+            index: index,
+            playbackPlugin: playbackPlugin
+        )
+    }
+
+    func prepareForDisplay(
+        video: ShowcaseVideo,
+        index: Int,
+        playbackPlugin: ShowcaseFeedPlaybackPlugin
+    ) {
+        runPlayFlow(
+            isAutoPlay: false,
+            video: video,
+            index: index,
+            playbackPlugin: playbackPlugin
+        )
+    }
+
+    private func runPlayFlow(
+        isAutoPlay: Bool,
+        video: ShowcaseVideo,
+        index: Int,
+        playbackPlugin: ShowcaseFeedPlaybackPlugin
+    ) {
         scenePlayer.player?.bindPool(identifier: "showcase")
         guard let processService = scenePlayer.processService else { return }
         processService.execPlay(

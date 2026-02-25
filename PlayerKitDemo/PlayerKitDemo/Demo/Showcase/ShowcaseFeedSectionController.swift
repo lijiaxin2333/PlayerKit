@@ -90,8 +90,7 @@ final class ShowcaseFeedSectionController: BaseListSectionController, FeedAutoPl
         guard let feedCell = cell as? ShowcaseFeedCell else { return }
         if let vm = feedViewModel,
            let plugin = vm.listContext?.responderForProtocol(ShowcaseFeedPlaybackPluginProtocol.self) as? ShowcaseFeedPlaybackPlugin {
-            feedCell.startPlay(
-                isAutoPlay: false,
+            feedCell.prepareForDisplay(
                 video: vm.video,
                 index: vm.videoIndex,
                 playbackPlugin: plugin

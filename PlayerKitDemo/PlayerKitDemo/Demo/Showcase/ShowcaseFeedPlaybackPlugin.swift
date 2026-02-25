@@ -174,6 +174,17 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         }
     }
 
+    func scrollViewWillEndDragging(
+        _ scrollView: UIScrollView,
+        withVelocity velocity: CGPoint,
+        targetContentOffset: UnsafeMutablePointer<CGPoint>
+    ) {
+        let targetPage = Int(round(targetContentOffset.pointee.y / scrollView.bounds.height))
+        if targetPage != currentPlayingIndex {
+            handlePageChange(to: targetPage)
+        }
+    }
+
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         let page = Int(round(scrollView.contentOffset.y / scrollView.bounds.height))
         handlePageChange(to: page)

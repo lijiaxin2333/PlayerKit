@@ -37,7 +37,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         var preRenderTimeout: TimeInterval = 10
         var prefetchMaxConcurrent: Int = 4
         var prefetchBytesPerURL: Int64 = 512 * 1024
-        var prefetchWindowAhead: Int = 3
+        var prefetchWindowAhead: Int = 2
         var prefetchWindowBehind: Int = 1
 
         init() {}
@@ -454,10 +454,29 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
     // MARK: - Prefetch
 
     func updatePrefetchWindow(videos: [ShowcaseVideo], focusIndex: Int) {
-        let urls = videos.compactMap { $0.url }
-        prefetchManager.updateWindow(urls: urls, focusIndex: focusIndex)
-        if focusIndex >= 0, focusIndex < videos.count, let url = videos[focusIndex].url {
-            prefetchManager.prioritize(url: url)
+        let indexedURLs = videos.enumerated().compactMap { index, video -> (Int, URL)? in
+            guard let url = video.url else { return nil }
+            return (index, url)
+        }
+        guard !indexedURLs.isEmpty else {
+            prefetchManager.cancelAll()
+            return
+        }
+
+        let urls = indexedURLs.map { $0.1 }
+        let mappedFocusIndex: Int
+        if let exact = indexedURLs.firstIndex(where: { $0.0 == focusIndex }) {
+            mappedFocusIndex = exact
+        } else if let nearestBefore = indexedURLs.lastIndex(where: { $0.0 < focusIndex }) {
+            mappedFocusIndex = nearestBefore
+        } else {
+            mappedFocusIndex = 0
+        }
+
+        prefetchManager.updateWindow(urls: urls, focusIndex: mappedFocusIndex)
+
+        if mappedFocusIndex >= 0, mappedFocusIndex < urls.count {
+            prefetchManager.prioritize(url: urls[mappedFocusIndex])
         }
     }
 

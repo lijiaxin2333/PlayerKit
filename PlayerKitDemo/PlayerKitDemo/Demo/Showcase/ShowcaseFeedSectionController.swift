@@ -119,7 +119,6 @@ final class ShowcaseFeedSectionController: BaseListSectionController, FeedAutoPl
             )
             feedCell.scenePlayer.context.configPlugin(serviceProtocol: ShowcaseFeedPreRenderService.self, withModel: config)
         }
-        feedCell.scenePlayer.preRenderService?.attachPrerenderPlayerView()
     }
 
     override func didSelectItem(atIndex index: Int, model: AnyObject) {}

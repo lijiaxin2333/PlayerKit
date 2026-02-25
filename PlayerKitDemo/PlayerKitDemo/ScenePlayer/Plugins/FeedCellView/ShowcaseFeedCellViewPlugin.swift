@@ -1,6 +1,9 @@
 import UIKit
 import PlayerKit
 
+/// Feed Cell 视图服务插件
+/// 职责：仅存储 Cell 视图容器的引用，供其他插件访问
+/// 注意：不负责贴播放器视图，贴视图由 Cell 层统一处理
 @MainActor
 public final class ShowcaseFeedCellViewPlugin: BasePlugin, ShowcaseFeedCellViewService {
 
@@ -9,8 +12,6 @@ public final class ShowcaseFeedCellViewPlugin: BasePlugin, ShowcaseFeedCellViewS
 
     public var playerContainerView: UIView? { _playerContainer }
     public var contentView: UIView? { _contentView }
-
-    @PlayerPlugin private var engineService: PlayerEngineCoreService?
 
     public required override init() {
         super.init()
@@ -25,47 +26,5 @@ public final class ShowcaseFeedCellViewPlugin: BasePlugin, ShowcaseFeedCellViewS
             self._playerContainer = model.playerContainer
             self.context?.post(.showcaseFeedCellViewDidSetSticky, object: model, sender: self)
         }
-        context.add(self, event: .playerEngineDidCreateSticky, option: .none) { [weak self] _, _ in
-            self?.attachPlayerViewIfNeeded()
-        }
-    }
-
-    public override func contextDidAddSubContext(_ subContext: PublicContext) {
-        attachPlayerViewIfNeeded()
-    }
-
-    public override func contextWillRemoveSubContext(_ subContext: PublicContext) {
-        detachPlayerView()
-    }
-
-    private func attachPlayerViewIfNeeded() {
-        guard let container = _playerContainer else { return }
-        guard let pv = engineService?.playerView else { return }
-        if pv.superview === container {
-            if let rv = pv as? PlayerEngineRenderView {
-                rv.isHidden = false
-                rv.ensurePlayerBound()
-            }
-            return
-        }
-        detachPlayerView()
-        pv.translatesAutoresizingMaskIntoConstraints = false
-        pv.isHidden = false
-        container.addSubview(pv)
-        NSLayoutConstraint.activate([
-            pv.topAnchor.constraint(equalTo: container.topAnchor),
-            pv.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            pv.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            pv.bottomAnchor.constraint(equalTo: container.bottomAnchor)
-        ])
-        container.layoutIfNeeded()
-        if let renderView = pv as? PlayerEngineRenderView {
-            renderView.ensurePlayerBound()
-        }
-    }
-
-    private func detachPlayerView() {
-        guard let container = _playerContainer else { return }
-        container.subviews.forEach { $0.removeFromSuperview() }
     }
 }

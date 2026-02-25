@@ -191,7 +191,6 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
     }
 
     func detachPlayer() {
-        guard let index = _cellViewModel?.videoIndex else { return }
         _playerContainer.subviews.forEach { $0.removeFromSuperview() }
         scenePlayer.removePlayer()
     }

@@ -131,7 +131,7 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         guard let player = scenePlayer.player else { return }
         if player.engineService?.avPlayer?.currentItem != nil { return }
 
-        let identifier = "showcase_\(index)"
+        let identifier = video.feedId
         if let preRenderedPlayer = playbackPlugin.consumePreRendered(identifier: identifier),
            preRenderedPlayer.engineService?.currentURL == video.url {
             player.adoptEngine(from: preRenderedPlayer)

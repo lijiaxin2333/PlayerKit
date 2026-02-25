@@ -57,10 +57,11 @@ public final class ShowcaseFeedPreRenderPlugin: BasePlugin, ShowcaseFeedPreRende
         }
 
         // 尝试消费预渲染引擎（滑动过程中展示首帧）
-        let identifier = "showcase_\(index)"
+        guard let video = dataService?.video else { return }
+        let identifier = video.feedId
         guard let consume = consumePreRendered,
               let preRenderedPlayer = consume(identifier) else { return }
-        guard let video = dataService?.video, preRenderedPlayer.engineService?.currentURL == video.url else {
+        guard preRenderedPlayer.engineService?.currentURL == video.url else {
             cancelPreRenderFn?(identifier)
             return
         }

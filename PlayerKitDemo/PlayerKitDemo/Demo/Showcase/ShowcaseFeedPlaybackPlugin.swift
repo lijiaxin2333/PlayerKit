@@ -388,12 +388,21 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
     // MARK: - PreRender Adjacent
 
     func preRenderAdjacent(currentIndex: Int, videos: [ShowcaseVideo]) {
-        preRenderPool.keepRange((currentIndex - 2)...(currentIndex + 2), identifierPrefix: "showcase")
+        let keepRange = (currentIndex - 2)...(currentIndex + 2)
+        var keepFeedIds = Set<String>()
+        for idx in keepRange {
+            guard idx >= 0, idx < videos.count else { continue }
+            keepFeedIds.insert(videos[idx].feedId)
+        }
+        for entry in preRenderPool.allEntries() where !keepFeedIds.contains(entry.identifier) {
+            cancelPreRender(identifier: entry.identifier)
+        }
         for offset in [-1, 1, -2, 2] {
             let idx = currentIndex + offset
             guard idx >= 0, idx < videos.count else { continue }
-            guard let url = videos[idx].url else { continue }
-            let identifier = "showcase_\(idx)"
+            let video = videos[idx]
+            guard let url = video.url else { continue }
+            let identifier = video.feedId
             let state = preRenderState(for: identifier)
             if state != .idle { continue }
             preRender(url: url, identifier: identifier)

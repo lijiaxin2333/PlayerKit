@@ -1,5 +1,7 @@
 import Foundation
 import AVFoundation
+import UIKit
+import KTVHTTPCache
 
 /// 预渲染池，管理预渲染的播放器引擎
 @MainActor
@@ -19,19 +21,30 @@ public final class PlayerPreRenderPool {
 
     private var entries: [String: PreRenderEntry] = [:]
     private var timeouts: [String: Timer] = [:]
+    private var observers: [String: EntryObservers] = [:]
+    private let hostContainerView = UIView(frame: CGRect(x: -2000, y: -2000, width: 1, height: 1))
 
     private struct PreRenderEntry {
         let url: URL
-        let engine: PlayerEngineCoreService
+        let avPlayer: AVPlayer
+        let renderView: PlayerEngineRenderView
         let createdAt: Date
         var completedAt: Date?
         var state: PlayerPreRenderState
+    }
+
+    private struct EntryObservers {
+        var status: NSKeyValueObservation?
+        var readyForDisplay: NSKeyValueObservation?
     }
 
     // MARK: - Init
 
     public init(config: PlayerPreRenderPoolConfig = PlayerPreRenderPoolConfig()) {
         self.config = config
+        hostContainerView.clipsToBounds = true
+        hostContainerView.isUserInteractionEnabled = false
+        hostContainerView.backgroundColor = .black
     }
 
     private func updateConfig() {
@@ -52,31 +65,13 @@ public final class PlayerPreRenderPool {
             guard entries.count < config.maxCount else { return }
         }
 
-        // 从引擎池获取引擎
-        let engineService: PlayerEngineCoreService
-        if let pooled = PlayerEnginePool.shared.dequeue(identifier: config.poolIdentifier) {
-            engineService = pooled
-        } else {
-            let player = Player(name: "PreRender_\(identifier)")
-            player.bindPool(identifier: config.poolIdentifier)
-            guard let engine = player.engineService else { return }
-            engineService = engine
-        }
+        let core = makeCore(url: url, extraConfig: extraConfig)
+        guard let core else { return }
 
-        // 配置引擎
-        let engineConfig = extraConfig ?? PlayerEngineCoreConfigModel()
-        engineConfig.isLooping = true
-        engineConfig.initialVolume = 0
-        engineConfig.autoPlay = false
-        (engineService as? BasePlugin)?.config(engineConfig)
-
-        // 加载数据
-        engineService.setURL(url)
-
-        // 创建条目
         let entry = PreRenderEntry(
             url: url,
-            engine: engineService,
+            avPlayer: core.player,
+            renderView: core.renderView,
             createdAt: Date(),
             completedAt: nil,
             state: .preparing
@@ -84,30 +79,15 @@ public final class PlayerPreRenderPool {
         entries[identifier] = entry
         statistics.totalStarted += 1
 
-        // 开始预渲染
-        engineService.volume = 0
-        engineService.play()
-
-        // 监听就绪状态
-        observeReadyState(identifier: identifier, engine: engineService)
-
-        // 启动超时计时器
+        observeReadyState(identifier: identifier, player: core.player, renderView: core.renderView)
         scheduleTimeout(identifier: identifier)
-
+        core.player.play()
     }
 
     public func cancel(identifier: String) {
         guard let entry = entries.removeValue(forKey: identifier) else { return }
-        cancelTimeout(identifier: identifier)
-
-        entry.engine.pause()
-        entry.engine.replaceCurrentItem(with: nil)
-
-        if entry.engine.canReuse {
-            entry.engine.prepareForReuse()
-            PlayerEnginePool.shared.enqueue(entry.engine, identifier: config.poolIdentifier)
-        }
-
+        clearRuntime(identifier: identifier)
+        releaseCore(avPlayer: entry.avPlayer, renderView: entry.renderView)
         statistics.totalCancelled += 1
     }
 
@@ -121,37 +101,45 @@ public final class PlayerPreRenderPool {
     }
 
     public func consume(identifier: String) -> PlayerEngineCoreService? {
-        guard let entry = entries[identifier] else { return nil }
-        guard entry.state == .readyToPlay || entry.state == .readyToDisplay else { return nil }
+        guard let state = entries[identifier]?.state,
+              state == .readyToPlay || state == .readyToDisplay else { return nil }
+        guard let entry = entries.removeValue(forKey: identifier) else { return nil }
 
-        entries.removeValue(forKey: identifier)
-        cancelTimeout(identifier: identifier)
+        clearRuntime(identifier: identifier)
+        entry.avPlayer.pause()
+        entry.avPlayer.seek(to: .zero, toleranceBefore: .zero, toleranceAfter: .zero)
+        entry.renderView.removeFromSuperview()
 
-        entry.engine.pause()
-        entry.engine.avPlayer?.seek(to: .zero, toleranceBefore: .zero, toleranceAfter: .zero)
+        let engine = PlayerEngineCorePlugin()
+        engine.adoptPreparedCore(player: entry.avPlayer, renderView: entry.renderView, url: entry.url)
 
         statistics.totalConsumed += 1
-        return entry.engine
+        return engine
     }
 
     public func consumeAndTransfer(identifier: String, to player: Player) -> Bool {
-        guard let engine = consume(identifier: identifier) else { return false }
+        guard let state = entries[identifier]?.state,
+              state == .readyToPlay || state == .readyToDisplay else { return false }
+        guard let entry = entries.removeValue(forKey: identifier) else { return false }
+        clearRuntime(identifier: identifier)
+        entry.avPlayer.pause()
+        entry.avPlayer.seek(to: .zero, toleranceBefore: .zero, toleranceAfter: .zero)
+        entry.renderView.removeFromSuperview()
 
         if let currentURL = player.dataService?.dataModel.videoURL,
-           engine.currentURL != currentURL {
-            if engine.canReuse {
-                engine.prepareForReuse()
-                PlayerEnginePool.shared.enqueue(engine, identifier: config.poolIdentifier)
-            }
+           entry.url != currentURL {
+            releaseCore(avPlayer: entry.avPlayer, renderView: entry.renderView)
             return false
         }
 
-        // 转移引擎到目标 Player
-        player.recycleEngine()
-        player.context.detachInstance(for: PlayerEngineCoreService.self)
-        guard let enginePlugin = engine as? BasePlugin else { return false }
-        player.context.registerInstance(enginePlugin, protocol: PlayerEngineCoreService.self)
+        guard let engine = player.engineService as? PlayerEngineCorePlugin else {
+            releaseCore(avPlayer: entry.avPlayer, renderView: entry.renderView)
+            return false
+        }
+        engine.adoptPreparedCore(player: entry.avPlayer, renderView: entry.renderView, url: entry.url)
         engine.volume = 1.0
+        engine.isLooping = false
+        engine.pause()
         return true
     }
 
@@ -222,26 +210,79 @@ public final class PlayerPreRenderPool {
 
     // MARK: - Private
 
-    private func observeReadyState(identifier: String, engine: PlayerEngineCoreService) {
-        var observer: NSKeyValueObservation?
-        observer = engine.avPlayer?.observe(\.status, options: [.new, .initial]) { [weak self] player, _ in
-            guard let self = self else { return }
-            MainActor.assumeIsolated {
-                guard player.status == .readyToPlay else { return }
-                self.markReady(identifier: identifier)
-                observer?.invalidate()
-                observer = nil
-            }
-        }
+    private struct CreatedCore {
+        let player: AVPlayer
+        let renderView: PlayerEngineRenderView
     }
 
-    private func markReady(identifier: String) {
+    private func makeCore(url: URL, extraConfig: PlayerEngineCoreConfigModel?) -> CreatedCore? {
+        let player = AVPlayer()
+        let renderView = PlayerEngineRenderView(frame: hostContainerView.bounds)
+        renderView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        renderView.setPlayer(player)
+        renderView.isHidden = false
+        attachRenderViewToHost(renderView)
+
+        let engineConfig = extraConfig ?? PlayerEngineCoreConfigModel()
+        player.actionAtItemEnd = engineConfig.isLooping ? .none : .pause
+        player.automaticallyWaitsToMinimizeStalling = false
+        player.volume = 0
+        player.rate = engineConfig.initialRate > 0 ? engineConfig.initialRate : 1.0
+
+        let finalURL = proxyURL(for: url)
+        let asset = AVURLAsset(url: finalURL, options: [AVURLAssetPreferPreciseDurationAndTimingKey: false])
+        let item = AVPlayerItem(asset: asset)
+        item.canUseNetworkResourcesForLiveStreamingWhilePaused = false
+        player.replaceCurrentItem(with: item)
+        return CreatedCore(player: player, renderView: renderView)
+    }
+
+    private func observeReadyState(identifier: String, player: AVPlayer, renderView: PlayerEngineRenderView) {
+        var statusObservation: NSKeyValueObservation?
+        statusObservation = player.observe(\.status, options: [.new, .initial]) { [weak self] observed, _ in
+            guard let self = self else { return }
+            MainActor.assumeIsolated {
+                guard observed.status == .readyToPlay else { return }
+                self.markReadyToPlay(identifier: identifier)
+                statusObservation?.invalidate()
+                statusObservation = nil
+            }
+        }
+
+        var displayObservation: NSKeyValueObservation?
+        displayObservation = renderView.playerLayer.observe(\.isReadyForDisplay, options: [.new, .initial]) { [weak self] layer, _ in
+            guard let self = self else { return }
+            let isReady = layer.isReadyForDisplay
+            MainActor.assumeIsolated {
+                guard isReady else { return }
+                self.markReadyToDisplay(identifier: identifier)
+                displayObservation?.invalidate()
+                displayObservation = nil
+            }
+        }
+        observers[identifier] = EntryObservers(status: statusObservation, readyForDisplay: displayObservation)
+    }
+
+    private func markReadyToPlay(identifier: String) {
         guard var entry = entries[identifier] else { return }
-        let elapsedMs = Int(Date().timeIntervalSince(entry.createdAt) * 1000)
-        entry.state = .readyToPlay
-        entry.completedAt = Date()
+        if entry.state == .preparing {
+            entry.state = .readyToPlay
+        }
+        if entry.completedAt == nil {
+            entry.completedAt = Date()
+            statistics.totalCompleted += 1
+        }
         entries[identifier] = entry
-        statistics.totalCompleted += 1
+    }
+
+    private func markReadyToDisplay(identifier: String) {
+        guard var entry = entries[identifier] else { return }
+        entry.state = .readyToDisplay
+        if entry.completedAt == nil {
+            entry.completedAt = Date()
+            statistics.totalCompleted += 1
+        }
+        entries[identifier] = entry
     }
 
     private func evictOldest() {
@@ -266,10 +307,75 @@ public final class PlayerPreRenderPool {
         timeouts.removeValue(forKey: identifier)
     }
 
+    private func clearRuntime(identifier: String) {
+        cancelTimeout(identifier: identifier)
+        observers[identifier]?.status?.invalidate()
+        observers[identifier]?.readyForDisplay?.invalidate()
+        observers.removeValue(forKey: identifier)
+    }
+
     private func handleTimeout(identifier: String) {
         guard entries[identifier] != nil else { return }
         cancel(identifier: identifier)
         statistics.totalTimeouts += 1
+    }
+
+    private func releaseCore(avPlayer: AVPlayer, renderView: PlayerEngineRenderView) {
+        avPlayer.pause()
+        avPlayer.replaceCurrentItem(with: nil)
+        renderView.removeFromSuperview()
+    }
+
+    private func attachRenderViewToHost(_ renderView: PlayerEngineRenderView) {
+        ensureHostContainer()
+        guard hostContainerView.superview != nil else { return }
+        renderView.removeFromSuperview()
+        renderView.frame = hostContainerView.bounds
+        hostContainerView.addSubview(renderView)
+        renderView.ensurePlayerBound()
+    }
+
+    private func reattachAllRenderViewsToHost() {
+        ensureHostContainer()
+        guard hostContainerView.superview != nil else { return }
+        for entry in entries.values {
+            if entry.renderView.superview !== hostContainerView {
+                entry.renderView.removeFromSuperview()
+                entry.renderView.frame = hostContainerView.bounds
+                hostContainerView.addSubview(entry.renderView)
+                entry.renderView.ensurePlayerBound()
+            }
+        }
+    }
+
+    private func ensureHostContainer() {
+        if hostContainerView.superview != nil {
+            return
+        }
+        guard UIApplication.shared.applicationState == .active else { return }
+        guard let window = activeKeyWindow() else { return }
+        hostContainerView.frame = CGRect(x: -2000, y: -2000, width: 1, height: 1)
+        window.addSubview(hostContainerView)
+    }
+
+    private func activeKeyWindow() -> UIWindow? {
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        for scene in scenes where scene.activationState == .foregroundActive {
+            if let key = scene.windows.first(where: { $0.isKeyWindow }) {
+                return key
+            }
+            if let first = scene.windows.first {
+                return first
+            }
+        }
+        return nil
+    }
+
+    private func proxyURL(for original: URL) -> URL {
+        guard let scheme = original.scheme?.lowercased(), scheme == "http" || scheme == "https" else {
+            return original
+        }
+        return KTVHTTPCache.proxyURL(withOriginalURL: original) ?? original
     }
 }
 

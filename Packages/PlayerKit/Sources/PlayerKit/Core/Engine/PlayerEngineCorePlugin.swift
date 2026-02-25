@@ -683,6 +683,58 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         renderView?.ensurePlayerBound()
     }
 
+    func adoptPreparedCore(player: AVPlayer, renderView: PlayerEngineRenderView, url: URL) {
+        removeBufferObservers()
+        removePlaybackObservers()
+        cancelRetry()
+
+        if let observer = timeObserver {
+            avPlayerInstance?.removeTimeObserver(observer)
+            timeObserver = nil
+        }
+        timeObservers.values.forEach { observer in
+            avPlayerInstance?.removeTimeObserver(observer)
+        }
+        timeObservers.removeAll()
+
+        avPlayerInstance?.pause()
+        avPlayerInstance = player
+        playerItem = player.currentItem
+        self.renderView = renderView
+        currentURL = url
+
+        let readyForDisplayHandler: () -> Void = { [weak self] in
+            guard let self else { return }
+            self._isReadyForDisplay = true
+            self.context?.post(.playerReadyForDisplaySticky, object: self, sender: self)
+        }
+        renderView.onReadyForDisplay = readyForDisplayHandler
+        renderView.ensurePlayerBound()
+        renderView.reobserveReadyForDisplay()
+
+        let interval = CMTime(seconds: 0.5, preferredTimescale: 600)
+        timeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
+            guard let self = self else { return }
+            let currentTime = CMTimeGetSeconds(time)
+            MainActor.assumeIsolated {
+                self.context?.post(.playerTimeDidChange, object: currentTime, sender: self)
+            }
+        }
+
+        if let item = playerItem {
+            addPlaybackObservers(to: item)
+        }
+        if renderView.playerLayer.isReadyForDisplay {
+            _isReadyForDisplay = true
+        }
+        if player.status == .readyToPlay {
+            _isReadyToPlay = true
+        }
+        loadState = playerItem == nil ? .idle : .ready
+        context?.post(.playerEngineDidChange, sender: self)
+        context?.post(.playerEngineViewDidChanged, sender: self)
+    }
+
     // MARK: - Private Methods
 
     /**

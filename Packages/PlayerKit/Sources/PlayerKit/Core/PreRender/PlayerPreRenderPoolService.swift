@@ -1,6 +1,19 @@
 import Foundation
 import AVFoundation
 
+// MARK: - PreRender State
+
+/// 预渲染状态
+public enum PlayerPreRenderState: Int, Sendable {
+    case idle = 0
+    case preparing
+    case readyToDisplay
+    case readyToPlay
+    case failed
+    case cancelled
+    case expired
+}
+
 // MARK: - PreRender Pool Events
 
 public extension Event {

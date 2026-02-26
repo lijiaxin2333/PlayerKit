@@ -77,11 +77,6 @@ final class ShowcaseFeedScenePlayer: ScenePlayerProtocol {
         configModel.isLooping = false
         player.context.configPlugin(serviceProtocol: PlayerEngineCoreService.self, withModel: configModel)
 
-        // 配置预渲染 key
-        if let key = prerenderKey {
-            player.context.configPlugin(serviceProtocol: PlayerPreRenderService.self, withModel: key)
-        }
-
         return player
     }
 

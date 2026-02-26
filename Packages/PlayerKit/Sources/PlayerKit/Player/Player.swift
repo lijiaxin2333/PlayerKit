@@ -23,7 +23,6 @@ final class PlayerRegProvider: RegisterProvider {
         registerSet.addEntry(pluginClass: PlayerTimeControlPlugin.self, serviceType: PlayerTimeControlService.self)
         registerSet.addEntry(pluginClass: PlayerAppActivePlugin.self, serviceType: PlayerAppActiveService.self)
         registerSet.addEntry(pluginClass: PlayerMediaControlPlugin.self, serviceType: PlayerMediaControlService.self)
-        registerSet.addEntry(pluginClass: PlayerPreRenderPlugin.self, serviceType: PlayerPreRenderService.self)
         registerSet.addEntry(pluginClass: PlayerStartTimePlugin.self, serviceType: PlayerStartTimeService.self)
         registerSet.addEntry(pluginClass: PlayerSnapshotPlugin.self, serviceType: PlayerSnapshotService.self)
         // 引擎池服务（全局单例访问入口）
@@ -110,7 +109,6 @@ public final class Player: ContextHolder {
     @PlayerPlugin public var startTimeService: PlayerStartTimeService?
     @PlayerPlugin public var snapshotService: PlayerSnapshotService?
     @PlayerPlugin public var preRenderPoolService: PlayerPreRenderPoolService?
-    @PlayerPlugin public var preRenderService: PlayerPreRenderService?
     @PlayerPlugin public var playbackControlService: PlayerPlaybackControlService?
     @PlayerPlugin public var loopingService: PlayerLoopingService?
     @PlayerPlugin public var timeControlService: PlayerTimeControlService?

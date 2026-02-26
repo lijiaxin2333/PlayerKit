@@ -88,12 +88,10 @@ final class ShowcaseFeedSectionController: BaseListSectionController, FeedAutoPl
     /// Cell 显示回调，触发 Cell 的 cellWillDisplay
     override func sectionWillDisplayCell(_ cell: UICollectionViewCell, index: Int, model: AnyObject) {
         guard let feedCell = cell as? ShowcaseFeedCell else { return }
-        if let vm = feedViewModel,
-           let plugin = vm.listContext?.responderForProtocol(ShowcaseFeedPlaybackPluginProtocol.self) as? ShowcaseFeedPlaybackPlugin {
+        if let vm = feedViewModel {
             feedCell.prepareForDisplay(
                 video: vm.video,
-                index: vm.videoIndex,
-                playbackPlugin: plugin
+                index: vm.videoIndex
             )
         }
         feedCell.cellWillDisplay(duplicateReload: false)

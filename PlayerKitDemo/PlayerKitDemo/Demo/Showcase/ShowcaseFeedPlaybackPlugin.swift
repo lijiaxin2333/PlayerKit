@@ -373,8 +373,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         targetCell.startPlay(
             isAutoPlay: true,
             video: videos[index],
-            index: index,
-            playbackPlugin: self
+            index: index
         )
 
         if let autoPlayPlugin = targetCell.scenePlayer.autoPlayNextService {

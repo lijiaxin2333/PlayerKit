@@ -33,6 +33,7 @@ public final class ShowcaseFeedDataPlugin: BasePlugin, ShowcaseFeedDataService {
 
         let config = PlayerDataConfigModel()
         var dataModel = PlayerDataModel()
+        dataModel.vid = video.feedId
         dataModel.videoURL = video.url
         dataModel.title = video.title
         dataModel.author = video.creator.nickname

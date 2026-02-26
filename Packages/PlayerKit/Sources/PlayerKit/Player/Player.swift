@@ -120,7 +120,33 @@ public final class Player: ContextHolder {
         return engineCoreService
     }
 
-    // MARK: - PreRender Pool
+    // MARK: - Engine Acquisition
+
+    /** 确保播放器拥有可用引擎（预渲染池优先，引擎池兜底） */
+    @discardableResult
+    public func ensureEngine() -> Bool {
+        if engineService?.avPlayer?.currentItem != nil { return true }
+
+        // 优先从预渲染池获取
+        if let vid = dataService?.dataModel.vid,
+           let pool = preRenderPoolService {
+            if let entry = pool.entry(for: vid),
+               let videoURL = dataService?.dataModel.videoURL,
+               entry.url == videoURL,
+               let engine = pool.consume(identifier: vid),
+               let comp = engine as? BasePlugin {
+                context.detachInstance(for: PlayerEngineCoreService.self)
+                context.registerInstance(comp, protocol: PlayerEngineCoreService.self)
+                engine.volume = 1.0
+                engine.isLooping = false
+                return true
+            }
+            pool.cancel(identifier: vid)
+        }
+
+        // 兜底：从引擎池获取
+        return acquireEngine()
+    }
 
     /** 绑定预渲染引擎到当前播放器 */
     @discardableResult

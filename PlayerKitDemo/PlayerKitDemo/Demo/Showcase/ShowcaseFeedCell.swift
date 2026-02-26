@@ -97,45 +97,27 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
     func startPlay(
         isAutoPlay: Bool,
         video: ShowcaseVideo,
-        index: Int,
-        playbackPlugin: ShowcaseFeedPlaybackPlugin
+        index: Int
     ) {
-        runPlayFlow(
-            isAutoPlay: isAutoPlay,
-            video: video,
-            index: index,
-            playbackPlugin: playbackPlugin
-        )
+        runPlayFlow(isAutoPlay: isAutoPlay, video: video, index: index)
     }
 
     func prepareForDisplay(
         video: ShowcaseVideo,
-        index: Int,
-        playbackPlugin: ShowcaseFeedPlaybackPlugin
+        index: Int
     ) {
-        runPlayFlow(
-            isAutoPlay: false,
-            video: video,
-            index: index,
-            playbackPlugin: playbackPlugin
-        )
+        runPlayFlow(isAutoPlay: false, video: video, index: index)
     }
 
     private func runPlayFlow(
         isAutoPlay: Bool,
         video: ShowcaseVideo,
-        index: Int,
-        playbackPlugin: ShowcaseFeedPlaybackPlugin
+        index: Int
     ) {
-        scenePlayer.player?.bindPool(identifier: "showcase")
         guard let processService = scenePlayer.processService else { return }
         processService.execPlay(
             isAutoPlay: isAutoPlay,
             prepare: nil,
-            createIfNeeded: { [weak self] in
-                guard let self = self else { return }
-                self.preparePlayerIfNeeded(video: video, index: index, playbackPlugin: playbackPlugin)
-            },
             attach: { [weak self] in
                 self?.attachPlayerView()
             },
@@ -146,27 +128,6 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
                 self?.setDataIfNeeded(video: video, index: index)
             }
         )
-    }
-
-    private func preparePlayerIfNeeded(
-        video: ShowcaseVideo,
-        index: Int,
-        playbackPlugin: ShowcaseFeedPlaybackPlugin
-    ) {
-        guard let player = scenePlayer.player else { return }
-        if player.engineService?.avPlayer?.currentItem != nil { return }
-
-        let identifier = video.feedId
-        if let preRenderedPlayer = playbackPlugin.consumePreRendered(identifier: identifier),
-           preRenderedPlayer.engineService?.currentURL == video.url {
-            player.adoptEngine(from: preRenderedPlayer)
-            // 预渲染引擎的 isLooping=true，正式播放需要恢复为 false
-            player.engineService?.isLooping = false
-            return
-        }
-
-        playbackPlugin.cancelPreRender(identifier: identifier)
-        _ = player.acquireEngine()
     }
 
     func attachPlayerView() {

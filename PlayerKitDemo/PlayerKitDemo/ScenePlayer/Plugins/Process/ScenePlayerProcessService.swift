@@ -10,10 +10,10 @@ public protocol ScenePlayerProcessService: PluginService {
 
     /**
      * 执行播放流程
+     * 引擎获取由基础层 Player.ensureEngine() 自动完成（预渲染池优先，引擎池兜底）
      * - Parameters:
      *   - isAutoPlay: 是否自动开始播放
      *   - prepare: 播放前的准备回调
-     *   - createIfNeeded: 若无播放器则创建的回调
      *   - attach: 挂载回调
      *   - checkDataValid: 检查数据有效性的回调
      *   - setDataIfNeeded: 数据无效时设置数据的回调
@@ -21,7 +21,6 @@ public protocol ScenePlayerProcessService: PluginService {
     func execPlay(
         isAutoPlay: Bool,
         prepare: (() -> Void)?,
-        createIfNeeded: (() -> Void)?,
         attach: (() -> Void)?,
         checkDataValid: (() -> Bool)?,
         setDataIfNeeded: (() -> Void)?

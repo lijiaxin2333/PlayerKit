@@ -96,17 +96,11 @@ public final class FeedSceneContext: ScenePlayerProtocol {
 
     public func execPlay(
         prepare: (() -> Void)? = nil,
-        createIfNeeded: (() -> Void)? = nil,
         setDataIfNeeded: (() -> Void)? = nil
     ) {
         sceneProcessService?.execPlay(
             isAutoPlay: configuration.autoPlay,
             prepare: prepare,
-            createIfNeeded: createIfNeeded ?? { [weak self] in
-                guard let self = self else { return }
-                let player = self.createPlayer(prerenderKey: nil)
-                self.addPlayer(player)
-            },
             attach: nil,
             checkDataValid: nil,
             setDataIfNeeded: setDataIfNeeded

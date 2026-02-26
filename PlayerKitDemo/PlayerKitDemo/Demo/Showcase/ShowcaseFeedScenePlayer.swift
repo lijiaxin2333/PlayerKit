@@ -68,6 +68,9 @@ final class ShowcaseFeedScenePlayer: ScenePlayerProtocol {
     func createPlayer(prerenderKey: String?) -> Player {
         let player = Player(name: "ShowcaseFeedPlayer.\(UUID().uuidString)")
 
+        // 绑定引擎池
+        player.bindPool(identifier: "showcase")
+
         // 配置引擎
         let configModel = PlayerEngineCoreConfigModel()
         configModel.autoPlay = true

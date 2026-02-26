@@ -28,11 +28,10 @@ public final class ScenePlayerProcessPlugin: BasePlugin, ScenePlayerProcessServi
 
     /**
      * 执行播放流程
-     * 根据是否有已创建的播放器及数据有效性，依次执行 prepare、createIfNeeded、attach 等步骤
+     * 引擎获取由基础层 Player.ensureEngine() 自动完成（预渲染池优先，引擎池兜底）
      * - Parameters:
      *   - isAutoPlay: 是否自动开始播放
      *   - prepare: 播放前的准备回调
-     *   - createIfNeeded: 若无播放器则创建的回调
      *   - attach: 挂载回调
      *   - checkDataValid: 检查数据有效性的回调，返回 true 表示有效
      *   - setDataIfNeeded: 数据无效时设置数据的回调
@@ -40,11 +39,12 @@ public final class ScenePlayerProcessPlugin: BasePlugin, ScenePlayerProcessServi
     public func execPlay(
         isAutoPlay: Bool,
         prepare: (() -> Void)?,
-        createIfNeeded: (() -> Void)?,
         attach: (() -> Void)?,
         checkDataValid: (() -> Bool)?,
         setDataIfNeeded: (() -> Void)?
     ) {
+        let holder = context?.holder as? ScenePlayerProtocol
+
         if hasPlayer {
             let hasActiveEngine = engineService?.avPlayer?.currentItem != nil
             if hasActiveEngine == true {
@@ -54,11 +54,16 @@ public final class ScenePlayerProcessPlugin: BasePlugin, ScenePlayerProcessServi
             }
             prepare?()
             if hasActiveEngine != true {
-                createIfNeeded?()
+                holder?.player?.ensureEngine()
             }
         } else {
             prepare?()
-            createIfNeeded?()
+            // 无播放器时，通过场景协议创建
+            if let holder = holder {
+                let player = holder.createPlayer(prerenderKey: nil)
+                holder.addPlayer(player)
+                player.ensureEngine()
+            }
         }
 
         var isDataValid = false

@@ -421,6 +421,12 @@ public class PlayerFullScreenContainerView: UIView {
 
 /**
  * 全屏播放插件
+ *
+ * 使用 View Reparent + CGAffineTransform 旋转动画实现丝滑全屏转场：
+ * - 视频图层不重建，playerView 仅换父视图，AVPlayer 渲染层从未断开
+ * - GPU 加速的仿射变换，不触发离屏渲染
+ * - 0.3s EaseInOut 动画曲线
+ * - 坐标系精确转换，保证起始位置与原始位置完全重合
  */
 @MainActor
 public final class PlayerFullScreenPlugin: BasePlugin, PlayerFullScreenService {
@@ -439,8 +445,10 @@ public final class PlayerFullScreenPlugin: BasePlugin, PlayerFullScreenService {
 
     /// 全屏窗口
     private var fullScreenWindow: UIWindow?
-    /// 全屏容器视图
-    private var fullScreenContainerView: PlayerFullScreenContainerView?
+    /// 全屏播控视图
+    private var fullScreenControlView: PlayerFullScreenControlView?
+    /// 黑色背景视图
+    private var backgroundView: UIView?
     /// 原始父视图
     private var originalSuperview: UIView?
     /// 原始 frame
@@ -451,8 +459,8 @@ public final class PlayerFullScreenPlugin: BasePlugin, PlayerFullScreenService {
     private var originalAutoresizingMask: UIView.AutoresizingMask = []
     /// 原始 translatesAutoresizingMaskIntoConstraints
     private var originalTranslatesAutoresizingMaskIntoConstraints: Bool = true
-    /// 原始约束
-    private var originalConstraints: [NSLayoutConstraint] = []
+    /// playerView 在 window 坐标系中的原始位置（用于退出动画的目标位置）
+    private var originalFrameInWindow: CGRect = .zero
 
     /// 进度更新观察者 token
     private var progressObserverToken: String?
@@ -494,7 +502,7 @@ public final class PlayerFullScreenPlugin: BasePlugin, PlayerFullScreenService {
         supportedOrientation = config.supportedOrientation
     }
 
-    // MARK: - Methods
+    // MARK: - Enter / Exit
 
     public func enterFullScreen(orientation: PlayerFullScreenOrientation = .auto, animated: Bool = true) {
         guard fullScreenState != .fullScreen,
@@ -505,20 +513,72 @@ public final class PlayerFullScreenPlugin: BasePlugin, PlayerFullScreenService {
         fullScreenState = .transitioning
         context?.post(.playerWillEnterFullScreen, sender: self)
 
-        // 保存原始状态
+        // 1. 保存原始状态
         originalSuperview = playerView.superview
         originalFrame = playerView.frame
         originalTransform = playerView.transform
         originalAutoresizingMask = playerView.autoresizingMask
         originalTranslatesAutoresizingMaskIntoConstraints = playerView.translatesAutoresizingMaskIntoConstraints
-        originalConstraints = playerView.constraints
 
-        // 先旋转到横屏
-        rotateToLandscape()
+        // 2. 精确坐标转换：计算 playerView 在 window 坐标系中的位置
+        originalFrameInWindow = playerView.superview?.convert(playerView.frame, to: nil) ?? playerView.frame
 
-        // 延迟创建窗口，等待旋转完成
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-            self?.createFullScreenWindow(with: playerView, animated: animated)
+        // 3. 屏幕尺寸（竖屏状态）
+        let screenBounds = UIScreen.main.bounds
+        let landscapeWidth = max(screenBounds.width, screenBounds.height)
+        let landscapeHeight = min(screenBounds.width, screenBounds.height)
+
+        // 4. 创建全屏 window（竖屏尺寸，不旋转设备方向）
+        let window = makeWindow(frame: screenBounds)
+        window.backgroundColor = .clear
+
+        // 5. 黑色背景（跟随动画渐入）
+        let bgView = UIView(frame: screenBounds)
+        bgView.backgroundColor = .black
+        bgView.alpha = 0
+        window.addSubview(bgView)
+        self.backgroundView = bgView
+
+        // 6. 视图重挂载：playerView 从原始父视图移到 window
+        //    不销毁、不重建，AVPlayer 渲染层从未断开
+        playerView.removeFromSuperview()
+        playerView.translatesAutoresizingMaskIntoConstraints = true
+        playerView.autoresizingMask = []
+        playerView.transform = .identity
+        playerView.frame = originalFrameInWindow
+        window.addSubview(playerView)
+
+        window.makeKeyAndVisible()
+        self.fullScreenWindow = window
+
+        // 7. 计算目标状态（横屏全屏）
+        let targetFrame = CGRect(x: 0, y: 0, width: landscapeWidth, height: landscapeHeight)
+        let targetCenter = CGPoint(x: screenBounds.width / 2, y: screenBounds.height / 2)
+        let angle: CGFloat = .pi / 2
+
+        // 8. 执行 0.3s EaseInOut 旋转动画
+        let animateBlock = {
+            // 设置顺序(必须)：frame → center → transform
+            playerView.frame = targetFrame
+            playerView.center = targetCenter
+            playerView.transform = CGAffineTransform(rotationAngle: angle)
+            bgView.alpha = 1
+        }
+
+        let completionBlock: () -> Void = { [weak self] in
+            guard let self = self else { return }
+            self.setupFullScreenOverlay(in: window, landscapeWidth: landscapeWidth, landscapeHeight: landscapeHeight)
+            self.fullScreenState = .fullScreen
+            self.context?.post(.playerDidEnterFullScreen, sender: self)
+        }
+
+        if animated {
+            UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut, animations: animateBlock) { _ in
+                completionBlock()
+            }
+        } else {
+            animateBlock()
+            completionBlock()
         }
     }
 
@@ -528,7 +588,6 @@ public final class PlayerFullScreenPlugin: BasePlugin, PlayerFullScreenService {
         fullScreenState = .transitioning
         context?.post(.playerWillExitFullScreen, sender: self)
 
-        // 移除进度观察
         removeProgressObserver()
 
         guard let playerView = engineService?.playerView else {
@@ -536,13 +595,31 @@ public final class PlayerFullScreenPlugin: BasePlugin, PlayerFullScreenService {
             return
         }
 
-        // 动画退出
+        // 移除播控覆盖层
+        fullScreenControlView?.removeFromSuperview()
+        fullScreenControlView = nil
+
+        // 反向动画：恢复 transform + frame，背景渐出
+        let animateBlock = {
+            playerView.transform = .identity
+            playerView.frame = self.originalFrameInWindow
+            self.backgroundView?.alpha = 0
+        }
+
+        let completionBlock: () -> Void = { [weak self] in
+            guard let self = self else { return }
+            self.restorePlayerView(playerView)
+            self.fullScreenState = .normal
+            self.context?.post(.playerDidExitFullScreen, sender: self)
+        }
+
         if animated {
-            exitWithAnimation(playerView: playerView)
+            UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut, animations: animateBlock) { _ in
+                completionBlock()
+            }
         } else {
-            restorePlayerView(playerView)
-            fullScreenState = .normal
-            context?.post(.playerDidExitFullScreen, sender: self)
+            animateBlock()
+            completionBlock()
         }
     }
 
@@ -554,142 +631,49 @@ public final class PlayerFullScreenPlugin: BasePlugin, PlayerFullScreenService {
         }
     }
 
-    // MARK: - Private Methods
+    // MARK: - Private
 
-    private func createFullScreenWindow(with playerView: UIView, animated: Bool) {
-        // 获取横屏尺寸
-        var landscapeWidth: CGFloat
-        var landscapeHeight: CGFloat
-
+    private func makeWindow(frame: CGRect) -> UIWindow {
         if #available(iOS 13.0, *) {
-            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-                // 使用 windowScene 的尺寸
-                let screenSize = windowScene.screen.bounds.size
-                landscapeWidth = max(screenSize.width, screenSize.height)
-                landscapeHeight = min(screenSize.width, screenSize.height)
-            } else {
-                let screenBounds = UIScreen.main.bounds
-                landscapeWidth = max(screenBounds.width, screenBounds.height)
-                landscapeHeight = min(screenBounds.width, screenBounds.height)
-            }
-        } else {
-            let screenBounds = UIScreen.main.bounds
-            landscapeWidth = max(screenBounds.width, screenBounds.height)
-            landscapeHeight = min(screenBounds.width, screenBounds.height)
-        }
-
-        let landscapeFrame = CGRect(x: 0, y: 0, width: landscapeWidth, height: landscapeHeight)
-
-        let window: UIWindow
-
-        if #available(iOS 13.0, *) {
-            let scene = UIApplication.shared.connectedScenes
-                .compactMap { $0 as? UIWindowScene }
-                .first ?? UIApplication.shared.windows.first?.windowScene
-
-            if let scene = scene {
-                window = UIWindow(windowScene: scene)
-            } else {
-                window = UIWindow(frame: landscapeFrame)
-            }
-        } else {
-            window = UIWindow(frame: landscapeFrame)
-        }
-
-        window.windowLevel = .statusBar + 1
-        window.backgroundColor = .black
-        window.frame = landscapeFrame
-
-        // 创建容器视图
-        let containerView = PlayerFullScreenContainerView(frame: landscapeFrame)
-        containerView.backgroundColor = .black
-
-        // 设置视频尺寸（用于计算 aspectFit）
-        var videoSize = CGSize.zero
-        if let dataService = dataService,
-           dataService.dataModel.videoWidth > 0,
-           dataService.dataModel.videoHeight > 0 {
-            videoSize = CGSize(
-                width: dataService.dataModel.videoWidth,
-                height: dataService.dataModel.videoHeight
-            )
-        } else if let playerItem = engineService?.avPlayer?.currentItem {
-            // 从 AVPlayerItem 获取视频尺寸
-            let tracks = playerItem.asset.tracks(withMediaType: AVMediaType.video)
-            if let videoTrack = tracks.first {
-                let naturalSize = videoTrack.naturalSize
-                let transform = videoTrack.preferredTransform
-                videoSize = naturalSize.applying(transform)
-                // 如果 transform 导致宽高互换，需要调整
-                if videoSize.width < 0 { videoSize.width = -videoSize.width }
-                if videoSize.height < 0 { videoSize.height = -videoSize.height }
-            }
-
-            // 如果还是 zero，尝试 presentationSize
-            if videoSize == .zero {
-                let presentationSize = playerItem.presentationSize
-                if presentationSize.width > 0, presentationSize.height > 0 {
-                    videoSize = presentationSize
-                }
+            if let scene = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .first {
+                let w = UIWindow(windowScene: scene)
+                w.frame = frame
+                w.windowLevel = .statusBar + 1
+                return w
             }
         }
+        let w = UIWindow(frame: frame)
+        w.windowLevel = .statusBar + 1
+        return w
+    }
 
-        containerView.videoSize = videoSize
+    /// 动画完成后添加播控覆盖层（横屏方向，与 playerView 同角度旋转）
+    private func setupFullScreenOverlay(in window: UIWindow, landscapeWidth: CGFloat, landscapeHeight: CGFloat) {
+        let screenBounds = UIScreen.main.bounds
 
-        self.fullScreenContainerView = containerView
+        let controlView = PlayerFullScreenControlView(
+            frame: CGRect(x: 0, y: 0, width: landscapeWidth, height: landscapeHeight)
+        )
+        controlView.center = CGPoint(x: screenBounds.width / 2, y: screenBounds.height / 2)
+        controlView.transform = CGAffineTransform(rotationAngle: .pi / 2)
+        window.addSubview(controlView)
 
-        // 配置播控回调
-        setupControlViewCallbacks(containerView.controlView)
+        self.fullScreenControlView = controlView
 
-        // 移动播放器视图（先移除）
-        playerView.removeFromSuperview()
-        playerView.transform = .identity
-
-        // 先把容器加到 window，触发 AutoLayout 解算
-        window.addSubview(containerView)
-
-        // 显示窗口
-        window.makeKeyAndVisible()
-        self.fullScreenWindow = window
-
-        // 先让 containerView 完成一轮布局
-        containerView.setNeedsLayout()
-        containerView.layoutIfNeeded()
-
-        // 现在设置 contentView
-        containerView.setContentView(playerView)
-
-        // 更新播控状态
+        setupControlViewCallbacks(controlView)
         updateControlViewState()
-
-        // 添加进度观察
         addProgressObserver()
-
-        if animated {
-            // 入场动画
-            containerView.alpha = 0
-            UIView.animate(withDuration: 0.3, animations: {
-                containerView.alpha = 1
-            }, completion: { _ in
-                self.fullScreenState = .fullScreen
-                self.context?.post(.playerDidEnterFullScreen, sender: self)
-            })
-        } else {
-            fullScreenState = .fullScreen
-            context?.post(.playerDidEnterFullScreen, sender: self)
-        }
     }
 
     private func setupControlViewCallbacks(_ controlView: PlayerFullScreenControlView) {
-        // 关闭按钮
         controlView.onCloseTapped = { [weak self] in
             self?.exitFullScreen(animated: true)
         }
 
-        // 播放/暂停
         controlView.onPlayPauseTapped = { [weak self] in
             guard let self = self else { return }
-            // 如果播放完成，重播
             if controlView.isPlaybackEnded {
                 self.engineService?.seek(to: 0)
                 controlView.isPlaybackEnded = false
@@ -701,17 +685,14 @@ public final class PlayerFullScreenPlugin: BasePlugin, PlayerFullScreenService {
             }
         }
 
-        // 进度改变
         controlView.onProgressChanged = { [weak self] progress in
             guard let self = self, let duration = self.engineService?.duration, duration > 0 else { return }
             let targetTime = duration * TimeInterval(progress)
             self.engineService?.seek(to: targetTime)
         }
 
-        // 倍速
         controlView.onSpeedTapped = { [weak self] in
             guard let self = self else { return }
-            // 循环切换倍速: 1.0 -> 1.5 -> 2.0 -> 0.5 -> 1.0
             let speeds: [Float] = [1.0, 1.5, 2.0, 0.5]
             let currentSpeed = self.speedService?.currentSpeed ?? 1.0
             if let currentIndex = speeds.firstIndex(of: currentSpeed) {
@@ -725,7 +706,7 @@ public final class PlayerFullScreenPlugin: BasePlugin, PlayerFullScreenService {
     }
 
     private func updateControlViewState() {
-        guard let controlView = fullScreenContainerView?.controlView else { return }
+        guard let controlView = fullScreenControlView else { return }
 
         controlView.isPlaying = engineService?.playbackState == .playing
         controlView.currentTime = engineService?.currentTime ?? 0
@@ -738,14 +719,13 @@ public final class PlayerFullScreenPlugin: BasePlugin, PlayerFullScreenService {
 
         progressObserverToken = processService.observeProgress { [weak self] progress, currentTime in
             guard let self = self else { return }
-            self.fullScreenContainerView?.controlView.currentTime = currentTime
-            self.fullScreenContainerView?.controlView.duration = self.engineService?.duration ?? 0
-            self.fullScreenContainerView?.controlView.isPlaying = self.engineService?.playbackState == .playing
+            self.fullScreenControlView?.currentTime = currentTime
+            self.fullScreenControlView?.duration = self.engineService?.duration ?? 0
+            self.fullScreenControlView?.isPlaying = self.engineService?.playbackState == .playing
         }
 
-        // 监听播放完成事件
         context?.add(self, event: .playerPlaybackDidFinish) { [weak self] _, _ in
-            self?.fullScreenContainerView?.controlView.isPlaybackEnded = true
+            self?.fullScreenControlView?.isPlaybackEnded = true
         }
     }
 
@@ -756,52 +736,10 @@ public final class PlayerFullScreenPlugin: BasePlugin, PlayerFullScreenService {
         }
     }
 
-    private func rotateToLandscape() {
-        if #available(iOS 16.0, *) {
-            guard let windowScene = UIApplication.shared.connectedScenes
-                .compactMap({ $0 as? UIWindowScene })
-                .first else { return }
-            windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: .landscapeRight)) { _ in }
-        } else {
-            UIDevice.current.setValue(UIInterfaceOrientation.landscapeRight.rawValue, forKey: "orientation")
-            UIViewController.attemptRotationToDeviceOrientation()
-        }
-    }
-
-    private func rotateToPortrait() {
-        if #available(iOS 16.0, *) {
-            guard let windowScene = UIApplication.shared.connectedScenes
-                .compactMap({ $0 as? UIWindowScene })
-                .first else { return }
-            windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { _ in }
-        } else {
-            UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
-            UIViewController.attemptRotationToDeviceOrientation()
-        }
-    }
-
-    private func exitWithAnimation(playerView: UIView) {
-        guard let containerView = fullScreenContainerView else {
-            restorePlayerView(playerView)
-            fullScreenState = .normal
-            context?.post(.playerDidExitFullScreen, sender: self)
-            return
-        }
-
-        UIView.animate(withDuration: 0.3, animations: {
-            containerView.alpha = 0
-        }, completion: { _ in
-            self.restorePlayerView(playerView)
-            self.rotateToPortrait()
-            self.fullScreenState = .normal
-            self.context?.post(.playerDidExitFullScreen, sender: self)
-        })
-    }
-
+    /// 将 playerView 恢复到原始父视图
     private func restorePlayerView(_ playerView: UIView) {
         playerView.removeFromSuperview()
 
-        // 恢复原始布局模式
         playerView.translatesAutoresizingMaskIntoConstraints = originalTranslatesAutoresizingMaskIntoConstraints
         playerView.transform = originalTransform
         playerView.frame = originalFrame
@@ -810,7 +748,6 @@ public final class PlayerFullScreenPlugin: BasePlugin, PlayerFullScreenService {
         if let superview = originalSuperview {
             superview.addSubview(playerView)
 
-            // 如果原来使用 Auto Layout，重新设置约束
             if !originalTranslatesAutoresizingMaskIntoConstraints {
                 playerView.topAnchor.constraint(equalTo: superview.topAnchor).isActive = true
                 playerView.leadingAnchor.constraint(equalTo: superview.leadingAnchor).isActive = true
@@ -819,8 +756,8 @@ public final class PlayerFullScreenPlugin: BasePlugin, PlayerFullScreenService {
             }
         }
 
+        backgroundView = nil
         fullScreenWindow?.isHidden = true
         fullScreenWindow = nil
-        fullScreenContainerView = nil
     }
 }

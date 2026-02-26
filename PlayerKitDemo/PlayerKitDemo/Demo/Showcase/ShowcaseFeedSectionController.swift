@@ -73,16 +73,6 @@ final class ShowcaseFeedSectionController: BaseListSectionController, FeedAutoPl
               let cellViewModel = model as? ShowcaseFeedCellViewModel else { return }
 
         feedCell.bindCellViewModel(cellViewModel)
-
-        if let vm = feedViewModel,
-           let plugin = vm.listContext?.responderForProtocol(ShowcaseFeedPlaybackPluginProtocol.self) as? ShowcaseFeedPlaybackPlugin {
-            let config = ShowcaseFeedPreRenderConfigModel(
-                cancelPreRender: { [weak plugin] identifier in
-                    plugin?.cancelPreRender(identifier: identifier)
-                }
-            )
-            feedCell.scenePlayer.context.configPlugin(serviceProtocol: ShowcaseFeedPreRenderService.self, withModel: config)
-        }
     }
 
     /// Cell 显示回调，触发 Cell 的 cellWillDisplay
@@ -104,19 +94,6 @@ final class ShowcaseFeedSectionController: BaseListSectionController, FeedAutoPl
     }
 
     func sectionControllerWillEnterWorkingRange(_ sectionController: BaseListSectionController) {
-        guard sectionController === self else { return }
-        guard let feedCell = feedCell else { return }
-        if let vm = feedViewModel,
-           let plugin = vm.listContext?.responderForProtocol(ShowcaseFeedPlaybackPluginProtocol.self) as? ShowcaseFeedPlaybackPlugin {
-            plugin.preRenderAdjacent(currentIndex: vm.videoIndex, videos: videosFromContext())
-
-            let config = ShowcaseFeedPreRenderConfigModel(
-                cancelPreRender: { [weak plugin] identifier in
-                    plugin?.cancelPreRender(identifier: identifier)
-                }
-            )
-            feedCell.scenePlayer.context.configPlugin(serviceProtocol: ShowcaseFeedPreRenderService.self, withModel: config)
-        }
     }
 
     override func didSelectItem(atIndex index: Int, model: AnyObject) {}

@@ -11,7 +11,6 @@
 		0B487CBD030C1EDDD6A5D409 /* ShowcaseDetailLongPressSpeedService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 189F9040412B67F8BA3BE2C6 /* ShowcaseDetailLongPressSpeedService.swift */; };
 		0CB126164802F6E56E55814E /* FeedPlayerPool.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4EE57BB8840ABE48608158B /* FeedPlayerPool.swift */; };
 		0E2F30F7781F68D1F0648EA7 /* PlayerCoverMaskPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 287181332FC7C5088D9BA912 /* PlayerCoverMaskPlugin.swift */; };
-		0E333D5436C299FD9E3ADC78 /* ShowcaseFeedPreRenderPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83AB81B9ACDA2DE6C6CEAFF0 /* ShowcaseFeedPreRenderPlugin.swift */; };
 		12D7134C3FA162F6B30C683D /* PlayerSpeedPanelPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 292027AF722AB2C9EA8D548E /* PlayerSpeedPanelPlugin.swift */; };
 		1C383F3DE609B3CEFDC38607 /* ShowcaseFeedListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AA7178FB8FD997439BE4895 /* ShowcaseFeedListViewModel.swift */; };
 		1EB8C9C31647171C1E123789 /* PlayerDebugService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A8D41BBCCF60A68688A19C3 /* PlayerDebugService.swift */; };
@@ -78,7 +77,6 @@
 		F38563BDF75673C72F6F6D40 /* LoopingDemoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD6D51A0779EAAB7D0E0F3F6 /* LoopingDemoViewController.swift */; };
 		F4671601CE68B68D0D7D18A9 /* PlayerKit in Frameworks */ = {isa = PBXBuildFile; productRef = 37F022EF2F2D6D78DDAAAAFC /* PlayerKit */; };
 		F864BEDD7681D25676E46CC2 /* ShowcaseGestureHandlers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2693DD18DB3CB2F4A35B723 /* ShowcaseGestureHandlers.swift */; };
-		FA38F6647C252212FDB5FD1E /* ShowcaseFeedPreRenderService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 224A1CB2D602AB6E8091E473 /* ShowcaseFeedPreRenderService.swift */; };
 		FB2D13B888BFA7BA6E4862CE /* PlayerZoomService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 340B94B339C497C2985D5F4B /* PlayerZoomService.swift */; };
 		FF0B2C9D1C2BE25C0EDFD686 /* ShowcaseDetailControlPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A7516359C093C748A1E530F /* ShowcaseDetailControlPlugin.swift */; };
 /* End PBXBuildFile section */
@@ -95,7 +93,6 @@
 		1BCECE80D2529ED40EB1CAF5 /* PlayerSpeedPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSpeedPanelView.swift; sourceTree = "<group>"; };
 		1D3BCA95CAF5FDE921DC513A /* ShowcaseFeedScenePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseFeedScenePlayer.swift; sourceTree = "<group>"; };
 		21AEBF9F4BCB9EAB761B9A71 /* PlayerGesturePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerGesturePlugin.swift; sourceTree = "<group>"; };
-		224A1CB2D602AB6E8091E473 /* ShowcaseFeedPreRenderService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseFeedPreRenderService.swift; sourceTree = "<group>"; };
 		287181332FC7C5088D9BA912 /* PlayerCoverMaskPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerCoverMaskPlugin.swift; sourceTree = "<group>"; };
 		292027AF722AB2C9EA8D548E /* PlayerSpeedPanelPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSpeedPanelPlugin.swift; sourceTree = "<group>"; };
 		340B94B339C497C2985D5F4B /* PlayerZoomService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerZoomService.swift; sourceTree = "<group>"; };
@@ -127,7 +124,6 @@
 		6E5C83E4BFF16AE27F23463B /* PlayerKitDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PlayerKitDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6FD2438B2B6F043830CFEC65 /* ShowcaseDetailLongPressSpeedPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseDetailLongPressSpeedPlugin.swift; sourceTree = "<group>"; };
 		7FF7541EFC0AC0E95857BF7B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		83AB81B9ACDA2DE6C6CEAFF0 /* ShowcaseFeedPreRenderPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseFeedPreRenderPlugin.swift; sourceTree = "<group>"; };
 		8596D75076C16739EDEF5AD3 /* PlayerZoomPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerZoomPlugin.swift; sourceTree = "<group>"; };
 		91971AA6E4A77F1362C76D7C /* ScenePlayerRegProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScenePlayerRegProvider.swift; sourceTree = "<group>"; };
 		990A46EC5472B01DA03BA14F /* ShowcaseFeedSectionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseFeedSectionController.swift; sourceTree = "<group>"; };
@@ -226,7 +222,6 @@
 				BDC5B3E942C0578D8D1B560B /* Gesture */,
 				121589F2836C153151F9CA80 /* Overlay */,
 				D0D7D892282904E4DDF793A8 /* Panel */,
-				F2B4A47D569869061998A1CA /* Prerender */,
 				BB2FBCF19EC9F4515FC58A70 /* Process */,
 				963CD464180EC955C75AAA64 /* SpeedPanel */,
 				772A0987D72CB178C15CC5E6 /* TipManager */,
@@ -529,15 +524,6 @@
 			path = PlayerKitDemo;
 			sourceTree = "<group>";
 		};
-		F2B4A47D569869061998A1CA /* Prerender */ = {
-			isa = PBXGroup;
-			children = (
-				83AB81B9ACDA2DE6C6CEAFF0 /* ShowcaseFeedPreRenderPlugin.swift */,
-				224A1CB2D602AB6E8091E473 /* ShowcaseFeedPreRenderService.swift */,
-			);
-			path = Prerender;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -682,8 +668,6 @@
 				E871E72A923D77790B8A46A5 /* ShowcaseFeedOverlayPlugin.swift in Sources */,
 				7FDA8094C8352E5782CD9DBA /* ShowcaseFeedOverlayService.swift in Sources */,
 				D0F91612CFE24C38AE59C7A8 /* ShowcaseFeedPlaybackPlugin.swift in Sources */,
-				0E333D5436C299FD9E3ADC78 /* ShowcaseFeedPreRenderPlugin.swift in Sources */,
-				FA38F6647C252212FDB5FD1E /* ShowcaseFeedPreRenderService.swift in Sources */,
 				97830ECBCFFF15F11C4CC649 /* ShowcaseFeedScenePlayer.swift in Sources */,
 				DA9922EAA4C518C3AE1F5FAA /* ShowcaseFeedSectionController.swift in Sources */,
 				D3F2A83B22646052AAE6A992 /* ShowcaseFeedSectionViewModel.swift in Sources */,

@@ -33,8 +33,6 @@ final class ShowcaseFeedSceneRegProvider: RegisterProvider {
                             serviceType: ShowcaseFeedOverlayService.self)
         registerSet.addEntry(pluginClass: ShowcaseAutoPlayNextPlugin.self,
                             serviceType: ShowcaseAutoPlayNextService.self)
-        registerSet.addEntry(pluginClass: ShowcaseFeedPreRenderPlugin.self,
-                            serviceType: ShowcaseFeedPreRenderService.self)
     }
 }
 
@@ -49,7 +47,6 @@ final class ShowcaseFeedScenePlayer: ScenePlayerProtocol {
     @PlayerPlugin var cellViewService: ShowcaseFeedCellViewService?
     @PlayerPlugin var processService: ScenePlayerProcessService?
     @PlayerPlugin var playbackControl: PlayerPlaybackControlService?
-    @PlayerPlugin var preRenderService: ShowcaseFeedPreRenderService?
     @PlayerPlugin var autoPlayNextService: ShowcaseAutoPlayNextService?
 
     init() {

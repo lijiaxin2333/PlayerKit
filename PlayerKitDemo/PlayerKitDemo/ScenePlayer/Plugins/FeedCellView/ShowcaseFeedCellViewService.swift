@@ -2,7 +2,7 @@ import UIKit
 import PlayerKit
 
 @MainActor
-public class ShowcaseFeedCellViewConfigModel {
+public class ShowcaseFeedCellViewPluginConfigModel {
     public weak var contentView: UIView?
     public weak var playerContainer: UIView?
 

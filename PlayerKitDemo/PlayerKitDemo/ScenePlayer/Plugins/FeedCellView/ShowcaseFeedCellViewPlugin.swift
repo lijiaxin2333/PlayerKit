@@ -7,24 +7,27 @@ import PlayerKit
 @MainActor
 public final class ShowcaseFeedCellViewPlugin: BasePlugin, ShowcaseFeedCellViewService {
 
+    public typealias ConfigModelType = ShowcaseFeedCellViewPluginConfigModel
+    
     private weak var _contentView: UIView?
     private weak var _playerContainer: UIView?
 
     public var playerContainerView: UIView? { _playerContainer }
     public var contentView: UIView? { _contentView }
 
-    public required override init() {
+    public required init() {
         super.init()
     }
 
     public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
-        context.add(self, event: .showcaseFeedCellViewDidSet) { [weak self] object, _ in
-            guard let self = self,
-                  let model = object as? ShowcaseFeedCellViewConfigModel else { return }
-            self._contentView = model.contentView
-            self._playerContainer = model.playerContainer
-            self.context?.post(.showcaseFeedCellViewDidSetSticky, object: model, sender: self)
+    }
+    
+    public override func config(_ configModel: Any?) {
+        guard let configModel = configModel as? ConfigModelType else {
+            return
         }
+        self._playerContainer = configModel.playerContainer
+        self._contentView = configModel.contentView
     }
 }

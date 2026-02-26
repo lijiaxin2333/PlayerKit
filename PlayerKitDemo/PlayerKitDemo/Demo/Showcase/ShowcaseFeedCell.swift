@@ -33,13 +33,11 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
     func cellWillDisplay(duplicateReload: Bool) {
         if hasAppear { return }
         hasAppear = true
-        scenePlayer.post(.cellWillDisplay, sender: self)
     }
 
     func cellDidEndDisplaying(duplicateReload: Bool) {
         if !hasAppear { return }
         hasAppear = false
-        scenePlayer.post(.cellDidEndDisplaying, sender: self)
     }
 
     /// VC viewWillAppear
@@ -81,8 +79,8 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
             _playerContainer.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
         ])
 
-        let cellViewConfig = ShowcaseFeedCellViewConfigModel(contentView: contentView, playerContainer: _playerContainer)
-        scenePlayer.post(.showcaseFeedCellViewDidSet, object: cellViewConfig, sender: self)
+        let cellViewConfig = ShowcaseFeedCellViewPluginConfigModel(contentView: contentView, playerContainer: _playerContainer)
+        scenePlayer.context.configPlugin(serviceProtocol: ShowcaseFeedCellViewService.self, withModel: cellViewConfig)
 
         let player = scenePlayer.createPlayer(prerenderKey: nil)
         scenePlayer.addPlayer(player)
@@ -250,7 +248,6 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         super.prepareForReuse()
         hasAppear = false
         isTransferringPlayer = false
-        scenePlayer.post(.cellPrepareForReuse, sender: self)
         stopAndRecycleEngine()
         if !scenePlayer.hasPlayer() {
             let player = scenePlayer.createPlayer(prerenderKey: nil)

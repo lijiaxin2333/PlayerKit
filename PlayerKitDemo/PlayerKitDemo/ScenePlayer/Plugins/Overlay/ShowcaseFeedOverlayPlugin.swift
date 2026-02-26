@@ -298,10 +298,6 @@ public final class ShowcaseFeedOverlayPlugin: BasePlugin, ShowcaseFeedOverlaySer
             self.infoView.configure(video: video, index: index)
             self.socialView.configure(video: video, index: index)
         }
-
-        context.add(self, event: .cellPrepareForReuse) { [weak self] _, _ in
-            guard self != nil else { return }
-        }
     }
 
     public func bringOverlaysToFront() {

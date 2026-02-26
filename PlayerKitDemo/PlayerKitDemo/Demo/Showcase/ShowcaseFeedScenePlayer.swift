@@ -3,11 +3,6 @@ import PlayerKit
 
 public extension Event {
     static let showcaseFeedDataDidUpdate: Event = "ShowcaseFeedDataDidUpdate"
-    static let showcaseFeedCellViewDidSet: Event = "ShowcaseFeedCellViewDidSet"
-    static let showcaseFeedCellViewDidSetSticky: Event = "ShowcaseFeedCellViewDidSetSticky"
-    static let cellPrepareForReuse: Event = "CellPrepareForReuse"
-    static let cellWillDisplay: Event = "CellWillDisplay"
-    static let cellDidEndDisplaying: Event = "CellDidEndDisplaying"
     static let showcaseOverlayDidTapLike: Event = "ShowcaseOverlayDidTapLike"
     static let showcaseOverlayDidTapComment: Event = "ShowcaseOverlayDidTapComment"
     static let showcaseOverlayDidTapShare: Event = "ShowcaseOverlayDidTapShare"

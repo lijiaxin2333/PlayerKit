@@ -755,8 +755,9 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         }
         timeObservers.removeAll()
 
-        // 暂停但不销毁 AVPlayer
+        // 暂停并清理 AVPlayerItem，避免旧帧残留
         player.pause()
+        player.replaceCurrentItem(with: nil)
         rv.cancelDisplayObservation()
         rv.removeFromSuperview()
 

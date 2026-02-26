@@ -13,7 +13,7 @@ public final class PlayerEnginePool: PlayerEnginePoolService {
     private var pool: [String: [PoolEntry]] = [:]
     private var _maxCapacity: Int = 4
     private var _maxPerIdentifier: Int = 2
-    private var _isAutoReplenishEnabled: Bool = false
+    private var _isAutoReplenishEnabled: Bool = true  // 默认开启自动补充
     private var _autoReplenishThreshold: Float = 0.5
     private var _idleTimeout: TimeInterval = 0
     private var _statistics = PlayerEnginePoolStatistics()
@@ -88,11 +88,10 @@ public final class PlayerEnginePool: PlayerEnginePoolService {
             evictOldestGlobal()
         }
 
-        // 从 Plugin 中提取核心资源
+        // 从 Plugin 中提取核心资源（detachCore 会清理 AVPlayerItem）
         guard let core = plugin.detachCore() else { return }
 
-        // 准备核心资源用于复用
-        core.avPlayer.pause()
+        // 核心资源已被 detachCore 清理，直接入队
         core.renderView.isHidden = true
 
         if pool[identifier] == nil {
@@ -111,25 +110,47 @@ public final class PlayerEnginePool: PlayerEnginePoolService {
     }
 
     /// 从池中出队核心资源，创建新的 Plugin 接管
+    /// 如果池为空且启用自动补充，会自动创建新的引擎
     public func dequeue(identifier: String) -> PlayerEngineCoreService? {
-        guard var entries = pool[identifier], !entries.isEmpty else {
-            _statistics.poolMisses += 1
+        // 池中有可用条目
+        if var entries = pool[identifier], !entries.isEmpty {
+            let entry = entries.removeFirst()
+            pool[identifier] = entries.isEmpty ? nil : entries
+            _statistics.poolHits += 1
             _statistics.totalDequeued += 1
-            return nil
+
+            cancelIdleTimer(forIdentifier: identifier)
+            autoReplenishIfNeeded(identifier: identifier)
+
+            let newPlugin = PlayerEngineCorePlugin()
+            newPlugin.adoptCore(player: entry.avPlayer, renderView: entry.renderView)
+            return newPlugin
         }
 
-        let entry = entries.removeFirst()
-        pool[identifier] = entries.isEmpty ? nil : entries
-        _statistics.poolHits += 1
+        // 池为空，尝试自动创建
+        _statistics.poolMisses += 1
         _statistics.totalDequeued += 1
 
-        cancelIdleTimer(forIdentifier: identifier)
+        if _isAutoReplenishEnabled {
+            let newPlugin = PlayerEngineCorePlugin()
+            // adoptCore 需要已有的 AVPlayer + RenderView，这里创建新的
+            let player = AVPlayer()
+            player.automaticallyWaitsToMinimizeStalling = false
+            player.actionAtItemEnd = .pause
 
-        // 创建新的 Plugin 并接管核心资源
-        let newPlugin = PlayerEngineCorePlugin()
-        newPlugin.adoptCore(player: entry.avPlayer, renderView: entry.renderView)
+            let renderView = PlayerEngineRenderView(frame: .zero)
+            renderView.setPlayer(player)
+            renderView.isHidden = false
 
-        return newPlugin
+            newPlugin.adoptCore(player: player, renderView: renderView)
+
+            // 补充池子
+            replenishPool(identifier: identifier)
+
+            return newPlugin
+        }
+
+        return nil
     }
 
     public func count(for identifier: String) -> Int {
@@ -189,6 +210,8 @@ public final class PlayerEnginePool: PlayerEnginePoolService {
         }
     }
 
+    // MARK: - Private
+
     private func evictOldest(identifier: String) {
         guard var entries = pool[identifier], !entries.isEmpty else { return }
         let removed = entries.removeFirst()
@@ -217,6 +240,23 @@ public final class PlayerEnginePool: PlayerEnginePoolService {
         entry.avPlayer.pause()
         entry.avPlayer.replaceCurrentItem(with: nil)
         entry.renderView.removeFromSuperview()
+    }
+
+    private func autoReplenishIfNeeded(identifier: String) {
+        guard _isAutoReplenishEnabled else { return }
+        replenishPool(identifier: identifier)
+    }
+
+    private func replenishPool(identifier: String) {
+        let currentCount = pool[identifier]?.count ?? 0
+        let threshold = Int(Float(_maxPerIdentifier) * _autoReplenishThreshold)
+
+        guard currentCount < threshold else { return }
+
+        let toCreate = min(_maxPerIdentifier - currentCount, _maxCapacity - count)
+        guard toCreate > 0 else { return }
+
+        fill(count: toCreate, identifier: identifier)
     }
 
     private func scheduleIdleTimer(forEntryAt index: Int, identifier: String) {

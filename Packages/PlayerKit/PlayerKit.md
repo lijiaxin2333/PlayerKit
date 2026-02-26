@@ -96,9 +96,8 @@ public protocol ScenePlayerProtocol: ContextHolder {
 
 | 插件 | 服务 | 职责 |
 |------|------|------|
-| `PlayerEngineCorePlugin` | `PlayerEngineCoreService` | 管理 AVPlayer 引擎 |
+| `PlayerEngineCorePlugin` | `PlayerEngineCoreService` | 管理 AVPlayer 引擎和渲染视图 |
 | `PlayerProcessPlugin` | `PlayerProcessService` | 播放流程控制 |
-| `PlayerViewPlugin` | `PlayerViewService` | 播放器视图管理 |
 | `PlayerSpeedPlugin` | `PlayerSpeedService` | 播放速度控制 |
 | `PlayerDataPlugin` | `PlayerDataService` | 播放数据管理 |
 | `PlayerFullScreenPlugin` | `PlayerFullScreenService` | 全屏控制 |
@@ -217,7 +216,6 @@ class PlayerDanmakuPlugin: BasePlugin {
     static func dependencyProtocols() -> [Any.Type]? {
         return [
             PlayerEngineCoreService.self,
-            PlayerViewService.self,
             PlayerProcessService.self
         ]
     }
@@ -571,12 +569,12 @@ class PlayerAvatarPlugin: BasePlugin {
     override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
 
-        // 当 PlayerViewService 加载成功时，才会调用服务来绑定视图
-        let eventName = "ServiceDidLoadEvent_PlayerViewService"
+        // 当 PlayerEngineCoreService 加载成功时，才会访问引擎服务
+        let eventName = "ServiceDidLoadEvent_PlayerEngineCoreService"
         context.add(self, event: eventName) { [weak self] object, event in
             guard let self = self else { return }
-            let viewService = context.resolveService(PlayerViewService.self)
-            viewService?.bindView { self.createAvatarView() }
+            let engineService = context.resolveService(PlayerEngineCoreService.self)
+            // 使用 engineService?.playerView 添加自定义视图
         }
     }
 }

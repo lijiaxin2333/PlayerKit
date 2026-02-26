@@ -15,7 +15,6 @@ final class PlayerRegProvider: RegisterProvider {
         // 核心插件
         registerSet.addEntry(pluginClass: PlayerDataPlugin.self, serviceType: PlayerDataService.self)
         registerSet.addEntry(pluginClass: PlayerEngineCorePlugin.self, serviceType: PlayerEngineCoreService.self)
-        registerSet.addEntry(pluginClass: PlayerViewPlugin.self, serviceType: PlayerViewService.self)
         registerSet.addEntry(pluginClass: PlayerProcessPlugin.self, serviceType: PlayerProcessService.self)
         registerSet.addEntry(pluginClass: PlayerPlaybackControlPlugin.self, serviceType: PlayerPlaybackControlService.self)
         registerSet.addEntry(pluginClass: PlayerSpeedPlugin.self, serviceType: PlayerSpeedService.self)
@@ -103,7 +102,6 @@ public final class Player: ContextHolder {
 
     @PlayerPlugin public var dataService: PlayerDataService?
     @PlayerPlugin public var processService: PlayerProcessService?
-    @PlayerPlugin public var viewService: PlayerViewService?
     @PlayerPlugin public var engineCoreService: PlayerEngineCoreService?
     @PlayerPlugin public var speedService: PlayerSpeedService?
     @PlayerPlugin public var startTimeService: PlayerStartTimeService?
@@ -116,6 +114,11 @@ public final class Player: ContextHolder {
 
     public var engineService: PlayerEngineCoreService? {
         return engineCoreService
+    }
+
+    /// 播放器渲染视图
+    public var playerView: UIView? {
+        return engineCoreService?.playerView
     }
 
     // MARK: - Engine Acquisition

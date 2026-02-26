@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		02EB47A1BF8ADA9E0F01067A /* ContextTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B348C8E9D3B390D1698A36B /* ContextTests.swift */; };
 		0B487CBD030C1EDDD6A5D409 /* ShowcaseDetailLongPressSpeedService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 189F9040412B67F8BA3BE2C6 /* ShowcaseDetailLongPressSpeedService.swift */; };
-		0CB126164802F6E56E55814E /* FeedPlayerPool.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4EE57BB8840ABE48608158B /* FeedPlayerPool.swift */; };
 		0E2F30F7781F68D1F0648EA7 /* PlayerCoverMaskPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 287181332FC7C5088D9BA912 /* PlayerCoverMaskPlugin.swift */; };
 		12D7134C3FA162F6B30C683D /* PlayerSpeedPanelPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 292027AF722AB2C9EA8D548E /* PlayerSpeedPanelPlugin.swift */; };
 		1C383F3DE609B3CEFDC38607 /* ShowcaseFeedListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AA7178FB8FD997439BE4895 /* ShowcaseFeedListViewModel.swift */; };
@@ -65,7 +64,6 @@
 		D3F2A83B22646052AAE6A992 /* ShowcaseFeedSectionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA67D9F0EB72B679CBAE9682 /* ShowcaseFeedSectionViewModel.swift */; };
 		D40F627DA326D87B6F0C60AD /* PlayerCoverMaskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA20A2716DD1A71AA1E3977B /* PlayerCoverMaskService.swift */; };
 		D47735ECCDDA1539335132D7 /* ShowcaseFeedListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55F08C99AEA9161CEBB3D599 /* ShowcaseFeedListViewController.swift */; };
-		D7F97320313E30466161D967 /* FeedSceneContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AAEB1101CF22693A7565568 /* FeedSceneContext.swift */; };
 		DA9922EAA4C518C3AE1F5FAA /* ShowcaseFeedSectionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 990A46EC5472B01DA03BA14F /* ShowcaseFeedSectionController.swift */; };
 		DD3C3D691A53ECAABB8D1128 /* ZoomDemoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4037B14B56F0F7C39A36305C /* ZoomDemoViewController.swift */; };
 		DEB2B8D8C5F3753CCDA12B2E /* PlayerPanelPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B71B8E3A48AF581E93C4619 /* PlayerPanelPlugin.swift */; };
@@ -89,7 +87,6 @@
 		0D243291D3817BD26E2C5A54 /* SnapshotDemoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotDemoViewController.swift; sourceTree = "<group>"; };
 		189F9040412B67F8BA3BE2C6 /* ShowcaseDetailLongPressSpeedService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseDetailLongPressSpeedService.swift; sourceTree = "<group>"; };
 		1A4E6ABEEF584640634B139A /* PlayerControlViewService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerControlViewService.swift; sourceTree = "<group>"; };
-		1AAEB1101CF22693A7565568 /* FeedSceneContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedSceneContext.swift; sourceTree = "<group>"; };
 		1BCECE80D2529ED40EB1CAF5 /* PlayerSpeedPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSpeedPanelView.swift; sourceTree = "<group>"; };
 		1D3BCA95CAF5FDE921DC513A /* ShowcaseFeedScenePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseFeedScenePlayer.swift; sourceTree = "<group>"; };
 		21AEBF9F4BCB9EAB761B9A71 /* PlayerGesturePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerGesturePlugin.swift; sourceTree = "<group>"; };
@@ -143,7 +140,6 @@
 		CA20A2716DD1A71AA1E3977B /* PlayerCoverMaskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerCoverMaskService.swift; sourceTree = "<group>"; };
 		CB46E79FF10C01EBA0BB4067 /* ShowcaseFeedOverlayPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseFeedOverlayPlugin.swift; sourceTree = "<group>"; };
 		D33EB5E11A99887B46D48083 /* ShowcaseDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseDetailViewController.swift; sourceTree = "<group>"; };
-		D4EE57BB8840ABE48608158B /* FeedPlayerPool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedPlayerPool.swift; sourceTree = "<group>"; };
 		D70A384A8940840324373D76 /* ShowcaseFeedCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseFeedCell.swift; sourceTree = "<group>"; };
 		D818B272197D6F8264BB804B /* Player+SceneServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Player+SceneServices.swift"; sourceTree = "<group>"; };
 		DB89CC27EBCFF6E37F3EE0F2 /* PluginDemoBaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginDemoBaseViewController.swift; sourceTree = "<group>"; };
@@ -378,7 +374,6 @@
 			children = (
 				D818B272197D6F8264BB804B /* Player+SceneServices.swift */,
 				DBCA3D6686499E80FA79C89B /* Configuration */,
-				9563952644348ED2C75EEF9D /* Feed */,
 			);
 			path = Player;
 			sourceTree = "<group>";
@@ -390,23 +385,6 @@
 				569D68545A3A991F51A03996 /* PlayerKitInfraTests.xctest */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		92E1D0F01C2AA61984DFF358 /* Scene */ = {
-			isa = PBXGroup;
-			children = (
-				1AAEB1101CF22693A7565568 /* FeedSceneContext.swift */,
-			);
-			path = Scene;
-			sourceTree = "<group>";
-		};
-		9563952644348ED2C75EEF9D /* Feed */ = {
-			isa = PBXGroup;
-			children = (
-				D4EE57BB8840ABE48608158B /* FeedPlayerPool.swift */,
-				92E1D0F01C2AA61984DFF358 /* Scene */,
-			);
-			path = Feed;
 			sourceTree = "<group>";
 		};
 		963CD464180EC955C75AAA64 /* SpeedPanel */ = {
@@ -614,8 +592,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				94F2DB8C71A71CB49AFBACCC /* AppDelegate.swift in Sources */,
-				0CB126164802F6E56E55814E /* FeedPlayerPool.swift in Sources */,
-				D7F97320313E30466161D967 /* FeedSceneContext.swift in Sources */,
 				A449CEA749DDC45A9ECB9B82 /* GestureDemoViewController.swift in Sources */,
 				F38563BDF75673C72F6F6D40 /* LoopingDemoViewController.swift in Sources */,
 				D0C6E6D8CA379A9DACEA305A /* Player+SceneServices.swift in Sources */,

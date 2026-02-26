@@ -414,7 +414,7 @@ class PlayerViewModel: ObservableObject {
 
         // 创建新播放器
         player = Player()
-        playerView = player?.playerView
+        playerView = player?.engineService?.playerView
 
         // 配置数据
         if let url = video.url {
@@ -530,7 +530,7 @@ class PlayerViewModel: ObservableObject {
             progressToken = nil
         }
         player?.context.removeHandlers(forObserver: self)
-        player?.stop()
+        player?.engineService?.stop()
         player = nil
         playerView = nil
     }

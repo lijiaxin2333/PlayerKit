@@ -331,7 +331,7 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
 
     private func attachPlayer() {
         guard let player = player else { return }
-        guard let pv = player.playerView else { return }
+        guard let pv = player.engineService?.playerView else { return }
         pv.translatesAutoresizingMaskIntoConstraints = false
         pv.isHidden = false
         _playerContainer.addSubview(pv)

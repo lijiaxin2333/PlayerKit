@@ -388,7 +388,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
     }
 
     private func pauseCurrentPlayback() {
-        currentPlayingCell?.scenePlayer.player?.pause()
+        currentPlayingCell?.scenePlayer.player?.engineService?.pause()
     }
 
     private func resumeCurrentPlayback() {
@@ -459,7 +459,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         guard let ctx = listContext else { return }
         guard let cv = ctx.scrollView() as? UICollectionView else { return }
         if let cell = cv.cellForItem(at: IndexPath(item: 0, section: index)) as? ShowcaseFeedCell {
-            cell.scenePlayer.player?.pause()
+            cell.scenePlayer.player?.engineService?.pause()
             if currentPlayingCell === cell {
                 currentPlayingCell = nil
             }

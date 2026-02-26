@@ -144,7 +144,7 @@ class PluginDemoBaseViewController: UIViewController {
         dataConfig.initialDataModel = dataModel
         player.dataService?.config(dataConfig)
 
-        guard let pv = player.playerView else { return }
+        guard let pv = player.engineService?.playerView else { return }
         pv.translatesAutoresizingMaskIntoConstraints = false
         playerContainer.addSubview(pv)
         NSLayoutConstraint.activate([

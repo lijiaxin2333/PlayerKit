@@ -528,18 +528,28 @@ public final class PlayerFullScreenPlugin: BasePlugin, PlayerFullScreenService {
         let landscapeWidth = max(screenBounds.width, screenBounds.height)
         let landscapeHeight = min(screenBounds.width, screenBounds.height)
 
-        // 4. 创建全屏 window（竖屏尺寸，不旋转设备方向）
+        // 4. 获取视频尺寸，计算横屏下的 aspect-fit 尺寸
+        let videoSize = resolveVideoSize()
+        let landscapeContainer = CGSize(width: landscapeWidth, height: landscapeHeight)
+        let targetSize: CGSize
+        if videoSize.width > 0, videoSize.height > 0 {
+            targetSize = aspectFitSize(videoSize: videoSize, containerSize: landscapeContainer)
+        } else {
+            targetSize = landscapeContainer
+        }
+
+        // 5. 创建全屏 window（竖屏尺寸，不旋转设备方向）
         let window = makeWindow(frame: screenBounds)
         window.backgroundColor = .clear
 
-        // 5. 黑色背景（跟随动画渐入）
+        // 6. 黑色背景（跟随动画渐入）
         let bgView = UIView(frame: screenBounds)
         bgView.backgroundColor = .black
         bgView.alpha = 0
         window.addSubview(bgView)
         self.backgroundView = bgView
 
-        // 6. 视图重挂载：playerView 从原始父视图移到 window
+        // 7. 视图重挂载：playerView 从原始父视图移到 window
         //    不销毁、不重建，AVPlayer 渲染层从未断开
         playerView.removeFromSuperview()
         playerView.translatesAutoresizingMaskIntoConstraints = true
@@ -551,15 +561,14 @@ public final class PlayerFullScreenPlugin: BasePlugin, PlayerFullScreenService {
         window.makeKeyAndVisible()
         self.fullScreenWindow = window
 
-        // 7. 计算目标状态（横屏全屏）
-        let targetFrame = CGRect(x: 0, y: 0, width: landscapeWidth, height: landscapeHeight)
+        // 8. 目标状态
         let targetCenter = CGPoint(x: screenBounds.width / 2, y: screenBounds.height / 2)
         let angle: CGFloat = .pi / 2
 
-        // 8. 执行 0.3s EaseInOut 旋转动画
+        // 9. 执行 0.3s EaseInOut 动画：旋转 + 缩放同步
+        //    使用 bounds/center/transform 而非 frame，让 UIKit 同步插值旋转和缩放
         let animateBlock = {
-            // 设置顺序(必须)：frame → center → transform
-            playerView.frame = targetFrame
+            playerView.bounds = CGRect(origin: .zero, size: targetSize)
             playerView.center = targetCenter
             playerView.transform = CGAffineTransform(rotationAngle: angle)
             bgView.alpha = 1
@@ -599,10 +608,11 @@ public final class PlayerFullScreenPlugin: BasePlugin, PlayerFullScreenService {
         fullScreenControlView?.removeFromSuperview()
         fullScreenControlView = nil
 
-        // 反向动画：恢复 transform + frame，背景渐出
+        // 反向动画：缩放 + 旋转同步恢复，背景渐出
         let animateBlock = {
+            playerView.bounds = CGRect(origin: .zero, size: self.originalFrameInWindow.size)
+            playerView.center = CGPoint(x: self.originalFrameInWindow.midX, y: self.originalFrameInWindow.midY)
             playerView.transform = .identity
-            playerView.frame = self.originalFrameInWindow
             self.backgroundView?.alpha = 0
         }
 
@@ -726,6 +736,44 @@ public final class PlayerFullScreenPlugin: BasePlugin, PlayerFullScreenService {
 
         context?.add(self, event: .playerPlaybackDidFinish) { [weak self] _, _ in
             self?.fullScreenControlView?.isPlaybackEnded = true
+        }
+    }
+
+    /// 获取视频原始尺寸（优先 dataModel，兜底 AVPlayerItem）
+    private func resolveVideoSize() -> CGSize {
+        if let ds = dataService,
+           ds.dataModel.videoWidth > 0,
+           ds.dataModel.videoHeight > 0 {
+            return CGSize(width: ds.dataModel.videoWidth, height: ds.dataModel.videoHeight)
+        }
+
+        if let item = engineService?.avPlayer?.currentItem {
+            let tracks = item.asset.tracks(withMediaType: .video)
+            if let track = tracks.first {
+                var size = track.naturalSize.applying(track.preferredTransform)
+                if size.width < 0 { size.width = -size.width }
+                if size.height < 0 { size.height = -size.height }
+                if size.width > 0, size.height > 0 { return size }
+            }
+
+            let ps = item.presentationSize
+            if ps.width > 0, ps.height > 0 { return ps }
+        }
+
+        return .zero
+    }
+
+    /// 计算视频在容器中的 aspect-fit 尺寸
+    private func aspectFitSize(videoSize: CGSize, containerSize: CGSize) -> CGSize {
+        let videoAspect = videoSize.width / videoSize.height
+        let containerAspect = containerSize.width / containerSize.height
+
+        if videoAspect > containerAspect {
+            // 视频更宽，按宽度适配
+            return CGSize(width: containerSize.width, height: containerSize.width / videoAspect)
+        } else {
+            // 视频更高，按高度适配
+            return CGSize(width: containerSize.height * videoAspect, height: containerSize.height)
         }
     }
 

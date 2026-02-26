@@ -42,14 +42,14 @@ final class SpeedDemoViewController: PluginDemoBaseViewController {
 
     @objc private func speedTapped(_ sender: UIButton) {
         let speed = Float(sender.tag) / 100.0
-        player.speedService?.setSpeed(speed)
+        player.context.service(PlayerSpeedService.self)?.setSpeed(speed)
     }
 
     @objc private func resetSpeed() {
-        player.speedService?.setSpeed(1.0)
+        player.context.service(PlayerSpeedService.self)?.setSpeed(1.0)
     }
 
     @objc private func togglePlay() {
-        player.playbackControlService?.togglePlayPause()
+        player.context.service(PlayerPlaybackControlService.self)?.togglePlayPause()
     }
 }

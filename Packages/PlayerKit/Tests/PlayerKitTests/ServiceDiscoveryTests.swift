@@ -47,7 +47,7 @@ final class ServiceDiscoveryTests: XCTestCase {
         weak var dependencyA: TestServiceA?
 
         override func pluginDidLoad(_ context: ContextProtocol) {
-            dependencyA = context.resolveService(TestServiceA.self)
+            dependencyA = context.service(TestServiceA.self)
         }
     }
 
@@ -79,7 +79,7 @@ final class ServiceDiscoveryTests: XCTestCase {
         let context = Context(name: "TestContext")
         context.addRegProvider(TestRegProvider())
 
-        let service = context.resolveService(TestServiceA.self)
+        let service = context.service(TestServiceA.self)
 
         XCTAssertNotNil(service)
         XCTAssertEqual(service?.valueA, "ServiceA")
@@ -90,7 +90,7 @@ final class ServiceDiscoveryTests: XCTestCase {
         let context = Context(name: "TestContext")
 
         // 未注册的服务应该返回 nil
-        let service = context.resolveService(TestServiceA.self)
+        let service = context.service(TestServiceA.self)
         XCTAssertNil(service)
     }
 
@@ -160,7 +160,7 @@ final class ServiceDiscoveryTests: XCTestCase {
         let plugin = TestPluginA()
         context.registerInstance(plugin, protocol: TestServiceA.self)
 
-        let service = context.resolveService(TestServiceA.self)
+        let service = context.service(TestServiceA.self)
         XCTAssertNotNil(service)
 
         // 应该是同一个实例
@@ -243,7 +243,7 @@ final class ServiceDiscoveryTests: XCTestCase {
         childContext.addRegProvider(TestRegProvider())
 
         // 父 Context 可以解析子 Context 的服务
-        let service = parentContext.resolveService(TestServiceA.self)
+        let service = parentContext.service(TestServiceA.self)
         XCTAssertNotNil(service)
         XCTAssertEqual(service?.valueA, "ServiceA")
     }
@@ -257,7 +257,7 @@ final class ServiceDiscoveryTests: XCTestCase {
         baseContext.addExtendContext(extContext)
 
         // 扩展 Context 可以解析基础 Context 的服务
-        let service = extContext.resolveService(TestServiceA.self)
+        let service = extContext.service(TestServiceA.self)
         XCTAssertNotNil(service)
         XCTAssertEqual(service?.valueA, "ServiceA")
     }

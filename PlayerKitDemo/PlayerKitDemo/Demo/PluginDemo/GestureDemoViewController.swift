@@ -22,7 +22,7 @@ final class GestureDemoViewController: PluginDemoBaseViewController {
     private var handlers: [PlayerGestureHandler] = []
 
     override func onPlayerReady() {
-        guard let gestureService = player.gestureService else { return }
+        guard let gestureService = player.context.service(PlayerGestureService.self) else { return }
         gestureService.gestureView = playerContainer
 
         // 启用所有手势类型
@@ -65,7 +65,7 @@ final class GestureDemoViewController: PluginDemoBaseViewController {
     }
 
     @objc private func toggleGestures() {
-        guard let gs = player.gestureService else { return }
+        guard let gs = player.context.service(PlayerGestureService.self) else { return }
         gs.isEnabled.toggle()
         appendLog(gs.isEnabled ? "✅ 手势已启用" : "❌ 手势已禁用")
     }

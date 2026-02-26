@@ -30,10 +30,6 @@ public final class ScenePlayerRegProvider: RegisterProvider {
         registerSet.addEntry(pluginClass: PlayerSpeedPanelPlugin.self,
                             serviceType: PlayerSpeedPanelService.self)
 
-        // 遮罩
-        registerSet.addEntry(pluginClass: PlayerCoverMaskPlugin.self,
-                            serviceType: PlayerCoverMaskService.self)
-
         // Toast
         registerSet.addEntry(pluginClass: PlayerToastPlugin.self,
                             serviceType: PlayerToastService.self)

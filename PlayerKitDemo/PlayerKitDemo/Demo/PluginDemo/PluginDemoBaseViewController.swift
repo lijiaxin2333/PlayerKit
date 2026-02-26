@@ -33,8 +33,8 @@ class PluginDemoBaseViewController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         if isMovingFromParent || isBeingDismissed {
-            player.engineService?.pause()
-            player.engineService?.replaceCurrentItem(with: nil)
+            player.context.service(PlayerEngineCoreService.self)?.pause()
+            player.context.service(PlayerEngineCoreService.self)?.replaceCurrentItem(with: nil)
         }
     }
 
@@ -142,9 +142,9 @@ class PluginDemoBaseViewController: UIViewController {
         dataModel.videoHeight = video.height
         dataModel.duration = video.duration
         dataConfig.initialDataModel = dataModel
-        player.dataService?.config(dataConfig)
+        player.context.service(PlayerDataService.self)?.config(dataConfig)
 
-        guard let pv = player.engineService?.playerView else { return }
+        guard let pv = player.context.service(PlayerEngineCoreService.self)?.playerView else { return }
         pv.translatesAutoresizingMaskIntoConstraints = false
         playerContainer.addSubview(pv)
         NSLayoutConstraint.activate([

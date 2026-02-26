@@ -41,15 +41,15 @@ final class SnapshotDemoViewController: PluginDemoBaseViewController {
     }
 
     @objc private func captureSync() {
-        guard let snapshot = player.snapshotService else { return }
+        guard let snapshot = player.context.service(PlayerSnapshotService.self) else { return }
         let image = snapshot.currentFrameImage(size: nil)
         previewImageView.image = image
-        let time = player.timeControlService?.currentTime ?? 0
+        let time = player.context.service(PlayerTimeControlService.self)?.currentTime ?? 0
         infoLabel.text = "同步截取 @ \(String(format: "%.1f", time))s"
     }
 
     @objc private func captureAsync() {
-        guard let snapshot = player.snapshotService else { return }
+        guard let snapshot = player.context.service(PlayerSnapshotService.self) else { return }
         infoLabel.text = "截取中..."
         snapshot.currentFrameImage { [weak self] image in
             self?.previewImageView.image = image
@@ -66,7 +66,7 @@ final class SnapshotDemoViewController: PluginDemoBaseViewController {
     }
 
     private func captureAtTime(_ time: TimeInterval) {
-        guard let snapshot = player.snapshotService else { return }
+        guard let snapshot = player.context.service(PlayerSnapshotService.self) else { return }
         infoLabel.text = "生成缩略图 @ \(time)s ..."
         snapshot.generateThumbnail(at: time, size: CGSize(width: 320, height: 180)) { [weak self] image in
             self?.previewImageView.image = image

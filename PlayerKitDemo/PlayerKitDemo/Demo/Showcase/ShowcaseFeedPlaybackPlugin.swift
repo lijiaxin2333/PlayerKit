@@ -7,7 +7,6 @@ protocol ShowcaseFeedPlaybackPluginProtocol: AnyObject {
     var currentPlayingIndex: Int { get }
     var transferringPlayer: Player? { get set }
     func playVideo(at index: Int, in collectionView: UICollectionView, videos: [ShowcaseVideo])
-    func pauseCurrent()
     func preRenderAdjacent(currentIndex: Int, videos: [ShowcaseVideo])
     func updatePrefetchWindow(videos: [ShowcaseVideo], focusIndex: Int)
 }
@@ -126,15 +125,6 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
 
     func cancelAllPreRenders() {
         preRenderPool.cancelAll()
-    }
-
-    func consumePreRendered(identifier: String) -> Player? {
-        guard let engine = preRenderPool.consume(identifier: identifier) else { return nil }
-        guard let enginePlugin = engine as? BasePlugin else { return nil }
-        let player = Player(name: "Consumed_\(identifier)")
-        player.context.detachInstance(for: PlayerEngineCoreService.self)
-        player.context.registerInstance(enginePlugin, protocol: PlayerEngineCoreService.self)
-        return player
     }
 
     func preRenderState(for identifier: String) -> PlayerPreRenderState {
@@ -382,17 +372,12 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         }
     }
 
-    func pauseCurrent() {
-        guard currentPlayingIndex >= 0 else { return }
-        stopCell(at: currentPlayingIndex)
-    }
-
     private func pauseCurrentPlayback() {
-        currentPlayingCell?.scenePlayer.player?.engineService?.pause()
+        currentPlayingCell?.scenePlayer.player?.context.service(PlayerEngineCoreService.self)?.pause()
     }
 
     private func resumeCurrentPlayback() {
-        currentPlayingCell?.scenePlayer.player?.engineService?.play()
+        currentPlayingCell?.scenePlayer.player?.context.service(PlayerEngineCoreService.self)?.play()
     }
 
     // MARK: - PreRender Adjacent
@@ -459,7 +444,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         guard let ctx = listContext else { return }
         guard let cv = ctx.scrollView() as? UICollectionView else { return }
         if let cell = cv.cellForItem(at: IndexPath(item: 0, section: index)) as? ShowcaseFeedCell {
-            cell.scenePlayer.player?.engineService?.pause()
+            cell.scenePlayer.player?.context.service(PlayerEngineCoreService.self)?.pause()
             if currentPlayingCell === cell {
                 currentPlayingCell = nil
             }

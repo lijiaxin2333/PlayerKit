@@ -161,7 +161,7 @@ final class StickyEventTests: XCTestCase {
         context.addRegProvider(TestRegProvider())
 
         // 等待插件创建
-        _ = context.resolveService(TestService.self)
+        _ = context.service(TestService.self)
 
         // 获取正确的服务 key - 使用 String(reflecting:) 来匹配 Context.typeKey 的实现
         let serviceKey = String(reflecting: TestService.self)
@@ -183,7 +183,7 @@ final class StickyEventTests: XCTestCase {
 
         // 注册并解析服务
         context.addRegProvider(TestRegProvider())
-        _ = context.resolveService(TestService.self)
+        _ = context.service(TestService.self)
 
         // 后续添加的监听者应该收到
         let observer2 = TestObserver()

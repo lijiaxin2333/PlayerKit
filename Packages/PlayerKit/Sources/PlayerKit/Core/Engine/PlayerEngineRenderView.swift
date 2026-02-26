@@ -38,6 +38,7 @@ public class PlayerEngineRenderView: UIView {
     private var displayObservation: NSKeyValueObservation?
     /**
      * 首次准备好显示时的回调
+     * EngineCorePlugin设置此回调, 用于转发onReadyForDisplay事件到context
      */
     var onReadyForDisplay: (() -> Void)?
 
@@ -56,7 +57,7 @@ public class PlayerEngineRenderView: UIView {
         displayObservation?.invalidate()
         displayObservation = nil
         if playerLayer.isReadyForDisplay {
-            onReadyForDisplay?()
+            onReadyForDisplay?() 
             return
         }
         displayObservation = playerLayer.observe(\.isReadyForDisplay, options: [.new]) { [weak self] _, change in
@@ -92,19 +93,5 @@ public class PlayerEngineRenderView: UIView {
             }
         }
     }
-
-    /**
-     * 视图加入窗口时重新绑定
-     */
-    override public func didMoveToWindow() {
-        super.didMoveToWindow()
-    }
-
-    /**
-     * 布局变化时同步 layer 尺寸
-     * 注意：layerClass 方案下，UIKit 自动管理，无需手动设置。
-     */
-    override public func layoutSubviews() {
-        super.layoutSubviews()
-    }
+    
 }

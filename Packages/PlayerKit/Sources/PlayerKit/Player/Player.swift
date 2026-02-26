@@ -55,8 +55,6 @@ public final class Player: ContextHolder {
     /** 引擎池标识符（用于从池中获取/回收引擎） */
     private var _poolIdentifier: String?
 
-    @PlayerPlugin public var poolService: PlayerEnginePoolService?
-
     /** 绑定引擎池标识符，用于引擎复用 */
     public func bindPool(identifier: String) {
         _poolIdentifier = identifier
@@ -71,7 +69,7 @@ public final class Player: ContextHolder {
     /** 从引擎池中获取引擎实例 */
     @discardableResult
     public func acquireEngine() -> Bool {
-        guard let pool = poolService, let id = _poolIdentifier else { return false }
+        guard let pool = context.service(PlayerEnginePoolService.self), let id = _poolIdentifier else { return false }
         guard let engine = pool.dequeue(identifier: id) else { return false }
         guard let comp = engine as? BasePlugin else { return false }
         context.detachInstance(for: PlayerEngineCoreService.self)
@@ -81,8 +79,8 @@ public final class Player: ContextHolder {
 
     /** 回收引擎实例到引擎池 */
     public func recycleEngine() {
-        guard let pool = poolService, let id = _poolIdentifier else { return }
-        engineService?.pause()
+        guard let pool = context.service(PlayerEnginePoolService.self), let id = _poolIdentifier else { return }
+        context.service(PlayerEngineCoreService.self)?.pause()
         guard let comp = context.detachInstance(for: PlayerEngineCoreService.self) else { return }
         guard let engine = comp as? PlayerEngineCoreService else { return }
         pool.enqueue(engine, identifier: id)
@@ -98,41 +96,18 @@ public final class Player: ContextHolder {
         return true
     }
 
-    // MARK: - 便捷服务访问
-
-    @PlayerPlugin public var dataService: PlayerDataService?
-    @PlayerPlugin public var processService: PlayerProcessService?
-    @PlayerPlugin public var engineCoreService: PlayerEngineCoreService?
-    @PlayerPlugin public var speedService: PlayerSpeedService?
-    @PlayerPlugin public var startTimeService: PlayerStartTimeService?
-    @PlayerPlugin public var snapshotService: PlayerSnapshotService?
-    @PlayerPlugin public var preRenderPoolService: PlayerPreRenderPoolService?
-    @PlayerPlugin public var playbackControlService: PlayerPlaybackControlService?
-    @PlayerPlugin public var loopingService: PlayerLoopingService?
-    @PlayerPlugin public var timeControlService: PlayerTimeControlService?
-    @PlayerPlugin public var mediaControlService: PlayerMediaControlService?
-
-    public var engineService: PlayerEngineCoreService? {
-        return engineCoreService
-    }
-
-    /// 播放器渲染视图
-    public var playerView: UIView? {
-        return engineCoreService?.playerView
-    }
-
     // MARK: - Engine Acquisition
 
     /** 确保播放器拥有可用引擎（预渲染池优先，引擎池兜底） */
     @discardableResult
     public func ensureEngine() -> Bool {
-        if engineService?.avPlayer?.currentItem != nil { return true }
+        if context.service(PlayerEngineCoreService.self)?.avPlayer?.currentItem != nil { return true }
 
         // 优先从预渲染池获取
-        if let vid = dataService?.dataModel.vid,
-           let pool = preRenderPoolService {
+        if let vid = context.service(PlayerDataService.self)?.dataModel.vid,
+           let pool = context.service(PlayerPreRenderPoolService.self) {
             if let entry = pool.entry(for: vid),
-               let videoURL = dataService?.dataModel.videoURL,
+               let videoURL = context.service(PlayerDataService.self)?.dataModel.videoURL,
                entry.url == videoURL,
                let engine = pool.consume(identifier: vid),
                let comp = engine as? BasePlugin {
@@ -152,7 +127,7 @@ public final class Player: ContextHolder {
     /** 绑定预渲染引擎到当前播放器 */
     @discardableResult
     public func adoptEngine(fromPreRender identifier: String) -> Bool {
-        guard let pool = preRenderPoolService else { return false }
+        guard let pool = context.service(PlayerPreRenderPoolService.self) else { return false }
         return pool.consumeAndTransfer(identifier: identifier, to: self)
     }
 }

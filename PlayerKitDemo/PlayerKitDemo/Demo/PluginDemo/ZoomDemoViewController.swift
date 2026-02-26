@@ -20,7 +20,7 @@ final class ZoomDemoViewController: PluginDemoBaseViewController {
     private let statusLabel = UILabel()
 
     override func onPlayerReady() {
-        guard let gestureService = player.gestureService else { return }
+        guard let gestureService = player.context.service(PlayerGestureService.self) else { return }
         gestureService.gestureView = playerContainer
         gestureService.isPinchEnabled = true  // 启用捏合缩放
 
@@ -54,40 +54,40 @@ final class ZoomDemoViewController: PluginDemoBaseViewController {
     }
 
     private func updateStatus() {
-        let zoom = player.zoomService
+        let zoom = player.context.service(PlayerZoomService.self)
         let scale = zoom?.scale ?? 1.0
         let aspectFill = zoom?.isTurnOnAspectFill == true ? "开启" : "关闭"
         statusLabel.text = "缩放比例: \(String(format: "%.1f", scale))x | 智能满屏: \(aspectFill)"
     }
 
     @objc private func toggleAspectFill() {
-        guard let zoom = player.zoomService else { return }
+        guard let zoom = player.context.service(PlayerZoomService.self) else { return }
         zoom.setAspectFillEnable(!zoom.isTurnOnAspectFill, animated: true)
         updateStatus()
     }
 
     @objc private func resetZoom() {
-        player.zoomService?.setScale(1.0)
+        player.context.service(PlayerZoomService.self)?.setScale(1.0)
         updateStatus()
     }
 
     @objc private func zoom150() {
-        player.zoomService?.setScale(1.5)
+        player.context.service(PlayerZoomService.self)?.setScale(1.5)
         updateStatus()
     }
 
     @objc private func zoom200() {
-        player.zoomService?.setScale(2.0)
+        player.context.service(PlayerZoomService.self)?.setScale(2.0)
         updateStatus()
     }
 
     @objc private func zoom300() {
-        player.zoomService?.setScale(3.0)
+        player.context.service(PlayerZoomService.self)?.setScale(3.0)
         updateStatus()
     }
 
     @objc private func toggleFullScreen() {
-        player.fullScreenService?.toggleFullScreen(orientation: .landscapeRight, animated: true)
+        player.context.service(PlayerFullScreenService.self)?.toggleFullScreen(orientation: .landscapeRight, animated: true)
     }
 }
 

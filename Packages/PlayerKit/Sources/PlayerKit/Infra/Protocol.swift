@@ -131,7 +131,7 @@ public struct EventOption: OptionSet, Sendable {
 public protocol ServiceDiscovery: AnyObject {
 
     /** 解析服务实例，未找到时打印警告并返回 nil */
-    func resolveService<T>(_ serviceProtocol: T.Type) -> T?
+    func service<T>(_ serviceProtocol: T.Type) -> T?
 
     /** 尝试解析服务实例，未找到时静默返回 nil */
     func tryResolveService<T>(_ serviceProtocol: T.Type) -> T?

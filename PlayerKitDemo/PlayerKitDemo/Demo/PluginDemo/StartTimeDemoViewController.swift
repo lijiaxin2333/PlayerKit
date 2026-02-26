@@ -51,61 +51,61 @@ final class StartTimeDemoViewController: PluginDemoBaseViewController {
     }
 
     private func updateProgress() {
-        let process = player.processService
+        let process = player.context.service(PlayerProcessService.self)
         guard let process = process, !process.isScrubbing else { return }
         progressSlider.value = Float(process.progress)
-        statusLabel.text = "当前: \(player.timeControlService?.currentTimeString(style: .standard) ?? "--") / \(player.timeControlService?.durationString(style: .standard) ?? "--")\n起播时间: \(String(format: "%.1f", player.startTimeService?.startTime ?? 0))s"
+        statusLabel.text = "当前: \(player.context.service(PlayerTimeControlService.self)?.currentTimeString(style: .standard) ?? "--") / \(player.context.service(PlayerTimeControlService.self)?.durationString(style: .standard) ?? "--")\n起播时间: \(String(format: "%.1f", player.context.service(PlayerStartTimeService.self)?.startTime ?? 0))s"
     }
 
     @objc private func startAt0() {
-        player.startTimeService?.setStartTime(0)
+        player.context.service(PlayerStartTimeService.self)?.setStartTime(0)
         updateProgress()
     }
 
     @objc private func startAt10() {
-        player.startTimeService?.setStartTime(10)
+        player.context.service(PlayerStartTimeService.self)?.setStartTime(10)
         updateProgress()
     }
 
     @objc private func startAt30() {
-        player.startTimeService?.setStartTime(30)
+        player.context.service(PlayerStartTimeService.self)?.setStartTime(30)
         updateProgress()
     }
 
     @objc private func seekTo5() {
-        player.processService?.seek(to: 5.0 / max(player.processService?.duration ?? 1, 1), completion: nil)
+        player.context.service(PlayerProcessService.self)?.seek(to: 5.0 / max(player.context.service(PlayerProcessService.self)?.duration ?? 1, 1), completion: nil)
     }
 
     @objc private func seekTo20() {
-        player.processService?.seek(to: 20.0 / max(player.processService?.duration ?? 1, 1), completion: nil)
+        player.context.service(PlayerProcessService.self)?.seek(to: 20.0 / max(player.context.service(PlayerProcessService.self)?.duration ?? 1, 1), completion: nil)
     }
 
     @objc private func seekToHalf() {
-        player.processService?.seek(to: 0.5, completion: nil)
+        player.context.service(PlayerProcessService.self)?.seek(to: 0.5, completion: nil)
     }
 
     @objc private func sliderBegan(_ slider: UISlider) {
-        player.processService?.beginScrubbing()
+        player.context.service(PlayerProcessService.self)?.beginScrubbing()
     }
 
     @objc private func sliderChanged(_ slider: UISlider) {
-        player.processService?.scrubbing(to: Double(slider.value))
+        player.context.service(PlayerProcessService.self)?.scrubbing(to: Double(slider.value))
     }
 
     @objc private func sliderEnded(_ slider: UISlider) {
-        player.processService?.endScrubbing()
+        player.context.service(PlayerProcessService.self)?.endScrubbing()
     }
 
     @objc private func cacheProgress() {
-        player.startTimeService?.cacheCurrentProgress()
-        player.toastService?.showToast("进度已缓存", style: .info, duration: 1.5)
+        player.context.service(PlayerStartTimeService.self)?.cacheCurrentProgress()
+        player.context.service(PlayerToastService.self)?.showToast("进度已缓存", style: .info, duration: 1.5)
     }
 
     @objc private func restoreProgress() {
-        let cached = player.startTimeService?.cachedProgress(forKey: player.dataService?.dataModel.vid ?? "default")
+        let cached = player.context.service(PlayerStartTimeService.self)?.cachedProgress(forKey: player.context.service(PlayerDataService.self)?.dataModel.vid ?? "default")
         if let cached = cached {
-            player.processService?.seek(to: cached / max(player.processService?.duration ?? 1, 1), completion: nil)
-            player.toastService?.showToast("已恢复到 \(String(format: "%.1f", cached))s", style: .info, duration: 1.5)
+            player.context.service(PlayerProcessService.self)?.seek(to: cached / max(player.context.service(PlayerProcessService.self)?.duration ?? 1, 1), completion: nil)
+            player.context.service(PlayerToastService.self)?.showToast("已恢复到 \(String(format: "%.1f", cached))s", style: .info, duration: 1.5)
         }
     }
 }

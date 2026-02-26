@@ -132,7 +132,7 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
 
     func attachPlayerView() {
         guard let player = scenePlayer.player else { return }
-        guard let pv = player.engineService?.playerView else { return }
+        guard let pv = player.context.service(PlayerEngineCoreService.self)?.playerView else { return }
         if pv.superview === _playerContainer { return }
         _playerContainer.subviews.forEach { $0.removeFromSuperview() }
         pv.translatesAutoresizingMaskIntoConstraints = false
@@ -153,14 +153,14 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
 
     func stopAndDetachPlayer() {
         guard let player = scenePlayer.player else { return }
-        player.engineService?.pause()
+        player.context.service(PlayerEngineCoreService.self)?.pause()
         _playerContainer.subviews.forEach { $0.removeFromSuperview() }
     }
 
     func stopAndRecycleEngine() {
         guard let player = scenePlayer.player else { return }
-        player.engineService?.pause()
-        player.engineService?.stop()
+        player.context.service(PlayerEngineCoreService.self)?.pause()
+        player.context.service(PlayerEngineCoreService.self)?.stop()
         player.recycleEngine()
         _playerContainer.subviews.forEach { $0.removeFromSuperview() }
     }
@@ -172,7 +172,7 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
 
     func canDetachPlayer() -> Bool {
         guard let player = scenePlayer.player else { return false }
-        guard player.engineService != nil else { return false }
+        guard player.context.service(PlayerEngineCoreService.self) != nil else { return false }
         return scenePlayer.playbackControl?.isPlaying == true
     }
 

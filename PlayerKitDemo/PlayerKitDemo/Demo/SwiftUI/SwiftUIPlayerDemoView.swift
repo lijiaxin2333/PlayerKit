@@ -414,7 +414,7 @@ class PlayerViewModel: ObservableObject {
 
         // 创建新播放器
         player = Player()
-        playerView = player?.engineService?.playerView
+        playerView = player?.context.service(PlayerEngineCoreService.self)?.playerView
 
         // 配置数据
         if let url = video.url {
@@ -422,14 +422,14 @@ class PlayerViewModel: ObservableObject {
             model.videoURL = url
             model.title = video.title
             model.duration = video.duration
-            player?.dataService?.updateDataModel(model)
+            player?.context.service(PlayerDataService.self)?.updateDataModel(model)
         }
 
         // 绑定事件
         bindEvents()
 
         // 开始播放
-        player?.playbackControlService?.play()
+        player?.context.service(PlayerPlaybackControlService.self)?.play()
     }
 
     func playPrevious() {
@@ -443,41 +443,41 @@ class PlayerViewModel: ObservableObject {
     }
 
     func togglePlayPause() {
-        player?.playbackControlService?.togglePlayPause()
+        player?.context.service(PlayerPlaybackControlService.self)?.togglePlayPause()
     }
 
     func toggleFullScreen() {
-        player?.fullScreenService?.toggleFullScreen(orientation: .auto, animated: true)
+        player?.context.service(PlayerFullScreenService.self)?.toggleFullScreen(orientation: .auto, animated: true)
     }
 
     func setSpeed(_ speed: Float) {
-        player?.speedService?.setSpeed(speed)
+        player?.context.service(PlayerSpeedService.self)?.setSpeed(speed)
         currentSpeed = speed
     }
 
     func toggleLoop() {
-        player?.engineCoreService?.isLooping.toggle()
-        isLooping = player?.engineCoreService?.isLooping ?? false
+        player?.context.service(PlayerEngineCoreService.self)?.isLooping.toggle()
+        isLooping = player?.context.service(PlayerEngineCoreService.self)?.isLooping ?? false
     }
 
     func toggleMute() {
-        player?.mediaControlService?.toggleMute()
-        isMuted = player?.mediaControlService?.isMuted ?? false
+        player?.context.service(PlayerMediaControlService.self)?.toggleMute()
+        isMuted = player?.context.service(PlayerMediaControlService.self)?.isMuted ?? false
     }
 
     func showToast(_ message: String) {
-        player?.toastService?.showToast(message, style: .info, duration: 2.0)
+        player?.context.service(PlayerToastService.self)?.showToast(message, style: .info, duration: 2.0)
     }
 
     func captureSnapshot() {
-        player?.snapshotService?.currentFrameImage { [weak self] image in
+        player?.context.service(PlayerSnapshotService.self)?.currentFrameImage { [weak self] image in
             self?.showToast(image != nil ? "截图成功!" : "截图失败")
         }
     }
 
     func replay() {
-        player?.engineCoreService?.seek(to: 0)
-        player?.playbackControlService?.play()
+        player?.context.service(PlayerEngineCoreService.self)?.seek(to: 0)
+        player?.context.service(PlayerPlaybackControlService.self)?.play()
     }
 
     // MARK: - 事件绑定 (胶水代码核心)
@@ -497,19 +497,19 @@ class PlayerViewModel: ObservableObject {
         // 加载状态 → @Published bufferProgress
         ctx.add(self, event: .playerLoadStateDidChange) { [weak self] _, _ in
             guard let self = self else { return }
-            self.bufferProgress = self.player?.engineCoreService?.bufferProgress ?? 0
+            self.bufferProgress = self.player?.context.service(PlayerEngineCoreService.self)?.bufferProgress ?? 0
         }
 
         // 循环状态 → @Published isLooping
         ctx.add(self, event: .playerLoopingDidChange) { [weak self] _, _ in
-            self?.isLooping = self?.player?.engineCoreService?.isLooping ?? false
+            self?.isLooping = self?.player?.context.service(PlayerEngineCoreService.self)?.isLooping ?? false
         }
 
         // 进度监听 → @Published progress, timeText
-        progressToken = player.processService?.observeProgress { [weak self] progress, time in
+        progressToken = player.context.service(PlayerProcessService.self)?.observeProgress { [weak self] progress, time in
             guard let self = self else { return }
             self.progress = progress
-            if let duration = self.player?.engineCoreService?.duration {
+            if let duration = self.player?.context.service(PlayerEngineCoreService.self)?.duration {
                 self.timeText = "\(format(time)) / \(format(duration))"
             }
         }
@@ -526,11 +526,11 @@ class PlayerViewModel: ObservableObject {
 
     private func cleanupPlayer() {
         if let token = progressToken {
-            player?.processService?.removeProgressObserver(token: token)
+            player?.context.service(PlayerProcessService.self)?.removeProgressObserver(token: token)
             progressToken = nil
         }
         player?.context.removeHandlers(forObserver: self)
-        player?.engineService?.stop()
+        player?.context.service(PlayerEngineCoreService.self)?.stop()
         player = nil
         playerView = nil
     }

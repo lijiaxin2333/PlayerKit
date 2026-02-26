@@ -258,12 +258,11 @@ public final class Context: PublicContext, ExtendContext {
 
     // MARK: - Service Discovery
 
-    public func resolveService<T>(_ type: T.Type) -> T? {
+    public func service<T>(_ type: T.Type) -> T? {
         guard let service = tryResolveService(type) else {
-            print("[PlayerKit] ⚠️ Service not found: \(Self.typeKey(type))")
             return nil
         }
-        return service as? T
+        return service
     }
 
     public func tryResolveService<T>(_ type: T.Type) -> T? {
@@ -688,7 +687,7 @@ public final class SharedContext: SharedContextProtocol {
 
     // MARK: - ServiceDiscovery
 
-    public func resolveService<T>(_ type: T.Type) -> T? { context.resolveService(type) }
+    public func service<T>(_ type: T.Type) -> T? { context.service(type) }
     public func tryResolveService<T>(_ type: T.Type) -> T? { context.tryResolveService(type) }
     public func resolveServiceByType(_ type: Any.Type) -> Any? { context.resolveServiceByType(type) }
     public func checkService<T>(_ type: T.Type) -> Bool { context.checkService(type) }

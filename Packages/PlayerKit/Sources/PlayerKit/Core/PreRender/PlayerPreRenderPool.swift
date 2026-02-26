@@ -126,13 +126,13 @@ public final class PlayerPreRenderPool {
         // preroll 不会移动播放位置，不需要 seek 回 0
         entry.renderView.removeFromSuperview()
 
-        if let currentURL = player.dataService?.dataModel.videoURL,
+        if let currentURL = player.context.service(PlayerDataService.self)?.dataModel.videoURL,
            entry.url != currentURL {
             releaseCore(avPlayer: entry.avPlayer, renderView: entry.renderView)
             return false
         }
 
-        guard let engine = player.engineService as? PlayerEngineCorePlugin else {
+        guard let engine = player.context.service(PlayerEngineCoreService.self) as? PlayerEngineCorePlugin else {
             releaseCore(avPlayer: entry.avPlayer, renderView: entry.renderView)
             return false
         }
@@ -391,13 +391,3 @@ public final class PlayerPreRenderPool {
     }
 }
 
-// MARK: - Player Extension
-
-public extension Player {
-
-    /// 从预渲染池消费并转移引擎
-    func adoptFromPreRenderPool(identifier: String) -> Bool {
-        guard let poolPlugin = preRenderPoolService else { return false }
-        return poolPlugin.consumeAndTransfer(identifier: identifier, to: self)
-    }
-}

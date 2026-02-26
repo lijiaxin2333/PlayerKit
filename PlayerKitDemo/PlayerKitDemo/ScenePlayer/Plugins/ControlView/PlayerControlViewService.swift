@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import AVFoundation
 import UIKit
 import PlayerKit
 
@@ -15,8 +14,6 @@ import PlayerKit
 public extension Event {
     /// 播控模板更新
     static let playerControlViewTemplateChanged: Event = "PlayerControlViewTemplateChanged"
-    /// 主动更新模板
-    static let playerControlViewTryUpdateTemplate: Event = "PlayerControlViewTryUpdateTemplate"
     /// 播控初次加载完成（粘性事件）
     static let playerControlViewDidLoadSticky: Event = "PlayerControlViewDidLoadSticky"
     /// 播控显示状态更新
@@ -93,12 +90,6 @@ public class PlayerControlViewConfigModel {
 
     /// 自动隐藏时间间隔（秒）
     public var autoHideInterval: TimeInterval = 3.0
-
-    /// 是否支持锁定
-    public var supportLock: Bool = true
-
-    /// 是否支持点击隐藏
-    public var supportTapToHide: Bool = true
 
     public init() {}
 }

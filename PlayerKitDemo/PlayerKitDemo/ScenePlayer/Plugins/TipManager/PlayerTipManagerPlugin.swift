@@ -113,20 +113,6 @@ public final class PlayerTipManagerPlugin: BasePlugin, PlayerTipManagerService {
     }
 
     /**
-     * 插件加载完成
-     */
-    public override func pluginDidLoad(_ context: ContextProtocol) {
-        super.pluginDidLoad(context)
-    }
-
-    /**
-     * 应用配置模型
-     */
-    public override func config(_ configModel: Any?) {
-        super.config(configModel)
-    }
-
-    /**
      * 显示指定类型的提示
      */
     public func showTip(_ type: PlayerTipType, message: String) {
@@ -195,38 +181,4 @@ public final class PlayerTipManagerPlugin: BasePlugin, PlayerTipManagerService {
         print("[PlayerTipManagerPlugin] 隐藏所有提示，数量: \(count)")
     }
 
-    /**
-     * 显示缓冲中提示
-     */
-    public func showBufferingTip() {
-        showTip(.buffering, message: "缓冲中...")
-    }
-
-    /**
-     * 显示加载中提示
-     */
-    public func showLoadingTip(_ message: String = "加载中...") {
-        showTip(.loading, message: message)
-    }
-
-    /**
-     * 显示错误提示
-     */
-    public func showErrorTip(_ message: String) {
-        showTip(.error, message: message)
-    }
-
-    /**
-     * 显示警告提示
-     */
-    public func showWarningTip(_ message: String) {
-        showTip(.warning, message: message)
-    }
-
-    /**
-     * 显示信息提示
-     */
-    public func showInfoTip(_ message: String) {
-        showTip(.info, message: message)
-    }
 }

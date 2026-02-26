@@ -300,8 +300,6 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
                 }
             }
         }
-        detailVC.onDismiss = nil
-
         detailVC.modalPresentationStyle = .fullScreen
         viewController.present(detailVC, animated: true)
     }

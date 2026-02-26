@@ -39,7 +39,6 @@
 		81B83C0EC233EF008EF22866 /* PlayerFinishViewPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECE644144CD1410A23B5A24C /* PlayerFinishViewPlugin.swift */; };
 		83FE66A05B69AB2EC7A279B5 /* PlayerSpeedPanelService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20EFA5A475C963304460EFE /* PlayerSpeedPanelService.swift */; };
 		88BE8C0A30606874808F9342 /* ScenePlayerProcessService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1F0CC779B377F9A7E4A0BFB /* ScenePlayerProcessService.swift */; };
-		8B8CC9832C8984910778FF78 /* PlayerConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3452730E3FEE1983051D0DC7 /* PlayerConfiguration.swift */; };
 		8BE0A265609F39CBA7D3252D /* PlayerFullScreenPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2F966AE13FD582B687A8ED6 /* PlayerFullScreenPlugin.swift */; };
 		8F7C01119CD6B57D08C92597 /* ShowcaseFeedCellViewService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A447AC747C200AF3FF13C01 /* ShowcaseFeedCellViewService.swift */; };
 		921197E634346D9CE2ACBC9D /* PlayerGestureService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4E63DB4E7FF67B5EAA6CF8E /* PlayerGestureService.swift */; };
@@ -88,7 +87,6 @@
 		21AEBF9F4BCB9EAB761B9A71 /* PlayerGesturePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerGesturePlugin.swift; sourceTree = "<group>"; };
 		292027AF722AB2C9EA8D548E /* PlayerSpeedPanelPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerSpeedPanelPlugin.swift; sourceTree = "<group>"; };
 		340B94B339C497C2985D5F4B /* PlayerZoomService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerZoomService.swift; sourceTree = "<group>"; };
-		3452730E3FEE1983051D0DC7 /* PlayerConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerConfiguration.swift; sourceTree = "<group>"; };
 		34A24F3DE837FF5FA4FFF8CE /* ShowcaseFeedCellViewPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseFeedCellViewPlugin.swift; sourceTree = "<group>"; };
 		3A447AC747C200AF3FF13C01 /* ShowcaseFeedCellViewService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShowcaseFeedCellViewService.swift; sourceTree = "<group>"; };
 		3B71B8E3A48AF581E93C4619 /* PlayerPanelPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerPanelPlugin.swift; sourceTree = "<group>"; };
@@ -446,7 +444,6 @@
 		DBCA3D6686499E80FA79C89B /* Configuration */ = {
 			isa = PBXGroup;
 			children = (
-				3452730E3FEE1983051D0DC7 /* PlayerConfiguration.swift */,
 			);
 			path = Configuration;
 			sourceTree = "<group>";
@@ -574,7 +571,6 @@
 				94F2DB8C71A71CB49AFBACCC /* AppDelegate.swift in Sources */,
 				A449CEA749DDC45A9ECB9B82 /* GestureDemoViewController.swift in Sources */,
 				F38563BDF75673C72F6F6D40 /* LoopingDemoViewController.swift in Sources */,
-				8B8CC9832C8984910778FF78 /* PlayerConfiguration.swift in Sources */,
 				CF695D0DCE70E1890629CB41 /* PlayerControlViewPlugin.swift in Sources */,
 				C4CC8EC0B3DEE14AFFFCE901 /* PlayerControlViewService.swift in Sources */,
 				CA101E8C4775161903D5A741 /* PlayerDebugPlugin.swift in Sources */,

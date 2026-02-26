@@ -181,14 +181,6 @@ class PluginDemoBaseViewController: UIViewController {
         return stack
     }
 
-    func makeInfoLabel() -> UILabel {
-        let lbl = UILabel()
-        lbl.font = .monospacedDigitSystemFont(ofSize: 13, weight: .medium)
-        lbl.textColor = .secondaryLabel
-        lbl.numberOfLines = 0
-        return lbl
-    }
-
     private func makePillLabel(_ text: String) -> UIView {
         let lbl = UILabel()
         lbl.text = text

@@ -93,10 +93,7 @@ final class ShowcaseFeedSectionController: BaseListSectionController, FeedAutoPl
         feedCell.cellDidEndDisplaying(duplicateReload: false)
     }
 
-    func sectionControllerWillEnterWorkingRange(_ sectionController: BaseListSectionController) {
-    }
-
-    override func didSelectItem(atIndex index: Int, model: AnyObject) {}
+    func sectionControllerWillEnterWorkingRange(_ sectionController: BaseListSectionController) {}
 
     override func sectionBackgroundColor() -> UIColor? { .black }
 

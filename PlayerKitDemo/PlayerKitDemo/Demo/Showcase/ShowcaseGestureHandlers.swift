@@ -26,7 +26,6 @@ final class ShowcaseDoubleTapHandler: PlayerGestureHandler {
 final class ShowcasePanHandler: PlayerGestureHandler {
     var gestureType: PlayerGestureType { .pan }
     weak var delegate: ShowcaseGestureDelegate?
-    private var initialValue: Float = 0
 
     func handleGesture(_ recognizer: UIGestureRecognizer, direction: PlayerPanDirection) {
         guard let pan = recognizer as? UIPanGestureRecognizer else { return }

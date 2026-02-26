@@ -32,12 +32,6 @@ final class ShowcaseFeedCellViewModel: BaseListCellViewModel<ShowcaseVideo> {
         .zero
     }
 
-    // MARK: - 数据更新
-
-    func update(video: ShowcaseVideo, index: Int) {
-        self.video = video
-        self.videoIndex = index
-    }
 }
 
 // MARK: - BaseListSectionViewModel Placeholder

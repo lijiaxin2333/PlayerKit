@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import AVFoundation
 import UIKit
 import PlayerKit
 
@@ -366,42 +365,12 @@ public final class PlayerControlViewPlugin: BasePlugin, PlayerControlViewService
      * 更新播控模板
      */
     public func updateControlTemplate(_ templateClass: AnyClass?) {
-        print("[PlayerControlViewPlugin] 更新播控模板: \(String(describing: templateClass))")
-
         if let newTemplate = templateClass, newTemplate != currentTemplateClass {
             currentTemplateClass = newTemplate
-
             controlViewInstance?.removeFromSuperview()
-
             createDefaultControlView()
         }
-
         context?.post(.playerControlViewTemplateChanged, sender: self)
-    }
-
-    // MARK: - Public Methods
-
-    /**
-     * 更新播放暂停按钮状态
-     */
-    public func updatePlayPauseButton(isPlaying: Bool) {
-        let imageName = isPlaying ? "pause.fill" : "play.fill"
-        let image = UIImage(systemName: imageName)
-        controlViewInstance?.setPlayPauseButtonImage(image, for: .normal)
-    }
-
-    /**
-     * 更新时间文本
-     */
-    public func updateTimeText(_ text: String) {
-        controlViewInstance?.setTimeText(text)
-    }
-
-    /**
-     * 更新进度
-     */
-    public func updateProgress(_ progress: Float) {
-        controlViewInstance?.setProgress(progress)
     }
 
     // MARK: - Private Methods

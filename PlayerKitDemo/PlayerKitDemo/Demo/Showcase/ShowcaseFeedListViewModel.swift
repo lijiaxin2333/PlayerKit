@@ -68,13 +68,6 @@ final class ShowcaseFeedListViewModel: BaseListViewModel {
         }
     }
 
-    func reset() {
-        videos = []
-        sectionViewModelsArray.removeAll()
-        isLoadingMore = false
-        lastLoadMoreTriggeredCount = -1
-    }
-
     private func buildSectionViewModels(completion: (() -> Void)? = nil) {
         let vms = videos.enumerated().compactMap { index, video -> BaseListSectionViewModel? in
             let data = ShowcaseFeedSectionData(video: video, index: index)

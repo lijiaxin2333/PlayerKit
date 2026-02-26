@@ -100,38 +100,6 @@ final class ShowcaseDataSource: @unchecked Sendable {
         lock.unlock()
     }
 
-    private func guestLogin(completion: @escaping @Sendable (Bool) -> Void) {
-        guard let url = URL(string: Self.baseURL + Self.guestLoginPath) else {
-            completion(false)
-            return
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("iOS", forHTTPHeaderField: "X-Client-Type")
-        request.setValue(Self.deviceId, forHTTPHeaderField: "X-Client-Device-Id")
-        request.timeoutInterval = 10
-
-        URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
-            guard let self = self,
-                  let data = data, error == nil,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let code = json["code"] as? Int, code == 0,
-                  let dataObj = json["data"] as? [String: Any],
-                  let token = dataObj["token"] as? String,
-                  let userId = dataObj["userId"] as? String else {
-                completion(false)
-                return
-            }
-            self.lock.lock()
-            self._token = token
-            self._userId = userId
-            self.lock.unlock()
-            completion(true)
-        }.resume()
-    }
-
     private func requestFeed(completion: @escaping @Sendable ([ShowcaseVideo], Bool) -> Void) {
         lock.lock()
         let token = _token

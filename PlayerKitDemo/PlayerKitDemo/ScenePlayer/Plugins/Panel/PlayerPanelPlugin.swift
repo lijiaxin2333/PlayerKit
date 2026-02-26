@@ -1,5 +1,5 @@
 import Foundation
-import AVFoundation
+
 import UIKit
 import PlayerKit
 
@@ -99,20 +99,6 @@ public final class PlayerPanelPlugin: BasePlugin, PlayerPanelService {
      */
     public required override init() {
         super.init()
-    }
-
-    /**
-     * 插件加载完成
-     */
-    public override func pluginDidLoad(_ context: ContextProtocol) {
-        super.pluginDidLoad(context)
-    }
-
-    /**
-     * 配置插件
-     */
-    public override func config(_ configModel: Any?) {
-        super.config(configModel)
     }
 
     /**

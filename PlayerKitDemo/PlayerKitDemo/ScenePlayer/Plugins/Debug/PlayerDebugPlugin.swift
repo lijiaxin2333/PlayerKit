@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import AVFoundation
+
 import UIKit
 import PlayerKit
 
@@ -93,10 +93,6 @@ private class PlayerDebugPanelView: UIView {
         }
     }
 
-    func clearLogs() {
-        logMessages.removeAll()
-        textView.text = ""
-    }
 }
 
 // MARK: - 调试组件

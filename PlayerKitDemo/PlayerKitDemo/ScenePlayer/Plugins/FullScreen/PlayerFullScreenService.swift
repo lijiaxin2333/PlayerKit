@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import AVFoundation
 import UIKit
 import PlayerKit
 
@@ -73,12 +72,6 @@ public class PlayerFullScreenConfigModel {
 
     /// 支持的全屏方向
     public var supportedOrientation: PlayerFullScreenOrientation = .auto
-
-    /// 进入全屏是否动画
-    public var animated: Bool = true
-
-    /// 是否自动旋转
-    public var autoRotate: Bool = true
 
     public init() {}
 }

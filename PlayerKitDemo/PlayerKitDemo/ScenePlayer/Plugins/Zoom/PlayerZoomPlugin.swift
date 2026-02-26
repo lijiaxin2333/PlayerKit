@@ -230,9 +230,6 @@ public class PlayerZoomableView: UIView {
 
     /// 缩放状态变化回调
     public var onZoomChanged: ((PlayerZoomState) -> Void)?
-
-    /// 恢复按钮点击回调
-    public var onRestoreButtonTapped: (() -> Void)?
 }
 
 // MARK: - UIGestureRecognizerDelegate
@@ -266,9 +263,6 @@ public final class PlayerZoomPlugin: BasePlugin, PlayerZoomService {
 
     /// 全屏时是否限制底部滑动
     private var fullScreenStickBottomSlide: Bool = false
-
-    /// 上次缩放比例（用于埋点）
-    private var lastScale: CGFloat = 1.0
 
     /// 服务依赖
     @PlayerPlugin var engineService: PlayerEngineCoreService?
@@ -440,10 +434,7 @@ public final class PlayerZoomPlugin: BasePlugin, PlayerZoomService {
     }
 
     private func onZoomStateChanged(fromGesture: Bool) {
-        let currentScale = scale
-        let state = PlayerZoomState(mode: zoomMode, scale: currentScale, fromGesture: fromGesture)
-        lastScale = currentScale
-
+        let state = PlayerZoomState(mode: zoomMode, scale: scale, fromGesture: fromGesture)
         context?.post(.playerZoomStateDidChanged, object: state, sender: self)
     }
 }

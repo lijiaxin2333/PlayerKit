@@ -8,8 +8,6 @@ import ListKit
 @MainActor
 final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
 
-    static let reuseId = "ShowcaseFeedCell"
-
     // MARK: - ListCellProtocol
 
     private var _cellViewModel: ShowcaseFeedCellViewModel?
@@ -39,18 +37,6 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
         if !hasAppear { return }
         hasAppear = false
     }
-
-    /// VC viewWillAppear
-    func cellWillAppearByViewController() {}
-
-    /// VC viewDidAppear
-    func cellDidAppearByViewController() {}
-
-    /// VC viewWillDisappear
-    func cellWillDisappearByViewController() {}
-
-    /// VC viewDidDisappear
-    func cellDidDisappearByViewController() {}
 
     // MARK: - Properties
 

@@ -1,5 +1,4 @@
 import UIKit
-import AVFoundation
 import PlayerKit
 
 @MainActor
@@ -11,9 +10,6 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
     
     var allVideos: [ShowcaseVideo] = []
     var onWillDismiss: (() -> Void)?
-    var onDismiss: (() -> Void)?
-
-    var playerContainerView: UIView? { _playerContainer }
 
     private let _playerContainer = UIView()
     private let detailSceneContext = ShowcaseDetailSceneContext()
@@ -29,7 +25,6 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
     private let fullScreenButton = UIButton(type: .system)
     private let loopButton = UIButton(type: .system)
     private let snapshotButton = UIButton(type: .system)
-    private let subtitleButton = UIButton(type: .system)
     private let settingsButton = UIButton(type: .system)
     private let debugButton = UIButton(type: .system)
     private let speedIndicatorLabel = UILabel()
@@ -50,7 +45,6 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
         view.backgroundColor = .black
 
         setupPlayerContainer()
-        setupCoverImage()
         setupControlOverlay()
         setupDetailControl()
         setupGestureHandlers()
@@ -79,7 +73,6 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
         detailSceneContext.removePlayer()
         onWillDismiss?()
         onWillDismiss = nil
-        onDismiss = nil
         player = nil
     }
 
@@ -162,9 +155,6 @@ final class ShowcaseDetailViewController: UIViewController, ShowcaseGestureDeleg
             _playerContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             _playerContainer.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
-    }
-
-    private func setupCoverImage() {
     }
 
     // MARK: - Control Overlay

@@ -332,7 +332,6 @@ public final class PlayerPreRenderPool {
         renderView.removeFromSuperview()
         renderView.frame = hostContainerView.bounds
         hostContainerView.addSubview(renderView)
-        renderView.ensurePlayerBound()
     }
 
     private func reattachAllRenderViewsToHost() {
@@ -343,7 +342,6 @@ public final class PlayerPreRenderPool {
                 entry.renderView.removeFromSuperview()
                 entry.renderView.frame = hostContainerView.bounds
                 hostContainerView.addSubview(entry.renderView)
-                entry.renderView.ensurePlayerBound()
             }
         }
     }

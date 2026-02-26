@@ -183,9 +183,6 @@ final class ShowcaseFeedCell: UICollectionViewCell, ListCellProtocol {
             pv.trailingAnchor.constraint(equalTo: _playerContainer.trailingAnchor),
             pv.bottomAnchor.constraint(equalTo: _playerContainer.bottomAnchor)
         ])
-        if let renderView = pv as? PlayerEngineRenderView {
-            renderView.ensurePlayerBound()
-        }
     }
 
     func detachPlayer() {

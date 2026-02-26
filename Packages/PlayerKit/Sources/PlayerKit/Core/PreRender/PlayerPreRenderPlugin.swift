@@ -105,10 +105,6 @@ public final class PlayerPreRenderPlugin: BasePlugin, PlayerPreRenderService {
             pv.trailingAnchor.constraint(equalTo: container.trailingAnchor),
             pv.bottomAnchor.constraint(equalTo: container.bottomAnchor),
         ])
-
-        if let renderView = pv as? PlayerEngineRenderView {
-            renderView.ensurePlayerBound()
-        }
     }
 
     public func removeFromSuperView(_ superView: UIView) {

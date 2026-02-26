@@ -96,26 +96,10 @@ public class PlayerEngineRenderView: UIView {
     }
 
     /**
-     * 确保 player 已正确绑定到 layer
-     * 注意：layerClass 方案下，AVPlayerLayer 是 backing layer，
-     * UIKit 自动管理 layer.frame 与 view.frame 同步，无需手动设置。
-     */
-    public func ensurePlayerBound() {
-        guard let player = playerRef else { return }
-        if playerLayer.player !== player {
-            playerLayer.player = player
-        }
-        // layerClass 方案下不需要手动设置 frame，否则会破坏 view 的位置
-    }
-
-    /**
      * 视图加入窗口时重新绑定
      */
     override public func didMoveToWindow() {
         super.didMoveToWindow()
-        if window != nil {
-            ensurePlayerBound()
-        }
     }
 
     /**
@@ -124,7 +108,6 @@ public class PlayerEngineRenderView: UIView {
      */
     override public func layoutSubviews() {
         super.layoutSubviews()
-        // layerClass 方案下不需要手动设置 frame
     }
 }
 
@@ -680,7 +663,6 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         avPlayerInstance?.automaticallyWaitsToMinimizeStalling = false
         volume = 1.0
         renderView?.isHidden = false
-        renderView?.ensurePlayerBound()
     }
 
     func adoptPreparedCore(player: AVPlayer, renderView: PlayerEngineRenderView, url: URL) {
@@ -709,7 +691,6 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
             self.context?.post(.playerReadyForDisplaySticky, object: self, sender: self)
         }
         renderView.onReadyForDisplay = readyForDisplayHandler
-        renderView.ensurePlayerBound()
         renderView.reobserveReadyForDisplay()
 
         let interval = CMTime(seconds: 0.5, preferredTimescale: 600)
@@ -802,7 +783,6 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
             self.context?.post(.playerReadyForDisplaySticky, object: self, sender: self)
         }
         renderView.onReadyForDisplay = readyForDisplayHandler
-        renderView.ensurePlayerBound()
         renderView.reobserveReadyForDisplay()
 
         let interval = CMTime(seconds: 0.5, preferredTimescale: 600)

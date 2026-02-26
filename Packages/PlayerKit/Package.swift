@@ -44,6 +44,15 @@ let package = Package(
         .binaryTarget(
             name: "KTVHTTPCache",
             path: "../../KTVHTTPCache.xcframework"
+        ),
+        // 测试目标
+        .testTarget(
+            name: "PlayerKitTests",
+            dependencies: ["PlayerKit"],
+            path: "Tests/PlayerKitTests",
+            swiftSettings: [
+                .swiftLanguageMode(.v6)
+            ]
         )
     ]
 )

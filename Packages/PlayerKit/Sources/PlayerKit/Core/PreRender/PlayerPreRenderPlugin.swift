@@ -22,21 +22,7 @@ public final class PlayerPreRenderPlugin: BasePlugin, PlayerPreRenderService {
     public override func pluginDidLoad(_ context: ContextProtocol) {
         super.pluginDidLoad(context)
 
-        context.add(self, event: .playerReadyForDisplaySticky, option: .execOnlyOnce) { [weak self] _, _ in
-            guard let self = self else { return }
-            guard self._state == .preparing else { return }
-            self.engineService?.pause()
-            self.engineService?.avPlayer?.seek(to: .zero, toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
-                MainActor.assumeIsolated {
-                    guard let self = self else { return }
-                    self._state = .readyToDisplay
-                    if let container = self.playerContainerView {
-                        container.isHidden = false
-                    }
-                }
-            }
-        }
-
+        // 监听 readyToPlay 事件，更新状态
         context.add(self, event: .playerReadyToPlaySticky, option: .execOnlyOnce) { [weak self] _, _ in
             guard let self = self else { return }
             guard self._state == .preparing || self._state == .readyToDisplay else { return }
@@ -48,10 +34,44 @@ public final class PlayerPreRenderPlugin: BasePlugin, PlayerPreRenderService {
         guard _state == .idle else { return }
         guard let engine = engineService else { return }
         guard engine.currentURL != nil else { return }
+        guard let player = engine.avPlayer else { return }
 
         _state = .preparing
-        engine.volume = 0
-        engine.play()
+
+        // preroll 需要 status == .readyToPlay
+        if player.status == .readyToPlay {
+            startPreroll(player: player)
+        } else {
+            // 等待 readyToPlay 后再 preroll
+            context?.add(self, event: .playerReadyToPlaySticky, option: .execOnlyOnce) { [weak self] _, _ in
+                guard let self = self, let player = self.engineService?.avPlayer else { return }
+                self.startPreroll(player: player)
+            }
+        }
+    }
+
+    private func startPreroll(player: AVPlayer) {
+        // 可能是 .preparing 或 .readyToPlay（readyToPlay 事件先触发的情况）
+        guard _state == .preparing || _state == .readyToPlay else { return }
+
+        player.preroll(atRate: 1.0) { [weak self] finished in
+            MainActor.assumeIsolated {
+                guard let self = self else { return }
+                // 状态可能已经被改变（如 resetPlayer），检查是否仍在预渲染流程中
+                guard self._state == .preparing || self._state == .readyToPlay else { return }
+
+                if finished {
+                    // preroll 成功，管线已预热，首帧已渲染
+                    self._state = .readyToDisplay
+                    if let container = self.playerContainerView {
+                        container.isHidden = false
+                    }
+                } else {
+                    // preroll 被中断（seek/replaceItem/cancel）
+                    self._state = .cancelled
+                }
+            }
+        }
     }
 
     public func dragPlay() {

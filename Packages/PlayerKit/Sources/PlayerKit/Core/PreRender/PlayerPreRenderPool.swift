@@ -81,7 +81,7 @@ public final class PlayerPreRenderPool {
 
         observeReadyState(identifier: identifier, player: core.player, renderView: core.renderView)
         scheduleTimeout(identifier: identifier)
-        core.player.play()
+        // 不再需要 play()，preroll 会在 readyToPlay 后自动调用
     }
 
     public func cancel(identifier: String) {
@@ -107,7 +107,7 @@ public final class PlayerPreRenderPool {
 
         clearRuntime(identifier: identifier)
         entry.avPlayer.pause()
-        entry.avPlayer.seek(to: .zero, toleranceBefore: .zero, toleranceAfter: .zero)
+        // preroll 不会移动播放位置，不需要 seek 回 0
         entry.renderView.removeFromSuperview()
 
         let engine = PlayerEngineCorePlugin()
@@ -123,7 +123,7 @@ public final class PlayerPreRenderPool {
         guard let entry = entries.removeValue(forKey: identifier) else { return false }
         clearRuntime(identifier: identifier)
         entry.avPlayer.pause()
-        entry.avPlayer.seek(to: .zero, toleranceBefore: .zero, toleranceAfter: .zero)
+        // preroll 不会移动播放位置，不需要 seek 回 0
         entry.renderView.removeFromSuperview()
 
         if let currentURL = player.dataService?.dataModel.videoURL,
@@ -226,8 +226,7 @@ public final class PlayerPreRenderPool {
         let engineConfig = extraConfig ?? PlayerEngineCoreConfigModel()
         player.actionAtItemEnd = engineConfig.isLooping ? .none : .pause
         player.automaticallyWaitsToMinimizeStalling = false
-        player.volume = 0
-        player.rate = engineConfig.initialRate > 0 ? engineConfig.initialRate : 1.0
+        // preroll 不需要设置 rate，会预热管线但不会播放
 
         let finalURL = proxyURL(for: url)
         let asset = AVURLAsset(url: finalURL, options: [AVURLAssetPreferPreciseDurationAndTimingKey: false])
@@ -246,6 +245,8 @@ public final class PlayerPreRenderPool {
                 self.markReadyToPlay(identifier: identifier)
                 statusObservation?.invalidate()
                 statusObservation = nil
+                // readyToPlay 后开始 preroll 预热管线
+                self.startPreroll(identifier: identifier, player: player, renderView: renderView)
             }
         }
 
@@ -261,6 +262,19 @@ public final class PlayerPreRenderPool {
             }
         }
         observers[identifier] = EntryObservers(status: statusObservation, readyForDisplay: displayObservation)
+    }
+
+    private func startPreroll(identifier: String, player: AVPlayer, renderView: PlayerEngineRenderView) {
+        player.preroll(atRate: 1.0) { [weak self] finished in
+            MainActor.assumeIsolated {
+                guard let self = self, finished else { return }
+                // preroll 完成，管线已预热
+                // 如果 AVPlayerLayer 在视图层级中，isReadyForDisplay 会变成 true
+                if renderView.playerLayer.isReadyForDisplay {
+                    self.markReadyToDisplay(identifier: identifier)
+                }
+            }
+        }
     }
 
     private func markReadyToPlay(identifier: String) {

@@ -25,3 +25,16 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.ljx.playerkitdemo
         TARGETED_DEVICE_FAMILY: "1"
         SWIFT_VERSION: "5.0"
+  PlayerKitInfraTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - ../Packages/PlayerKit/Tests/PlayerKitTests
+    dependencies:
+      - package: PlayerKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ljx.playerkitinfra.tests
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_VERSION: "5.0"
+        GENERATE_INFOPLIST_FILE: YES

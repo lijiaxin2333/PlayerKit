@@ -233,6 +233,19 @@ public protocol PlayerEngineCoreService: PluginService {
      * 从回收池出队
      */
     func didDequeueForReuse()
+
+    /**
+     * 分离核心资源（AVPlayer + RenderView）
+     * 用于引擎池只缓存 AVPlayer + RenderView 这一对
+     * 调用后 Plugin 将处于空状态
+     */
+    func detachCore() -> (avPlayer: AVPlayer, renderView: PlayerEngineRenderView)?
+
+    /**
+     * 接管已准备好的核心资源
+     * 用于引擎池出队时让新 Plugin 接管缓存的 AVPlayer + RenderView
+     */
+    func adoptCore(player: AVPlayer, renderView: PlayerEngineRenderView)
 }
 
 // MARK: - 配置模型

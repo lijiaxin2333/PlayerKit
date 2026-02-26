@@ -1,6 +1,10 @@
 import Foundation
 import UIKit
+import AVFoundation
 
+/// 播放器引擎池
+/// 只缓存 AVPlayer + RenderView 这一对核心资源
+/// Plugin 每次使用时创建，复用结束后销毁
 @MainActor
 public final class PlayerEnginePool: PlayerEnginePoolService {
 
@@ -13,11 +17,12 @@ public final class PlayerEnginePool: PlayerEnginePoolService {
     private var _autoReplenishThreshold: Float = 0.5
     private var _idleTimeout: TimeInterval = 0
     private var _statistics = PlayerEnginePoolStatistics()
-    private var idleTimers: [ObjectIdentifier: Timer] = [:]
-    private var engineFactory: (() -> PlayerEngineCoreService?)?
+    private var idleTimers: [String: Timer] = [:]
 
+    /// 池条目：只存储 AVPlayer + RenderView
     private struct PoolEntry {
-        let engine: PlayerEngineCoreService
+        let avPlayer: AVPlayer
+        let renderView: PlayerEngineRenderView
         let enqueueTime: Date
     }
 
@@ -69,12 +74,11 @@ public final class PlayerEnginePool: PlayerEnginePoolService {
         )
     }
 
-    public func setEngineFactory(_ factory: @escaping () -> PlayerEngineCoreService?) {
-        engineFactory = factory
-    }
-
+    /// 将引擎的核心资源入队到池中
+    /// 会从 Plugin 中提取 AVPlayer + RenderView，Plugin 随后可被销毁
     public func enqueue(_ engine: PlayerEngineCoreService, identifier: String) {
         guard engine.canReuse else { return }
+        guard let plugin = engine as? PlayerEngineCorePlugin else { return }
 
         let identifierCount = pool[identifier]?.count ?? 0
         if identifierCount >= _maxPerIdentifier {
@@ -84,24 +88,33 @@ public final class PlayerEnginePool: PlayerEnginePoolService {
             evictOldestGlobal()
         }
 
-        engine.prepareForReuse()
+        // 从 Plugin 中提取核心资源
+        guard let core = plugin.detachCore() else { return }
+
+        // 准备核心资源用于复用
+        core.avPlayer.pause()
+        core.renderView.isHidden = true
 
         if pool[identifier] == nil {
             pool[identifier] = []
         }
-        pool[identifier]?.append(PoolEntry(engine: engine, enqueueTime: Date()))
+        pool[identifier]?.append(PoolEntry(
+            avPlayer: core.avPlayer,
+            renderView: core.renderView,
+            enqueueTime: Date()
+        ))
         _statistics.totalEnqueued += 1
 
         if _idleTimeout > 0 {
-            scheduleIdleTimer(for: engine, identifier: identifier)
+            scheduleIdleTimer(forEntryAt: pool[identifier]!.count - 1, identifier: identifier)
         }
     }
 
+    /// 从池中出队核心资源，创建新的 Plugin 接管
     public func dequeue(identifier: String) -> PlayerEngineCoreService? {
         guard var entries = pool[identifier], !entries.isEmpty else {
             _statistics.poolMisses += 1
             _statistics.totalDequeued += 1
-            autoReplenishIfNeeded(identifier: identifier)
             return nil
         }
 
@@ -110,12 +123,13 @@ public final class PlayerEnginePool: PlayerEnginePoolService {
         _statistics.poolHits += 1
         _statistics.totalDequeued += 1
 
-        cancelIdleTimer(for: entry.engine)
-        entry.engine.didDequeueForReuse()
+        cancelIdleTimer(forIdentifier: identifier)
 
-        autoReplenishIfNeeded(identifier: identifier)
+        // 创建新的 Plugin 并接管核心资源
+        let newPlugin = PlayerEngineCorePlugin()
+        newPlugin.adoptCore(player: entry.avPlayer, renderView: entry.renderView)
 
-        return entry.engine
+        return newPlugin
     }
 
     public func count(for identifier: String) -> Int {
@@ -123,23 +137,31 @@ public final class PlayerEnginePool: PlayerEnginePoolService {
     }
 
     public func fill(count fillCount: Int, identifier: String) {
-        guard let factory = engineFactory else { return }
         let currentCount = pool[identifier]?.count ?? 0
         let toCreate = min(fillCount, _maxPerIdentifier - currentCount, _maxCapacity - count)
         guard toCreate > 0 else { return }
 
         for _ in 0..<toCreate {
-            guard let engine = factory() else { continue }
-            engine.prepareForReuse()
+            let player = AVPlayer()
+            player.automaticallyWaitsToMinimizeStalling = false
+            player.actionAtItemEnd = .pause
+
+            let renderView = PlayerEngineRenderView(frame: .zero)
+            renderView.setPlayer(player)
+            renderView.isHidden = true
 
             if pool[identifier] == nil {
                 pool[identifier] = []
             }
-            pool[identifier]?.append(PoolEntry(engine: engine, enqueueTime: Date()))
+            pool[identifier]?.append(PoolEntry(
+                avPlayer: player,
+                renderView: renderView,
+                enqueueTime: Date()
+            ))
             _statistics.totalEnqueued += 1
 
             if _idleTimeout > 0 {
-                scheduleIdleTimer(for: engine, identifier: identifier)
+                scheduleIdleTimer(forEntryAt: pool[identifier]!.count - 1, identifier: identifier)
             }
         }
     }
@@ -148,8 +170,9 @@ public final class PlayerEnginePool: PlayerEnginePoolService {
         cancelAllIdleTimers()
         for (_, entries) in pool {
             for entry in entries {
-                entry.engine.pause()
-                entry.engine.replaceCurrentItem(with: nil)
+                entry.avPlayer.pause()
+                entry.avPlayer.replaceCurrentItem(with: nil)
+                entry.renderView.removeFromSuperview()
             }
         }
         pool.removeAll()
@@ -157,10 +180,11 @@ public final class PlayerEnginePool: PlayerEnginePoolService {
 
     public func clear(identifier: String) {
         if let entries = pool.removeValue(forKey: identifier) {
+            cancelIdleTimer(forIdentifier: identifier)
             for entry in entries {
-                cancelIdleTimer(for: entry.engine)
-                entry.engine.pause()
-                entry.engine.replaceCurrentItem(with: nil)
+                entry.avPlayer.pause()
+                entry.avPlayer.replaceCurrentItem(with: nil)
+                entry.renderView.removeFromSuperview()
             }
         }
     }
@@ -169,7 +193,7 @@ public final class PlayerEnginePool: PlayerEnginePoolService {
         guard var entries = pool[identifier], !entries.isEmpty else { return }
         let removed = entries.removeFirst()
         pool[identifier] = entries.isEmpty ? nil : entries
-        cancelIdleTimer(for: removed.engine)
+        releaseCore(removed)
         _statistics.evictions += 1
     }
 
@@ -189,49 +213,30 @@ public final class PlayerEnginePool: PlayerEnginePoolService {
         }
     }
 
-    private func autoReplenishIfNeeded(identifier: String) {
-        guard _isAutoReplenishEnabled, let factory = engineFactory else { return }
-
-        let currentCount = pool[identifier]?.count ?? 0
-        let threshold = Int(Float(_maxPerIdentifier) * _autoReplenishThreshold)
-
-        guard currentCount < threshold else { return }
-
-        let toCreate = min(_maxPerIdentifier - currentCount, _maxCapacity - count)
-        guard toCreate > 0 else { return }
-
-        for _ in 0..<toCreate {
-            guard let engine = factory() else { continue }
-            engine.prepareForReuse()
-
-            if pool[identifier] == nil {
-                pool[identifier] = []
-            }
-            pool[identifier]?.append(PoolEntry(engine: engine, enqueueTime: Date()))
-            _statistics.totalEnqueued += 1
-
-            if _idleTimeout > 0 {
-                scheduleIdleTimer(for: engine, identifier: identifier)
-            }
-        }
+    private func releaseCore(_ entry: PoolEntry) {
+        entry.avPlayer.pause()
+        entry.avPlayer.replaceCurrentItem(with: nil)
+        entry.renderView.removeFromSuperview()
     }
 
-    private func scheduleIdleTimer(for engine: PlayerEngineCoreService, identifier: String) {
-        let engineId = ObjectIdentifier(engine as AnyObject)
-        idleTimers[engineId]?.invalidate()
+    private func scheduleIdleTimer(forEntryAt index: Int, identifier: String) {
+        let timerKey = "\(identifier)_\(index)"
+        idleTimers[timerKey]?.invalidate()
 
         let timer = Timer.scheduledTimer(withTimeInterval: _idleTimeout, repeats: false) { [weak self] _ in
             MainActor.assumeIsolated {
-                self?.removeIdleEngine(engine, identifier: identifier)
+                self?.handleIdleTimeout(identifier: identifier)
             }
         }
-        idleTimers[engineId] = timer
+        idleTimers[timerKey] = timer
     }
 
-    private func cancelIdleTimer(for engine: PlayerEngineCoreService) {
-        let engineId = ObjectIdentifier(engine as AnyObject)
-        idleTimers[engineId]?.invalidate()
-        idleTimers.removeValue(forKey: engineId)
+    private func cancelIdleTimer(forIdentifier identifier: String) {
+        let keysToRemove = idleTimers.keys.filter { $0.hasPrefix(identifier + "_") }
+        for key in keysToRemove {
+            idleTimers[key]?.invalidate()
+            idleTimers.removeValue(forKey: key)
+        }
     }
 
     private func cancelAllIdleTimers() {
@@ -239,12 +244,11 @@ public final class PlayerEnginePool: PlayerEnginePoolService {
         idleTimers.removeAll()
     }
 
-    private func removeIdleEngine(_ engine: PlayerEngineCoreService, identifier: String) {
-        guard var entries = pool[identifier] else { return }
-        let engineObj = engine as AnyObject
-        entries.removeAll { ($0.engine as AnyObject) === engineObj }
+    private func handleIdleTimeout(identifier: String) {
+        guard var entries = pool[identifier], !entries.isEmpty else { return }
+        let removed = entries.removeFirst()
         pool[identifier] = entries.isEmpty ? nil : entries
-        cancelIdleTimer(for: engine)
+        releaseCore(removed)
         _statistics.idleCleanups += 1
     }
 

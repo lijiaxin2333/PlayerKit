@@ -735,6 +735,93 @@ public final class PlayerEngineCorePlugin: BasePlugin, PlayerEngineCoreService {
         context?.post(.playerEngineViewDidChanged, sender: self)
     }
 
+    /// 分离核心资源（AVPlayer + RenderView）
+    /// 用于引擎池只缓存 AVPlayer + RenderView 这一对
+    /// 调用后 Plugin 将处于空状态，可以被销毁
+    public func detachCore() -> (avPlayer: AVPlayer, renderView: PlayerEngineRenderView)? {
+        guard let player = avPlayerInstance, let rv = renderView else { return nil }
+
+        // 清理所有观察者和状态
+        removeBufferObservers()
+        removePlaybackObservers()
+        cancelRetry()
+
+        if let observer = timeObserver {
+            avPlayerInstance?.removeTimeObserver(observer)
+            timeObserver = nil
+        }
+        timeObservers.values.forEach { observer in
+            avPlayerInstance?.removeTimeObserver(observer)
+        }
+        timeObservers.removeAll()
+
+        // 暂停但不销毁 AVPlayer
+        player.pause()
+        rv.cancelDisplayObservation()
+        rv.removeFromSuperview()
+
+        // 清空 Plugin 的引用
+        avPlayerInstance = nil
+        renderView = nil
+        playerItem = nil
+        currentURL = nil
+        _playbackState = .stopped
+        _loadState = .idle
+        _isReadyForDisplay = false
+        _isReadyToPlay = false
+
+        return (player, rv)
+    }
+
+    /// 接管已准备好的核心资源
+    /// 用于引擎池出队时让新 Plugin 接管缓存的 AVPlayer + RenderView
+    public func adoptCore(player: AVPlayer, renderView: PlayerEngineRenderView) {
+        removeBufferObservers()
+        removePlaybackObservers()
+        cancelRetry()
+
+        if let observer = timeObserver {
+            avPlayerInstance?.removeTimeObserver(observer)
+            timeObserver = nil
+        }
+        timeObservers.values.forEach { observer in
+            avPlayerInstance?.removeTimeObserver(observer)
+        }
+        timeObservers.removeAll()
+
+        avPlayerInstance?.pause()
+        avPlayerInstance = player
+        playerItem = player.currentItem
+        self.renderView = renderView
+        currentURL = nil // 池中的引擎没有 URL
+
+        let readyForDisplayHandler: () -> Void = { [weak self] in
+            guard let self else { return }
+            self._isReadyForDisplay = true
+            self.context?.post(.playerReadyForDisplaySticky, object: self, sender: self)
+        }
+        renderView.onReadyForDisplay = readyForDisplayHandler
+        renderView.ensurePlayerBound()
+        renderView.reobserveReadyForDisplay()
+
+        let interval = CMTime(seconds: 0.5, preferredTimescale: 600)
+        timeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
+            guard let self = self else { return }
+            let currentTime = CMTimeGetSeconds(time)
+            MainActor.assumeIsolated {
+                self.context?.post(.playerTimeDidChange, object: currentTime, sender: self)
+            }
+        }
+
+        _playbackState = .stopped
+        _loadState = .idle
+        _isReadyForDisplay = renderView.playerLayer.isReadyForDisplay
+        _isReadyToPlay = player.status == .readyToPlay
+
+        context?.post(.playerEngineDidChange, sender: self)
+        context?.post(.playerEngineViewDidChanged, sender: self)
+    }
+
     // MARK: - Private Methods
 
     /**

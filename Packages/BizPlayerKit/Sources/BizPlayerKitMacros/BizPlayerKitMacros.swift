@@ -1,6 +1,6 @@
 //
-//  PlayerKitMacros.swift
-//  PlayerKit
+//  BizPlayerKitMacros.swift
+//  BizPlayerKit
 //
 
 import SwiftCompilerPlugin
@@ -67,7 +67,7 @@ public struct PlayerPluginMacro: AccessorMacro {
 
 /// 编译器插件入口
 @main
-struct PlayerKitMacrosPlugin: CompilerPlugin {
+struct BizPlayerKitMacrosPlugin: CompilerPlugin {
     let providingMacros: [Macro.Type] = [
         PlayerPluginMacro.self
     ]

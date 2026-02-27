@@ -1,7 +1,7 @@
 import Foundation
 
 import UIKit
-import PlayerKit
+import BizPlayerKit
 
 /**
  * 面板容器视图，用于承载面板内容并处理背景点击

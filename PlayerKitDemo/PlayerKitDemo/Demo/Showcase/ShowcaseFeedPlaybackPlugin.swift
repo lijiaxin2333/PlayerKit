@@ -1,6 +1,6 @@
 import UIKit
-import PlayerKit
-import ListKit
+import BizPlayerKit
+import MixedListKit
 
 @MainActor
 protocol ShowcaseFeedPlaybackPluginProtocol: AnyObject {
@@ -34,7 +34,7 @@ final class ShowcaseFeedPlaybackPlugin: NSObject, ListPluginProtocol, ShowcaseFe
         var enginePoolMaxPerIdentifier: Int = 5
         var preRenderMaxCount: Int = 4
         var preRenderTimeout: TimeInterval = 10
-        var prefetchMaxConcurrent: Int = 4
+        var prefetchMaxConcurrent: Int = 2
         var prefetchBytesPerURL: Int64 = 512 * 1024
         var prefetchWindowAhead: Int = 2
         var prefetchWindowBehind: Int = 1

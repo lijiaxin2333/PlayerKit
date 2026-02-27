@@ -9,7 +9,7 @@ import Foundation
 
 import AVKit
 import UIKit
-import PlayerKit
+import BizPlayerKit
 
 // MARK: - 全屏播控视图
 

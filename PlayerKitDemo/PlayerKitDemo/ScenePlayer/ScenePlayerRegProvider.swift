@@ -1,5 +1,5 @@
 import Foundation
-import PlayerKit
+import BizPlayerKit
 
 /// 场景层插件注册器
 /// 注册所有场景层 UI 相关的插件

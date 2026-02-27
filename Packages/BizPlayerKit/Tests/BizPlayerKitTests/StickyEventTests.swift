@@ -6,7 +6,7 @@
 //
 
 import XCTest
-@testable import PlayerKit
+@testable import BizPlayerKit
 
 @MainActor
 final class StickyEventTests: XCTestCase {

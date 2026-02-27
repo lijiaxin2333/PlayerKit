@@ -1,5 +1,5 @@
 import UIKit
-import PlayerKit
+import BizPlayerKit
 
 /// Feed Cell 视图服务插件
 /// 职责：仅存储 Cell 视图容器的引用，供其他插件访问

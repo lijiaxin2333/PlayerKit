@@ -4,15 +4,15 @@ import PackageDescription
 import CompilerPluginSupport
 
 let package = Package(
-    name: "PlayerKit",
+    name: "BizPlayerKit",
     platforms: [
         .iOS(.v15),
         .macOS(.v12)
     ],
     products: [
         .library(
-            name: "PlayerKit",
-            targets: ["PlayerKit"]
+            name: "BizPlayerKit",
+            targets: ["BizPlayerKit"]
         )
     ],
     dependencies: [
@@ -21,22 +21,22 @@ let package = Package(
     targets: [
         // 宏实现目标（编译器插件）
         .macro(
-            name: "PlayerKitMacros",
+            name: "BizPlayerKitMacros",
             dependencies: [
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
                 .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax")
             ],
-            path: "Sources/PlayerKitMacros"
+            path: "Sources/BizPlayerKitMacros"
         ),
         // 主库目标
         .target(
-            name: "PlayerKit",
+            name: "BizPlayerKit",
             dependencies: [
                 "KTVHTTPCache",
-                "PlayerKitMacros"
+                "BizPlayerKitMacros"
             ],
-            path: "Sources/PlayerKit",
+            path: "Sources/BizPlayerKit",
             swiftSettings: [
                 .swiftLanguageMode(.v6)
             ]
@@ -47,9 +47,9 @@ let package = Package(
         ),
         // 测试目标
         .testTarget(
-            name: "PlayerKitTests",
-            dependencies: ["PlayerKit"],
-            path: "Tests/PlayerKitTests",
+            name: "BizPlayerKitTests",
+            dependencies: ["BizPlayerKit"],
+            path: "Tests/BizPlayerKitTests",
             swiftSettings: [
                 .swiftLanguageMode(.v6)
             ]

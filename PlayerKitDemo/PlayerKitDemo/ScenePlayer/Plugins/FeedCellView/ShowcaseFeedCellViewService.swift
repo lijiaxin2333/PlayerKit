@@ -1,5 +1,5 @@
 import UIKit
-import PlayerKit
+import BizPlayerKit
 
 @MainActor
 public class ShowcaseFeedCellViewPluginConfigModel {

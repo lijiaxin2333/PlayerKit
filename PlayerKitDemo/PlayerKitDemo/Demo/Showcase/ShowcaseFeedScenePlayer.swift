@@ -1,5 +1,5 @@
 import UIKit
-import PlayerKit
+import BizPlayerKit
 
 public extension Event {
     static let showcaseFeedDataDidUpdate: Event = "ShowcaseFeedDataDidUpdate"

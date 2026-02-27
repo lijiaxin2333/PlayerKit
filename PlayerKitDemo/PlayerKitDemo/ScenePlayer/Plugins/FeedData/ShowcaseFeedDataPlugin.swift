@@ -1,5 +1,5 @@
 import Foundation
-import PlayerKit
+import BizPlayerKit
 
 @MainActor
 public final class ShowcaseFeedDataPlugin: BasePlugin, ShowcaseFeedDataService {

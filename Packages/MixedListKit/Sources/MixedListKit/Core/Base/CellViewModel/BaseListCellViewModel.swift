@@ -31,7 +31,12 @@ open class BaseListCellViewModel<ModelType>: NSObject, ListCellViewModelProtocol
 
     // MARK: - Init
 
-    public init(cellData: ModelType?, listContext: ListContext?, sectionViewModel: BaseListSectionViewModel) {
+    /// 初始化 CellViewModel
+    /// - Parameters:
+    ///   - cellData: Cell 数据
+    ///   - listContext: 列表上下文
+    ///   - sectionViewModel: 所属的 SectionViewModel（可传 nil，后续通过 updateSectionViewModel 绑定）
+    public init(cellData: ModelType?, listContext: ListContext?, sectionViewModel: BaseListSectionViewModel?) {
         self.cellData = cellData
         self.listContext = listContext
         self._sectionViewModel = sectionViewModel

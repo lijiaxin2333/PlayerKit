@@ -1,5 +1,5 @@
 import UIKit
-import ListKit
+import MixedListKit
 
 @MainActor
 final class ShowcaseFeedListViewModel: BaseListViewModel {

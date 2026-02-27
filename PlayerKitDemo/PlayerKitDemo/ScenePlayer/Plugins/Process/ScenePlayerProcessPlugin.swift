@@ -1,5 +1,5 @@
 import Foundation
-import PlayerKit
+import BizPlayerKit
 
 /**
  * 播放器场景播放流程插件

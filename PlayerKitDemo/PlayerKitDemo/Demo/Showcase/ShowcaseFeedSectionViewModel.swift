@@ -1,6 +1,6 @@
 import UIKit
 import IGListKit
-import ListKit
+import MixedListKit
 
 @MainActor
 final class ShowcaseFeedSectionViewModel: BaseListSectionViewModel {
@@ -8,25 +8,22 @@ final class ShowcaseFeedSectionViewModel: BaseListSectionViewModel {
     let video: ShowcaseVideo
     let videoIndex: Int
 
-    /// CellViewModel，遵循 ListKit 标准模式
-    private var _cellViewModel: ShowcaseFeedCellViewModel?
-
+    /// 便捷访问 CellViewModel（从 modelsArray 获取）
     var cellViewModel: ShowcaseFeedCellViewModel {
-        if let vm = _cellViewModel {
-            return vm
-        }
-        let vm = ShowcaseFeedCellViewModel(video: video, index: videoIndex)
-        vm.bindSectionViewModel(self)
-        _cellViewModel = vm
-        // 设置 modelsArray
-        appendModels([vm as AnyObject], animated: false)
-        return vm
+        modelsArray.first as! ShowcaseFeedCellViewModel
     }
 
     init(video: ShowcaseVideo, index: Int) {
         self.video = video
         self.videoIndex = index
-        super.init(modelsArray: [])
+
+        // 创建 CellViewModel（sectionViewModel 先传 nil，因为 Swift 两阶段初始化限制）
+        let vm = ShowcaseFeedCellViewModel(video: video, index: index, sectionViewModel: nil)
+
+        super.init(modelsArray: [vm as AnyObject])
+
+        // 绑定 SectionViewModel
+        vm.bindSectionViewModel(self)
     }
 
     @available(*, unavailable)

@@ -1,7 +1,7 @@
 import Foundation
 
 import UIKit
-import PlayerKit
+import BizPlayerKit
 
 /**
  * 面板显示位置枚举

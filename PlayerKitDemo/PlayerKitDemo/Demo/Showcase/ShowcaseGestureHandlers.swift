@@ -1,6 +1,6 @@
 import Foundation
 import UIKit
-import PlayerKit
+import BizPlayerKit
 
 @MainActor
 final class ShowcaseSingleTapHandler: PlayerGestureHandler {

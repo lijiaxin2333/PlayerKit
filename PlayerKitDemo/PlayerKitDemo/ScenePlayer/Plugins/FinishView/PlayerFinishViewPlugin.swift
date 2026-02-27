@@ -8,7 +8,7 @@
 import Foundation
 
 import UIKit
-import PlayerKit
+import BizPlayerKit
 
 // MARK: - 播放结束视图
 

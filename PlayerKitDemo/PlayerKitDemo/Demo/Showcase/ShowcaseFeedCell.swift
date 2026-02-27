@@ -1,6 +1,6 @@
 import UIKit
-import PlayerKit
-import ListKit
+import BizPlayerKit
+import MixedListKit
 
 /// Showcase Feed Cell
 /// 实现 ListCellProtocol，遵循 ListKit 标准模式

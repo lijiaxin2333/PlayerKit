@@ -1,6 +1,6 @@
 //
 //  PlayerPlugin.swift
-//  PlayerKit
+//  BizPlayerKit
 //
 
 import Foundation
@@ -62,4 +62,4 @@ extension ContextHolder {
 /// }
 /// ```
 @attached(accessor)
-public macro PlayerPlugin() = #externalMacro(module: "PlayerKitMacros", type: "PlayerPluginMacro")
+public macro PlayerPlugin() = #externalMacro(module: "BizPlayerKitMacros", type: "PlayerPluginMacro")

@@ -7,7 +7,7 @@
 
 import Foundation
 import UIKit
-import PlayerKit
+import BizPlayerKit
 
 /**
  * 默认播控视图，包含播放暂停、全屏、进度条、时间等控件

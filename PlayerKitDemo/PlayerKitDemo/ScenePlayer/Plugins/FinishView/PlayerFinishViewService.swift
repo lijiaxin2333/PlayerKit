@@ -8,7 +8,7 @@
 import Foundation
 
 import UIKit
-import PlayerKit
+import BizPlayerKit
 
 /**
  * 播放结束视图服务协议

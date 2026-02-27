@@ -8,7 +8,7 @@
 import Foundation
 
 import UIKit
-import PlayerKit
+import BizPlayerKit
 
 /**
  * Toast 消息视图，显示短时文本提示

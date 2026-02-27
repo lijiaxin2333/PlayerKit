@@ -1,6 +1,6 @@
 import Foundation
 import UIKit
-import PlayerKit
+import BizPlayerKit
 
 /**
  * 播放器手势插件，负责管理各种手势识别及分发

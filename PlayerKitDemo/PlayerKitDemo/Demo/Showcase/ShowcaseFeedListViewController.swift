@@ -1,8 +1,8 @@
 import UIKit
 
 import IGListKit
-import PlayerKit
-import ListKit
+import BizPlayerKit
+import MixedListKit
 
 @MainActor
 final class ShowcaseFeedListViewController: BaseListViewController<ShowcaseFeedListViewModel> {

@@ -8,7 +8,7 @@
 import Foundation
 
 import UIKit
-import PlayerKit
+import BizPlayerKit
 
 // MARK: - 调试面板视图
 

@@ -3,28 +3,28 @@
 import PackageDescription
 
 let package = Package(
-    name: "ListKit",
+    name: "MixedListKit",
     platforms: [
         .iOS(.v15)
     ],
     products: [
         .library(
-            name: "ListKit",
-            targets: ["ListKit"]
+            name: "MixedListKit",
+            targets: ["MixedListKit"]
         )
     ],
     dependencies: [
         .package(url: "https://github.com/Instagram/IGListKit", from: "5.0.0"),
-        .package(path: "../PlayerKit")
+        .package(path: "../BizPlayerKit")
     ],
     targets: [
         .target(
-            name: "ListKit",
+            name: "MixedListKit",
             dependencies: [
                 .product(name: "IGListKit", package: "IGListKit"),
-                .product(name: "PlayerKit", package: "PlayerKit")
+                .product(name: "BizPlayerKit", package: "BizPlayerKit")
             ],
-            path: "Sources/ListKit"
+            path: "Sources/MixedListKit"
         )
     ]
 )

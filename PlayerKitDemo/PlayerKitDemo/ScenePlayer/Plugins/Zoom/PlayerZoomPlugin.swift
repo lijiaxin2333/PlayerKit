@@ -7,7 +7,7 @@
 
 import Foundation
 import UIKit
-import PlayerKit
+import BizPlayerKit
 
 // MARK: - 缩放视图
 

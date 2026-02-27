@@ -7,8 +7,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         window = UIWindow(windowScene: windowScene)
-        let demoMenuVC = PlayerDemoMenuViewController()
-        let navigationController = UINavigationController(rootViewController: demoMenuVC)
+        let feedListVC = ShowcaseFeedListViewController()
+        let navigationController = UINavigationController(rootViewController: feedListVC)
         window?.rootViewController = navigationController
         window?.makeKeyAndVisible()
     }

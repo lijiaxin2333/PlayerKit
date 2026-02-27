@@ -6,10 +6,10 @@ options:
   xcodeVersion: "16.0"
   generateEmptyDirectories: true
 packages:
-  PlayerKit:
-    path: ../Packages/PlayerKit
-  ListKit:
-    path: ../Packages/ListKit
+  BizPlayerKit:
+    path: ../Packages/BizPlayerKit
+  MixedListKit:
+    path: ../Packages/MixedListKit
 targets:
   PlayerKitDemo:
     type: application
@@ -17,24 +17,24 @@ targets:
     sources:
       - PlayerKitDemo
     dependencies:
-      - package: PlayerKit
-      - package: ListKit
+      - package: BizPlayerKit
+      - package: MixedListKit
     settings:
       base:
         INFOPLIST_FILE: PlayerKitDemo/Info.plist
         PRODUCT_BUNDLE_IDENTIFIER: com.ljx.playerkitdemo
         TARGETED_DEVICE_FAMILY: "1"
         SWIFT_VERSION: "5.0"
-  PlayerKitInfraTests:
+  BizPlayerKitTests:
     type: bundle.unit-test
     platform: iOS
     sources:
-      - ../Packages/PlayerKit/Tests/PlayerKitTests
+      - ../Packages/BizPlayerKit/Tests/BizPlayerKitTests
     dependencies:
-      - package: PlayerKit
+      - package: BizPlayerKit
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.ljx.playerkitinfra.tests
+        PRODUCT_BUNDLE_IDENTIFIER: com.ljx.bizplayerkit.tests
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_VERSION: "5.0"
         GENERATE_INFOPLIST_FILE: YES

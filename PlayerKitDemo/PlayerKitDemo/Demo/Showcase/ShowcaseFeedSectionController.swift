@@ -1,7 +1,7 @@
 import UIKit
 import IGListKit
-import PlayerKit
-import ListKit
+import BizPlayerKit
+import MixedListKit
 
 @MainActor
 protocol FeedAutoPlayProtocol: AnyObject {

@@ -8,7 +8,7 @@
 import Foundation
 
 import UIKit
-import PlayerKit
+import BizPlayerKit
 
 // MARK: - 提示类型
 

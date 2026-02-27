@@ -1,5 +1,5 @@
 import Foundation
-import PlayerKit
+import BizPlayerKit
 
 /**
  * 列表预加载插件，封装 KTVHTTPCache 预加载能力
